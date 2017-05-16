@@ -127,20 +127,45 @@ coef.htobit <- function(object, model = c("full", "location", "scale"), ...) {
   model <- match.arg(model)
   cf <- object$coefficients
   switch(model,
-    "location" = cf$location,
-    "scale" = cf$scale,
-    "full" = c(cf$location, cf$scale),
+    "location" = {
+      cf$location
+    },
+    "scale" = {
+      cf$scale
+    },
+    "full" = {
+      structure(c(cf$location, cf$scale),
+        .Names = c(names(cf$location), paste("(scale)", names(cf$scale), sep = "_")))
+    }
   )
 }
 
 print.htobit <- function(x, digits = max(3, getOption("digits") - 3), ...)
 {
-  cat("\nCall:", deparse(x$call, width.cutoff = floor(getOption("width") * 0.85)), "", sep = "\n")
-  cat("Coefficients (location model):\n")
-  print.default(format(x$coefficients$location, digits = digits), print.gap = 2, quote = FALSE)
-  cat("\nCoefficients (scale model with log link):\n")
-  print.default(format(x$coefficients$scale, digits = digits), print.gap = 2, quote = FALSE)
-  cat(sprintf("\nLog-likelihood: %s on %s Df\n", format(x$loglik, digits = digits), x$df))
+  cat("Heteroscedastic tobit model\n\n")
+  if(x$convergence > 0) {
+    cat("Model did not converge\n")
+  } else {
+    if(length(x$coefficients$location)) {
+      cat("Coefficients (location model):\n")
+      print.default(format(x$coefficients$location, digits = digits), print.gap = 2, quote = FALSE)
+      cat("\n")
+    } else {
+      cat("No coefficients (in location model)\n\n")
+    }
+    if(length(x$coefficients$scale)) {
+      cat("Coefficients (scale model with log link):\n")
+      print.default(format(x$coefficients$scale, digits = digits), print.gap = 2, quote = FALSE)
+      cat("\n")
+    } else {
+      cat("No coefficients (in scale model)\n\n")
+    }
+    cat(paste("Log-likelihood: ", format(x$loglik, digits = digits), "\n", sep = ""))
+    if(length(x$df)) {
+      cat(paste("Df: ", format(x$df, digits = digits), "\n", sep = ""))
+    }
+    cat("\n")
+  }
 
   invisible(x)
 }
@@ -158,5 +183,43 @@ model.matrix.htobit <- function(object, model = c("location", "scale"), ...) {
   model <- match.arg(model)
   rval <- if(!is.null(object$x[[model]])) object$x[[model]]
     else model.matrix(object$terms[[model]], model.frame(object), contrasts = object$contrasts[[model]])
+  return(rval)
+}
+
+predict.htobit <- function(object, newdata = NULL,
+  type = c("response", "location", "scale", "parameter", "probability", "quantile"),
+  na.action = na.pass, at = 0.5, ...)
+{
+  ## types of prediction
+  ## response/location are synonymous
+  type <- match.arg(type)
+  if(type == "location") type <- "response"
+
+  ## obtain model.frame/model.matrix
+  tnam <- switch(type,
+    "response" = "location",
+    "scale" = "scale",
+    "full")  
+  if(is.null(newdata)) {
+    X <- model.matrix(object, model = "location")
+    Z <- model.matrix(object, model = "scale")
+  } else {
+    mf <- model.frame(delete.response(object$terms[[tnam]]), newdata, na.action = na.action, xlev = object$levels[[tnam]])
+    if(type != "scale") X <- model.matrix(delete.response(object$terms$location), mf, contrasts = object$contrasts$location)
+    if(type != "response") Z <- model.matrix(object$terms$scale, mf, contrasts = object$contrasts$scale)
+  }
+
+  ## predicted parameters
+  if(type != "scale") location <- drop(X %*% object$coefficients$location)
+  if(type != "response") scale <- exp(drop(Z %*% object$coefficients$scale))
+
+  ## compute result
+  rval <- switch(type,
+    "response" = location,
+    "scale" = scale,
+    "parameter" = data.frame(location, scale),
+    "probability" = pnorm(at, mean = location, sd = scale),
+    "quantile" = pmax(0, qnorm(at, mean = location, sd = scale))
+  )
   return(rval)
 }
