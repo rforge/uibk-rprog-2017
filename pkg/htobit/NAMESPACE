@@ -1,0 +1,16 @@
+import("stats", "Formula")
+
+export(
+  "htobit",
+  "htobit_control",
+  "htobit_fit"
+)
+
+## methods for htobit
+S3method("coef", "htobit")
+S3method("logLik", "htobit")
+S3method("predict", "htobit")
+S3method("print", "htobit")
+S3method("terms", "htobit")
+S3method("model.frame", "htobit")
+S3method("model.matrix", "htobit")
