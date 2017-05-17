@@ -1,0 +1,230 @@
+negbin1 <- function(formula, data, subset, na.action,
+                    model = TRUE, y = TRUE, x = TRUE,
+                    control = negbin1_control(...), ...)
+{
+    ## call
+    cl <- match.call()
+    if(missing(data)) data <- environment(formula)
+    mf <- match.call(expand.dots = FALSE)
+    m <- match(c("formula", "data", "subset", "na.action"), names(mf), 0L)
+    mf <- mf[c(1L, m)]
+    mf$drop.unused.levels <- TRUE
+
+    ## formula
+    oformula <- as.formula(formula)
+    formula <- as.Formula(formula)
+   
+    mf$formula <- formula
+
+    ## evaluate model.frame
+    mf[[1L]] <- as.name("model.frame")
+    mf <- eval(mf, parent.frame())
+    
+    ## extract terms, model matrix and response
+    mt <- terms(formula, data = data)
+    mtX <- terms(formula, data = data, rhs = 1L)
+    Y <- model.response(mf, "numeric")
+    X <- model.matrix(mtX, mf)
+    
+    ## sanity check
+    if(length(Y) < 1) stop("empty model")
+    n <- length(Y)
+    
+    ## call the actual workhorse: negbin1_fit()
+    rval <- negbin1_fit(Y, X, control)
+    
+    ## further model information
+    rval$call <- cl
+    rval$formula <- oformula
+    rval$terms <- list(location = mtX)
+    rval$levels <- list(location = .getXlevels(mtX, mf))
+    rval$contrasts <- list(location = attr(X, "contrasts"))
+    if(model) rval$model <- mf
+    if(y) rval$y <- Y
+    if(x) rval$x <- X
+    class(rval) <- "negbin1"
+    return(rval)
+}
+
+negbin1_control <- function(maxit = 5000, start = NULL,...)
+{
+    ctrl <- c(
+        list(maxit = maxit,
+             start = start), list(...)
+    )
+    if(!is.null(ctrl$fnscale)) warning("fnscale must not be modified")
+    ctrl$fnscale <- 1L
+    if(is.null(ctrl$reltol)) ctrl$reltol <- .Machine$double.eps^(1/1.2)
+    ctrl
+}
+
+negbin1_fit <- function(y, x, control)
+{
+    ## dimemsions
+    n <- length(y)
+    m <- ncol(x)
+    stopifnot(n == nrow(x))
+
+    ## negative log-likelihood
+    nll <- function(par) {
+        beta <- par[1L:m]
+        mu <- exp(x %*% beta)
+        theta <- mu * par[m+1L]
+        ll <- dnbinom(y, size = theta, mu = mu, log = TRUE)
+        -sum(ll)
+        }
+
+    ## starting values (by default Poisson)
+    if(is.null(control$start)) {
+        start <- glm(y ~ -1L + x, family = "poisson")
+        start <- c(start$coefficients, 1L)
+    } else {
+        start <- control$start
+        stopifnot(length(start) == m + 1L)
+    }
+    control$start <- NULL
+    
+    ## optimization
+    opt <- optim(par = start, fn = nll, control = control)
+
+    ## collect information
+    names(opt)[1:2] <- c("coefficients", "loglik")
+    opt$coefficients <- list(
+        location = opt$coefficients[1L:m],
+        theta = opt$coefficients[m+1L]
+    )
+    names(opt$coefficients$location) <- colnames(x)
+    opt$loglik <- -opt$loglik
+    opt$nobs <- n
+    opt$df <- m + 1L
+    class(opt) <- "negbin1"
+    
+    return(opt)
+}
+
+logLik.negbin1 <- function(object, ...) {
+    structure(object$loglik, df = object$df, class = "logLik")
+}
+
+print.negbin1 <- function(x, digits = max(3, getOption("digits") - 3), ...)
+{
+    cat("Negbin 1 model\n\n")
+    if(x$convergence > 0) {
+        cat("Model did not converge\n")
+    } else {
+      if(length(x$coefficients$location)) {
+      cat("Coefficients:\n")
+      print.default(format(x$coefficients$location, digits = digits), print.gap = 2, quote = FALSE)
+      cat("\n")      
+      } else {
+        cat("No coefficients\n\n")  
+      }
+        if(length(x$coefficients$theta)){
+        cat("Theta:")
+        print.default(format(x$coefficients$theta, digits = digits), print.gap = 2, quote = FALSE)
+        cat("\n")
+        } else {
+          cat("No coefficient theta\n\n")  
+        }
+        cat(paste("Log-likelihood: ", format(x$loglik, digits = digits), "\n", sep = ""))
+      if(length(x$df)) {
+          cat(paste("Df: ", format(x$df, digits = digits), "\n", sep = ""))
+      }
+      cat("\n")
+    }
+    
+    invisible(x)
+}
+
+terms.negbin1 <- function(x, ...) x$terms
+
+model.frame.negbin1 <- function(formula, ...) {
+    if(!is.null(formula$model)) return(formula$model)
+    formula$call$formula <- formula$formula
+    NextMethod()
+}
+
+model.matrix.negbin1 <- function(object, ...) {
+    rval <- if(!is.null(object$x)) object$x
+            else model.matrix(object$terms, model.frame(object), contrasts = object$contrasts)
+    return(rval)
+}
+
+predict.negbin1 <- function(object, newdata = NULL,
+                            type = "response",
+                            na.action = na.pass, at = 0.5, ...)
+{
+    ## types of prediction
+    ## response/location
+    type <- match.arg(type)
+    
+    ##obtain model.frame/model.matrix
+    if(is.null(newdata)) {
+        X <- model.matrix(object)
+        } else {
+        mf <- model.frame(delete.response(object$terms$location), newdata, na.action = na.action, xlev = object$levels$location)
+        X <- model.matrix(delete.response(object$terms$location), mf, contrasts = object$contrasts$location)
+        }
+    ## predicted parameters
+    location <- drop(X %*% object$coefficients$location)
+    
+    ## compute result
+    rval <- location
+    
+    return(rval)
+}
+
+
+if(FALSE) {
+## data generating process
+dgp <- function(n = 1000, coef = c(2, 3, 0, 0.7)) {
+  d <- data.frame(
+    x1 = runif(n, -1, 1),
+    x2 = runif(n, -1, 1)
+    )
+  d$mu <- exp(coef[1] + coef[2] * d$x1 + coef[3] * d$x2)
+  d$y <- rnbinom(n, mu = d$mu, size = coef[4] * d$mu)
+  return(d)
+}
+
+## data
+set.seed(2007-05-15)
+d <- dgp()
+
+## model (with negbin1())
+source("negbin.R")
+library("Formula") 
+m1 <- negbin1(y ~ x1 + x2, data = d, control = list(maxit = 5000))
+m1
+    
+## model (with vglm())
+library("VGAM")
+m2 <- vglm(y ~ x1 + x2, negbinomial(parallel = TRUE, zero = NULL), data = d, trace = TRUE)    
+summary(m2)
+coef(m2, matrix = TRUE)
+    
+## coefficient vector
+cbind(m1$coefficients$location, coef(m2, matrix = TRUE)[1:3,1])   
+
+## log likelihood
+cbind(m1$loglik, logLik(m2))
+
+## model comparison
+m0 <- negbin1(y ~ x1, data = d, control = list(maxit = 5000))
+AIC(m0, m1)
+BIC(m0, m1)
+library("lmtest")
+lrtest(m0, m1)
+
+## benefit of formula/terms interface
+update(m1, subset = x2 > 0)
+head(model.frame(m1))
+head(model.matrix(m1))
+
+## predictions
+newd <- data.frame(x1 = c(-1, 0, 1), x2 = c(1, 0, -1))
+predict(m1, newd, type = "location")
+predict(m1, newd, type = "response")
+predict(m1, newd, type = "quantile")
+predict(m1, newd, type = "probability", at = 0)    
+}
