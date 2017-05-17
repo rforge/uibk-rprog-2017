@@ -1,9 +1,9 @@
 Package: negbin1
 Type: Package
-Title: What the package does (short line)
+Title: Negative Binomial 1 Regression
 Version: 1.0
 Date: 2017-05-17
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
-License: What license is it under?
+Author:Susanne Berger
+Maintainer: Susanne Berger <susanne.berger@uibk.ac.at>
+Description: Fit negative binomial 1 regression.
+License: GPL-2 | GPL-3
