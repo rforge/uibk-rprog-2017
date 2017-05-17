@@ -39,7 +39,7 @@ htobit <- function(formula, data, subset, na.action,
   if(length(Y) < 1) stop("empty model")
   n <- length(Y)
 
-  ## call the actual workhorse: betareg.fit()
+  ## call the actual workhorse: htobit_fit()
   rval <- htobit_fit(X, Y, Z, control)
 
   ## further model information
