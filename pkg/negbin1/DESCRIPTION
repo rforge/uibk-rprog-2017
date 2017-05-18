@@ -1,6 +1,6 @@
 Package: negbin1
 Title: Negative Binomial 1 Regression
-Version: 1.0
+Version: 0.0-1
 Date: 2017-05-17
 Authors@R: person("Susanne", "Berger", role = c("aut", "cre"), email = "Susanne.Berger@uibk.ac.at")
 Description: Fit negative binomial 1 regression.
