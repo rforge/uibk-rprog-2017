@@ -109,6 +109,10 @@ logLik.negbin1 <- function(object, ...) {
 print.negbin1 <- function(x, digits = max(3, getOption("digits") - 3), ...)
 {
     cat("Negbin 1 model\n\n")
+    if(!is.null(cl <- x$call)) {
+        cat("Call:\n", paste(deparse(cl), sep = "\n", collapse = "\n"),
+            "\n\n", sep = "")
+        }
     if(x$convergence > 0) {
         cat("Model did not converge\n")
     } else {
@@ -151,26 +155,32 @@ model.matrix.negbin1 <- function(object, ...) {
 }
 
 predict.negbin1 <- function(object, newdata = NULL,
-                            type = "response",
+                            type = c("response", "location", "probability", "quantile"),
                             na.action = na.pass, at = 0.5, ...)
 {
     ## types of prediction
     ## response/location
     type <- match.arg(type)
+    if(type == "location") type <- "response"
     
-    ##obtain model.frame/model.matrix
+    ##obtain model.frame/model.matrix              
     if(is.null(newdata)) {
         X <- model.matrix(object)
         } else {
         mf <- model.frame(delete.response(object$terms$location), newdata, na.action = na.action, xlev = object$levels$location)
         X <- model.matrix(delete.response(object$terms$location), mf, contrasts = object$contrasts$location)
         }
+
     ## predicted parameters
     location <- drop(X %*% object$coefficients$location)
+    theta <- object$coefficients$theta
     
     ## compute result
-    rval <- location
-    
+    rval <- switch(type,
+      "response" = location,
+      "probability" = pnbinom(at, size = theta * location, mu = location),
+      "quantile" = qnbinom(at, size = theta * location, mu = location)
+    )   
     return(rval)
 }
 
@@ -216,13 +226,23 @@ BIC(m0, m1)
 library("lmtest")
 lrtest(m0, m1)
 
+## compare theta
+theta.m1 <- m1$coefficients$theta
+co <- coef(m2, matrix = TRUE)
+theta.m2 <- exp(co["(Intercept)", "loge(size)"] - co["(Intercept)", "loge(mu)"]) 
+    
 ## benefit of formula/terms interface
 update(m1, subset = x2 > 0)
 head(model.frame(m1))
 head(model.matrix(m1))
 
+## model (with glm.nb())     
+library("MASS")
+m3 <- glm.nb(y ~ x1 + x2, data = d)
+sapply(list("negbin1" = m1, "vglm" = m2, "glm.nb" = m3), coef)
+    
 ## predictions
-newd <- data.frame(x1 = c(-1, 0, 1), x2 = c(1, 0, -1))
+newd <- data.frame(x1 = c(2, 0, 1, 4), x2 = c(1, 0, -1, 1))
 predict(m1, newd, type = "location")
 predict(m1, newd, type = "response")
 predict(m1, newd, type = "quantile")
