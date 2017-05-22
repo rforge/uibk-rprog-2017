@@ -46,7 +46,7 @@ The workhorse function is \code{negbin1_fit}, which is normally not called direc
 }
 
 \value{
-\code{negbin} returns an object of \code{\link{class}} "\code{negbin}".
+\code{negbin1} returns an object of \code{\link{class}} "\code{negbin}".
 }
 
 \references{
