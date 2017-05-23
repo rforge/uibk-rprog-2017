@@ -4,7 +4,7 @@
 \alias{fgamma_control}
 
 \title{
-Full gamma regression 
+Full Gamma Regression 
 }
 \description{
 Full gamma regression modeling the mu (mean) and sigma parameter as functions of explanatory variables using a "log" link for both parameters. 
