@@ -1,0 +1,15 @@
+import("stats", "Formula")
+
+export(
+  "fgamma",
+  "fgamma_fit",
+  "fgamma_control"
+)
+
+S3method("logLik", "fgamma")
+S3method("coef", "fgamma")
+S3method("model.frame", "fgamma")
+S3method("model.matrix", "fgamma")
+S3method("predict", "fgamma")
+S3method("print", "fgamma")
+S3method("terms", "fgamma")
