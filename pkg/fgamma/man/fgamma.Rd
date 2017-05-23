@@ -85,7 +85,7 @@ dgp <- function(n, coef = c(1, 1.5, 2, .04, .9, .1)) {
 set.seed(2017-05-15)
 d <- dgp(500)
 
-## model with fgamma()
+## model with fgamma
 m1 <- fgamma(y ~ x1 + x2 | x1 + x2, data = d)
 
 ## model with gamlss
