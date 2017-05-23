@@ -1,5 +1,5 @@
 Package: fgamma
-Title: Full gamma regression 
+Title: Full Gamma Regression 
 Version: 0.0-1
 Date: 2017-05-22
 Authors@R: person("Daniel", "Gstrein", role = c("aut", "cre"), email = "Daniel.Gstrein@uibk.ac.at")
