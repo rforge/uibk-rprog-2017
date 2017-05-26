@@ -36,10 +36,17 @@ htobit_control(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
   \item{z}{a design matrix with regressors for the scale.}
   \item{\dots}{arguments to be used to form the default \code{control} argument
     if it is not supplied directly.}
-  \item{control, maxit, start, hessian}{a list of control parameters passed to \code{\link{optim}} .}
+  \item{control, maxit, start}{a list of control parameters passed to \code{\link[stats]{optim}} .}
   \item{grad}{logical. Should gradients be used for optimization? If \code{TRUE},
     the default \code{method} is \code{"BFGS"}. Otherwise \code{method = "Nelder-Mead"}
     is used.}
+  \item{hessian}{logical or character. Should a numeric approximation of the
+    (negative) Hessian matrix be computed? Either \code{FALSE} (or equivalently
+    \code{"none"}) or \code{TRUE}. Alternatively, in the latter case,
+    \code{hessian = "optim"} could be specified to signal that the Hessian should
+    be approximated by \code{\link[stats]{optim}}. Another option is
+    \code{hessian = "numDeriv"} so that \code{\link[numDeriv]{hessian}} is used
+    for computing the Hessian.}
 }
 
 \details{
