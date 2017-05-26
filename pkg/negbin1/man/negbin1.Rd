@@ -1,7 +1,7 @@
 \name{negbin1}
 \alias{negbin1}
-\alias{negbin1_fit}
 \alias{negbin1_control}
+\alias{negbin1_fit}
 
 \title{
 Negative Binomial 1 Regression
@@ -22,7 +22,7 @@ negbin1_control(maxit = 5000, start = NULL, ...)
 }
 
 \arguments{
-  \item{formula}{an object of class "\code{\link[Formula]{formula}}": a symbolic description of the model to be fitted.}
+  \item{formula}{an object of class "\code{\link{formula}}": a symbolic description of the model to be fitted.}
   \item{data}{a data frame containing the variables of the model. If not found in the data, variables are taken from \code{environment(formula)}}.
   \item{subset}{an optional vector specifying a subset of observations to be used in the fitting process.}
   \item{na.action}{a function which indicates what should happen when the data contain NAs.}
@@ -46,7 +46,7 @@ The workhorse function is \code{negbin1_fit}, which is normally not called direc
 }
 
 \value{
-\code{negbin1} returns an object of \code{\link{class}} "\code{negbin}".
+\code{negbin1} returns an object of \code{\link{class}} "\code{negbin1}".
 }
 
 \references{
@@ -124,13 +124,6 @@ thetam2 <- exp(co["(Intercept)", "loge(size)"] - co["(Intercept)", "loge(mu)"])
 update(m1, subset = x2 > 0)
 head(model.frame(m1))
 head(model.matrix(m1))
-
-## predictions
-newd <- data.frame(x1 = c(2, 0, 1, 4), x2 = c(1, 0, -1, 1))
-predict(m1, newd, type = "location")
-predict(m1, newd, type = "response")
-predict(m1, newd, type = "quantile")
-predict(m1, newd, type = "probability", at = 0)    
 
 }
 
