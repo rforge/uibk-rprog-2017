@@ -57,6 +57,8 @@ htobit <- function(formula, data, subset, na.action,
 
 htobit_control <- function(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
 {
+  if(is.logical(hessian)) hessian <- if(hessian) "optim" else "none"
+  if(is.character(hessian)) hessian <- match.arg(tolower(hessian), c("optim", "numderiv", "none"))
   ctrl <- c(
     list(maxit = maxit, start = start, grad = grad, hessian = hessian),
     list(...)
@@ -143,9 +145,20 @@ htobit_fit <- function(x, y, z = NULL, control)
   
   ## optimization
   opt <- if(grad) {
-    optim(par = start, fn = nll, gr = ngr, control = control, method = meth, hessian = hess)
+    optim(par = start, fn = nll, gr = ngr, control = control, method = meth, hessian = (hess == "optim"))
   } else {
-    optim(par = start, fn = nll, control = control, method = meth, hessian = hess)
+    optim(par = start, fn = nll, control = control, method = meth, hessian = (hess == "optim"))
+  }
+
+  ## compute hessian (if necessary)
+  if(hess == "none") {
+    opt <- c(opt, list(hessian = NULL))
+  } else if(hess == "numderiv") {
+    opt$hessian <- numDeriv::hessian(nll, opt$par)
+  }
+  if(!is.null(opt$hessian)) {
+    rownames(opt$hessian) <- colnames(opt$hessian) <- c(
+      colnames(x), paste("(scale)", colnames(z), sep = "_"))
   }
 
   ## collect information
