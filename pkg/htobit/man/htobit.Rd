@@ -15,7 +15,7 @@ htobit(formula, data, subset, na.action,
 
 htobit_fit(x, y, z = NULL, control)
 
-htobit_control(maxit = 5000, start = NULL, ...)
+htobit_control(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
 }
 \arguments{
   \item{formula}{a formula expression of the form \code{y ~ x | z} where
@@ -36,7 +36,10 @@ htobit_control(maxit = 5000, start = NULL, ...)
   \item{z}{a design matrix with regressors for the scale.}
   \item{\dots}{arguments to be used to form the default \code{control} argument
     if it is not supplied directly.}
-  \item{control, maxit, start}{a list of control parameters passed to \code{\link{optim}} .}
+  \item{control, maxit, start, hessian}{a list of control parameters passed to \code{\link{optim}} .}
+  \item{grad}{logical. Should gradients be used for optimization? If \code{TRUE},
+    the default \code{method} is \code{"BFGS"}. Otherwise \code{method = "Nelder-Mead"}
+    is used.}
 }
 
 \details{

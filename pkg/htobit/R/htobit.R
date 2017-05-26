@@ -55,12 +55,15 @@ htobit <- function(formula, data, subset, na.action,
   return(rval)
 }
 
-htobit_control <- function(maxit = 5000, start = NULL, ...)
+htobit_control <- function(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
 {
   ctrl <- c(
-    list(maxit = maxit,
-    start = start), list(...)
+    list(maxit = maxit, start = start, grad = grad, hessian = hessian),
+    list(...)
   )
+  if(is.null(ctrl$method)) {
+    ctrl$method <- if(grad) "BFGS" else "Nelder-Mead"
+  }
   if(!is.null(ctrl$fnscale)) warning("fnscale must not be modified")
   ctrl$fnscale <- 1
   if(is.null(ctrl$reltol)) ctrl$reltol <- .Machine$double.eps^(1/1.2)
@@ -89,6 +92,43 @@ htobit_fit <- function(x, y, z = NULL, control)
     }
     -sum(ll)
   }
+
+  ## negative gradient (contributions)
+  ngr <- function(par, sum = TRUE) {
+    ## parameters
+    beta <- par[1:m]
+    gamma <- par[m + (1:p)]
+    mu <- x %*% beta
+    sigma <- exp(z %*% gamma)
+
+    ## auxiliary: censoring, inverse Mill's ratio, empty score matrix
+    y0 <- y <= 0
+    imr <- function(y, mean = 0, sd = 1) {
+      exp(dnorm(y, mean = mean, sd = sd, log = TRUE) - pnorm(y, mean = mean, sd = sd, log.p = TRUE))
+    }
+    rval <- matrix(0, nrow = nrow(x), ncol = ncol(x) + ncol(z))
+
+    ## uncensored: like Gaussian regression
+    rval[!y0, ] <- cbind(
+      (y[!y0] - mu[!y0]) * 1/sigma[!y0]^2 * x[!y0, , drop = FALSE],
+      ((y[!y0] - mu[!y0])^2 * 1/sigma[!y0]^2 - 1) * z[!y0, , drop = FALSE]
+    )
+    ## censored: like binary probit regression
+    rval[y0, ] <- -imr(0, mean = mu[y0], sd = sigma[y0]) * cbind(
+      x[y0, , drop = FALSE],
+      (y[y0] - mu[y0]) * z[y0, , drop = FALSE]
+    )
+  
+    ## sum (if desired) and change sign
+    if(sum) rval <- colSums(rval)
+    return(-rval)
+  }
+  
+  ## clean up control arguments
+  grad <- control$grad
+  hess <- control$hessian
+  meth <- control$method
+  control$grad <- control$hessian <- control$method <- NULL
   
   ## starting values (by default via OLS)
   if(is.null(control$start)) {
@@ -102,7 +142,11 @@ htobit_fit <- function(x, y, z = NULL, control)
   control$start <- NULL
   
   ## optimization
-  opt <- optim(par = start, fn = nll, control = control)
+  opt <- if(grad) {
+    optim(par = start, fn = nll, gr = ngr, control = control, method = meth, hessian = hess)
+  } else {
+    optim(par = start, fn = nll, control = control, method = meth, hessian = hess)
+  }
 
   ## collect information
   names(opt)[1:2] <- c("coefficients", "loglik")
@@ -223,3 +267,41 @@ predict.htobit <- function(object, newdata = NULL,
   )
   return(rval)
 }
+
+estfun.htobit <- function(x, ...)
+{
+  ## observed data and fit
+  if(is.null(x$y) || is.null(x$x)) {
+    mf <- model.frame(x)
+    x$y <- model.response(mf)
+    x$x <- list(
+      "location" = model.matrix(x$terms$location, mf),
+      "scale" = model.matrix(x$terms$scale, mf)
+    )
+  }
+  mu <- x$x$location %*% x$coefficients$location
+  sigma <- exp(x$x$scale %*% x$coefficients$scale)
+
+  ## auxiliary: censoring, inverse Mill's ratio, empty score matrix
+  y0 <- x$y <= 0
+  imr <- function(y, mean = 0, sd = 1) {
+    exp(dnorm(y, mean = mean, sd = sd, log = TRUE) - pnorm(y, mean = mean, sd = sd, log.p = TRUE))
+  }
+  rval <- matrix(0, nrow = x$nobs, ncol = x$df)
+
+  ## uncensored: like Gaussian regression
+  rval[!y0, ] <- cbind(
+    (x$y[!y0] - mu[!y0]) * 1/sigma[!y0]^2 * x$x$location[!y0, , drop = FALSE],
+    ((x$y[!y0] - mu[!y0])^2 * 1/sigma[!y0]^2 - 1) * x$x$scale[!y0, , drop = FALSE]
+  )
+  ## censored: like binary probit regression
+  rval[y0, ] <- -imr(0, mean = mu[y0], sd = sigma[y0]) * cbind(
+    x$x$location[y0, , drop = FALSE],
+    (x$y[y0] - mu[y0]) * x$x$scale[y0, , drop = FALSE]
+  )
+  
+  ## nice column names
+  colnames(rval) <- c(colnames(x$x$location), paste("(scale)", colnames(x$x$scale), sep = "_"))
+  return(rval)
+}
+
