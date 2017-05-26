@@ -10,18 +10,18 @@ Obtains predictions from a fitted negative binomial 1 model object.
 }
 
 \usage{
-predict.negbin1(object, newdata = NULL,
+\method{predict}{negbin1}(object, newdata = NULL,
                 type = c("response", "location", "probability", "quantile"),
                 na.action = na.pass, at = 0, ...)
 }
 
 \arguments{
-  \item{object}{a fitted object of class inheriting from "\code{negbin1}".}
+  \item{object}{a fitted object of class inheriting from "\code{\link[negbin1]{negbin1}}".}
   \item{newdata}{optionally, a data frame in which to look for variables
   with which to predict.}
   \item{type}{the type of prediction required. The default is on the
   scale of the linear predictors; \code{response} and \code{location} are equivalent.}
-  \item{na.action}{function determining what should be done with missing values in \code{newdata}. The default is to predict \code{NA}.}
+  \item{na.action}{function determining what should be done with missing values in \code{newdata}. The default is to predict NA.}
   \item{at}{quantiles or counts.}
   \item{\dots}{additional arguments to be passed.}
 }
@@ -37,7 +37,7 @@ function for probabilities \code{at}.
 }
 
 \value{
-\code{predict.negbin1} returns a vector of predictions.
+Returns a vector of predictions.
 }
 
 \references{
@@ -56,10 +56,6 @@ Negative Binomial and Mixed Poisson Regression,
 Winkelmann R & Boes S (2009).
 \dQuote{Analysis of Microdata},
 Springer, Second Edition.
-}
-
-\seealso{
-\code{\link[MASS]{glm.nb}}, \code{\link[VGAM]{vglm}}
 }
 
 \examples{
