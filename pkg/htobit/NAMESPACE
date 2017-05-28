@@ -1,5 +1,5 @@
 import("stats", "Formula")
-importFrom("sandwich", "estfun")
+importFrom("sandwich", "bread", "estfun")
 
 export(
   "htobit",
@@ -8,11 +8,16 @@ export(
 )
 
 ## methods for htobit
+S3method("bread", "htobit")
 S3method("coef", "htobit")
 S3method("estfun", "htobit")
+S3method("fitted", "htobit")
 S3method("logLik", "htobit")
-S3method("predict", "htobit")
-S3method("print", "htobit")
-S3method("terms", "htobit")
 S3method("model.frame", "htobit")
 S3method("model.matrix", "htobit")
+S3method("predict", "htobit")
+S3method("print", "htobit")
+S3method("summary", "htobit")
+S3method("print", "summary.htobit")
+S3method("terms", "htobit")
+S3method("vcov", "htobit")

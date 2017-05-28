@@ -159,6 +159,8 @@ htobit_fit <- function(x, y, z = NULL, control)
   if(!is.null(opt$hessian)) {
     rownames(opt$hessian) <- colnames(opt$hessian) <- c(
       colnames(x), paste("(scale)", colnames(z), sep = "_"))
+    opt$vcov <- solve(opt$hessian)
+    opt$hessian <- NULL
   }
 
   ## collect information
@@ -169,6 +171,16 @@ htobit_fit <- function(x, y, z = NULL, control)
   )
   names(opt$coefficients$location) <- colnames(x)
   names(opt$coefficients$scale) <- colnames(z)
+  
+  ## residuals and fitted values
+  ## (FIXME: need manifest location/scale - not latent)
+  mu <- drop(x %*% opt$coefficients$location)
+  sigma <- exp(drop(z %*% opt$coefficients$scale))
+  opt$residuals <- y - mu
+  opt$fitted.values <- list(location = mu, scale = sigma)
+
+  ## other information
+  opt$method <- meth
   opt$loglik <- -opt$loglik
   opt$nobs <- n
   opt$df <- m + p
@@ -243,6 +255,8 @@ model.matrix.htobit <- function(object, model = c("location", "scale"), ...) {
   return(rval)
 }
 
+fitted.htobit <- function(object, type = c("location", "scale"), ...) object$fitted.values[[match.arg(type)]]
+
 predict.htobit <- function(object, newdata = NULL,
   type = c("response", "location", "scale", "parameter", "probability", "quantile"),
   na.action = na.pass, at = 0.5, ...)
@@ -281,6 +295,8 @@ predict.htobit <- function(object, newdata = NULL,
   return(rval)
 }
 
+bread.htobit <- function(x, ...) x$vcov * x$nobs
+
 estfun.htobit <- function(x, ...)
 {
   ## observed data and fit
@@ -318,3 +334,88 @@ estfun.htobit <- function(x, ...)
   return(rval)
 }
 
+vcov.htobit <- function(object, model = c("full", "location", "scale"), ...)
+{
+  vc <- object$vcov
+  k <- length(object$coefficients$location)
+  m <- length(object$coefficients$scale)
+  model <-  match.arg(model)
+  switch(model,
+    "location" = {
+      vc[seq.int(length.out = k), seq.int(length.out = k), drop = FALSE]
+    },
+    "scale" = {
+      vc <- vc[seq.int(length.out = m) + k, seq.int(length.out = m) + k, drop = FALSE]
+      colnames(vc) <- rownames(vc) <- names(object$coefficients$scale)
+      vc
+    },
+    "full" = {
+      vc
+    }
+  )
+}
+
+summary.htobit <- function(object, ...)
+{
+  ## residuals
+  object$residuals <- object$residuals/object$fitted.values$scale
+
+  ## extend coefficient table
+  k <- length(object$coefficients$location)
+  m <- length(object$coefficients$scale)
+  cf <- as.vector(do.call("c", object$coefficients))
+  se <- sqrt(diag(object$vcov))
+  cf <- cbind(cf, se, cf/se, 2 * pnorm(-abs(cf/se)))
+  colnames(cf) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
+  cf <- list(location = cf[seq.int(length.out = k), , drop = FALSE], scale = cf[seq.int(length.out = m) + k, , drop = FALSE])
+  rownames(cf$location) <- names(object$coefficients$location)
+  rownames(cf$scale) <- names(object$coefficients$scale)
+  object$coefficients <- cf
+
+  ## delete some slots
+  object$fitted.values <- object$terms <- object$levels <- object$contrasts <- NULL
+
+  ## return
+  class(object) <- "summary.htobit"
+  object
+}
+
+
+print.summary.htobit <- function(x, digits = max(3, getOption("digits") - 3), ...)
+{
+  cat("\nCall:", deparse(x$call, width.cutoff = floor(getOption("width") * 0.85)), "", sep = "\n")
+  
+  if(x$convergence > 0L) {
+    cat("model did not converge\n")
+  } else {
+    cat(paste("Standardized residuals:\n", sep = ""))
+    print(structure(round(as.vector(quantile(x$residuals)), digits = digits),
+      .Names = c("Min", "1Q", "Median", "3Q", "Max")))
+
+    if(NROW(x$coefficients$location)) {
+      cat(paste("\nCoefficients (location model):\n", sep = ""))
+      printCoefmat(x$coefficients$location, digits = digits, signif.legend = FALSE)
+    } else cat("\nNo coefficients (in location model)\n")
+
+    if(NROW(x$coefficients$scale)) {
+      cat(paste("\nCoefficients (scale model with log link):\n", sep = ""))
+      printCoefmat(x$coefficients$scale, digits = digits, signif.legend = FALSE)
+    } else cat("\nNo coefficients ( in scale model)\n")
+
+    if(getOption("show.signif.stars") & any(do.call("rbind", x$coefficients)[, 4L] < 0.1, na.rm = TRUE))
+      cat("---\nSignif. codes: ", "0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1", "\n")
+    cat("Log-likelihood:", formatC(x$loglik, digits = digits),
+      "on", sum(sapply(x$coefficients, NROW)), "Df\n")
+    cat(paste("Number of iterations in", x$method, "optimization:", x$count[2L], "\n"))
+  }
+
+  invisible(x)
+}
+
+residuals.htobit <- function(object, type = c("standardized", "pearson", "response"), ...) {
+  if(match.arg(type) == "response") {
+    object$residuals 
+  } else {
+    object$residuals/object$fitted.values$scale
+  }
+}
