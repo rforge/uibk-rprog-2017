@@ -186,3 +186,35 @@ model.matrix.hetprobit <- function(object, model = c("mean", "scale"), ...) {
   return(rval)
 }
 
+predict.hetprobit <- function(object, newdata = NULL,
+  type = c("response", "link", "scale"),
+  na.action = na.pass, ...)
+{
+  ## types of prediction:
+  ## default is on the scale of the response (i.e. probability)
+  ## the alternatives are: (1) on the scale of the predictor eta, (2) on the scale parameter
+  type <- match.arg(type)
+
+  ## obtain model.frame/model.matrix
+  if(is.null(newdata)) {
+    X <- model.matrix(object, model = "mean")
+    Z <- model.matrix(object, model = "scale")[, -1, drop = FALSE]
+  } else {
+    mf <- model.frame(delete.response(object$terms[["full"]]), newdata, na.action = na.action, xlev = object$levels[["full"]])
+    if(type != "scale") X <- model.matrix(delete.response(object$terms$mean), mf, contrasts = object$contrasts$mean)
+    Z <- model.matrix(object$terms$scale, mf, contrasts = object$contrasts$scale)[, -1L, drop = FALSE]
+  }
+
+  ## predicted parameters
+  if(type != "scale") mean <- drop(X %*% object$coefficients$mean)
+  scale <- exp(drop(Z %*% object$coefficients$scale))
+
+  ## compute result
+  rval <- switch(type,
+    "response" = pnorm(mean/scale),
+    "link" = mean/scale,
+    "scale" = scale
+  )
+  return(rval)
+}
+

@@ -13,3 +13,5 @@ S3method("print", "hetprobit")
 S3method("terms", "hetprobit")
 S3method("model.frame", "hetprobit")
 S3method("model.matrix", "hetprobit")
+S3method("predict", "hetprobit")
+
