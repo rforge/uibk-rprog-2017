@@ -1,17 +1,17 @@
-\name{nndd}
-\alias{nndd}
+\name{NnDd}
+\alias{NnDd}
 \alias{nndd_reshape}
 \alias{nndd_reshape_other}
 
 \title{Nearest Neighbour Matching (NN) followed by a Linear Model with Difference in Differences (DD)}
 \description{Constructs NN by estimating pscores with a GLM and estimates a linear model in a DD setting}
 \usage{
-nndd(formula, data, indexes = c("year", "firm_id", "tg", "outcome"),
+NnDd(formula, data, indexes = c("year", "firm_id", "tg", "outcome"),
 	nn_time = c("2001", "2001"), t_time = "2002", time_ids = c("year", ""), 
 	family = "binomial", subset, na.action, model = TRUE, 
 	y = TRUE, x = FALSE,  \dots)
 
-nndd_reshape(object_nndd)
+nndd_reshape(object_NnDd)
 
 nndd_reshape_other(call, data)
 
@@ -31,7 +31,7 @@ nndd_reshape_other(call, data)
 }
   \item{t_time}{a string containing the timing of the treatment.}
   \item{time_ids}{#Fixme: delete this}
-  \item{family}{family of the GLM. #Fixme: not implemented in nndd, but in predict.nndd
+  \item{family}{family of the GLM. #Fixme: not implemented in NnDd, but in predict.NnDd
 }
  \item{subset}{an optional vector specifying a subset of observations to be
     used for fitting.}
@@ -41,23 +41,23 @@ nndd_reshape_other(call, data)
     included as a component of the returned value.}
   \item{x, y}{#Fixme: do I need this?}
   \item{\dots}{arguments to be passed on to the estimation of the DD (\link{lm.fit})}
-\item{object_nndd}{an object of class \code{"nndd"}}
-\item{call}{a call of a \code{"nndd"} object}  
+\item{object_NnDd}{an object of class \code{"NnDd"}}
+\item{call}{a call of a \code{"NnDd"} object}  
 
   }
 \details{
 %%  ~~ If necessary, more details than the description above ~~
 
-\code{plot.nndd} Creates eight plots in one window. The first tow plots are the distribution of the treated and control pscores pre and post the Nn selection. If data is not specified the pre Nn plot is omitted. In the following the outcome variable of the Dd estimation is plotted over time. For a description of the last four plots see \code{\link{plot.lm}}.
+\code{plot.NnDd} Creates eight plots in one window. The first tow plots are the distribution of the treated and control pscores pre and post the Nn selection. If data is not specified the pre Nn plot is omitted. In the following the outcome variable of the Dd estimation is plotted over time. For a description of the last four plots see \code{\link{plot.lm}}.
 }
 \value{
- \item{nndd}{An object of class \code{"nndd"}.}
+ \item{NnDd}{An object of class \code{"NnDd"}.}
  \item{nndd_reshape}{A data.frame containing a reshaped model matrix of the \code{"NdDd"} object.}
  \item{nndd_reshape_other}{A data.frame containing reshaped data.}
  \item{predict_fun_glm}{A list containing pscores.}
- \item{predict.nndd}{A data.frame containing the specified predictions.}
- \item{print.nndd}{Returns the imputed object.}
- \item{plot.nndd}{#Fixme: Ns are not well chosen at the Density plots (the N is of the control) Name of the plot is returned.}
+ \item{predict.NnDd}{A data.frame containing the specified predictions.}
+ \item{print.NnDd}{Returns the imputed object.}
+ \item{plot.NnDd}{#Fixme: Ns are not well chosen at the Density plots (the N is of the control) Name of the plot is returned.}
  
 }
 \references{
@@ -78,9 +78,9 @@ Fixme:
 \examples{
 require(Formula)
 set.seed(2015-5-23)
-data <- nndd_dgp(treated.n = 50, control.n = 50)
+data <- gen_data(treated.n = 50, control.n = 50)
 formula <- Formula(tg | outcome ~ X6+X9+X10+X11 | X6+X9+X10+X11+X12+X13) 
-nndd <- nndd(formula, data = data, indexes = c("year", "firm_id", "tg", "outcome"), 
+nndd <- NnDd(formula, data = data, indexes = c("year", "firm_id", "tg", "outcome"), 
 		nn_time = c(1997,2001), t_time = "2002")
 names(nndd)
 print(nndd)
