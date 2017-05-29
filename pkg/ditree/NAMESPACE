@@ -13,10 +13,6 @@ importFrom("stats",
   "weighted.mean"
 )
 
-#importFrom("sandwich",
-#  "bread",
-#  "estfun"
-#)
 
 export(
   ## core distribution fitting function
