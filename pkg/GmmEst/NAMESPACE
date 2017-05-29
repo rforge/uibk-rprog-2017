@@ -1,0 +1,9 @@
+import("stats")
+
+export(
+  "GmmEst"
+)
+
+## methods for GmmEst
+S3method("coef", "GmmEst")
+S3method("print", "GmmEst")
