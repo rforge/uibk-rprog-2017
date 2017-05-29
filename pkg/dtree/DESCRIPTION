@@ -1,0 +1,8 @@
+Package: dtree
+Title: Distributional Tree
+Version: 0.0-1
+Date: 2017-05-17
+Author: Lisa Schlosser
+Maintainer: Lisa Schlosser <Lisa.Schlosser@uibk.ac.at>
+Description: Build a tree fitting a distributional model in each node
+License: GPL-2 | GPL-3
