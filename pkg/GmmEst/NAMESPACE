@@ -1,7 +1,9 @@
 import("stats")
 
 export(
-  "GmmEst"
+  "GmmEst",
+  "GmmEst_est_control",
+  "GmmEst_optim_control"
 )
 
 ## methods for GmmEst
