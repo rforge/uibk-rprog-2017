@@ -6,5 +6,5 @@ Author: Lisa Schlosser
 Maintainer: Lisa Schlosser <Lisa.Schlosser@uibk.ac.at>
 Description: Build a tree fitting a distributional model in each node
 Depends: R (>= 3.1.0), partykit (>= 1.2-0), gamlss.dist
-Imports: graphics, stats
+Imports: graphics, stats, disttree
 License: GPL-2 | GPL-3
