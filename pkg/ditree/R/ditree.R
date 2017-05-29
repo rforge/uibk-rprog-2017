@@ -275,33 +275,33 @@ di_ocontrol <- function(maxit = 5000, grad = TRUE, hessian = TRUE, ...)
 
 
 
-
-####### test difit vs distfit
-#library("disttree")
-set.seed(7)
-y <- rnorm(400, 10, 3)
-
-d1 <- difit(y, family = NO())
-d2 <- distfit(y, family = NO())
-
-class(d1)
-class(d2)
-coef(d1)
-coef(d2)
-AIC(d1, d2)
-BIC(d1, d2)
-
-dt1 <- ditree(dist~speed, data = cars)
-dt2 <- disttree(dist~speed, data = cars)
-coef(dt1)
-coef(dt2)
-
-
-
-
-
-
-
+if(FALSE){
+  ####### test difit vs distfit
+  #library("disttree")
+  set.seed(7)
+  y <- rnorm(400, 10, 3)
+  
+  d1 <- difit(y, family = NO())
+  #d2 <- distfit(y, family = NO())
+  
+  class(d1)
+  class(d2)
+  coef(d1)
+  coef(d2)
+  AIC(d1, d2)
+  BIC(d1, d2)
+  
+  dt1 <- ditree(dist~speed, data = cars)
+  #dt2 <- disttree(dist~speed, data = cars)
+  coef(dt1)
+  coef(dt2)
+}  
+  
+  
+  
+  
+  
+  
 ########################################
 ## family list functions
 make_dist_list <- function(family, bd = NULL) 
