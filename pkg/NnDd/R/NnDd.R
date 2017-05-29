@@ -117,14 +117,17 @@ NnDd <- function(formula, data,
   ## formula
   oformula <- as.formula(formula)
   formula <- as.Formula(formula)
-  #   if(length(formula)[2L] < 2L) {
-  #     formula <- as.Formula(formula(formula), ~ 1)
-  #   } else {
-  #     if(length(formula)[2L] > 2L) {
-  #       formula <- Formula(formula(formula, rhs = 1L:2L))
-  #       warning("formula must not have more than two RHS parts")
-  #     }
-  #   }
+  if(length(formula)[1L] < 2L) {
+    stop("formula must have two LHS parts (outcomes) specified")
+  }
+  if(length(formula)[2L] < 2L) {
+      formula <- as.Formula(formula(formula), ~ 1)
+    } else {
+      if(length(formula)[2L] > 2L) {
+        formula <- Formula(formula(formula, rhs = 1L:2L))
+        warning("formula must not have more than two RHS parts, only the first two parts were used")
+      }
+    }
   
   mf$formula <- formula(formula,lhs = 2, rhs = 1)
   
@@ -179,10 +182,6 @@ NnDd <- function(formula, data,
   
   #mf <- model.frame(formula, data = nn_fdata)
   #y <- model.part(formula,lhs = 1, rhs = 0, data = mf)
-  
-  
-  
-  
   
   nn_fdata <- cbind(nn_fdata, nn_pscore)
   nn_tg <- nn_fdata[nn_fdata[,indexes[3]] == 1,]
@@ -259,9 +258,9 @@ NnDd <- function(formula, data,
   
   
   #mf <- model.frame(formula, data = fdata)
-  y <- as.numeric(model.part(formula_dd,  lhs = 1L, rhs = 0L, data = mf)[[1]])
-  x <- model.matrix(mt, mf)
-  reg <- lm.fit(x,y)
+  Y <- as.numeric(model.part(formula_dd,  lhs = 1L, rhs = 0L, data = mf)[[1]])
+  X <- model.matrix(mt, mf)
+  reg <- lm.fit(Y,Y)
   reg$xlevels <- .getXlevels(mt, mf)
   
   #adapt call 
@@ -275,8 +274,9 @@ NnDd <- function(formula, data,
   reg$call <- cl
   reg$terms <- mt
   #reg$model <- mf
-  reg$contrasts <- attr(x, "contrasts")
-  
+  reg$contrasts <- attr(X, "contrasts")
+  if(y) rval$y <- Y
+  if(x) rval$x <- X
   
   ###############################
   #add information from matching#

@@ -1,17 +1,4 @@
-import("stats", "Formula")
-
-
-export("gen_data", 
-"NnDd", 
-"nndd_reshape",
-"nndd_reshape_other",
-"predict_fun_glm",
-"nndd_ttest",
-"nndd_ttest")
-
-S3method("plot", "NnDd")
-S3method("predict", "NnDd")
-S3method("print", "NnDd")
+import("stats", "Formula") export("gen_data", "NnDd", "nndd_reshape","nndd_reshape_other","predict_fun_glm","nndd_ttest") S3method("plot", "NnDd") S3method("predict", "NnDd") S3method("print", "NnDd") S3method("ttest", "NnDd")
 
 
 
