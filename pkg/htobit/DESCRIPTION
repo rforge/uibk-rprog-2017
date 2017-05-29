@@ -4,8 +4,8 @@ Version: 0.0-2
 Date: 2017-05-26
 Authors@R: person(given = "Achim", family = "Zeileis", role = c("aut", "cre"), email = "Achim.Zeileis@R-project.org")
 Depends: R (>= 3.0.0)
-Imports: stats, Formula, sandwich
-Suggests: crch, lmtest, numDeriv
+Imports: stats, Formula, numDeriv, sandwich
+Suggests: car, crch, lmtest
 Description: Heteroscedastic tobit regression models are provided.
   These are Gaussian regression models with a response variable left-censored at zero
   and both distribution parameters (the latent location and scale) parameters

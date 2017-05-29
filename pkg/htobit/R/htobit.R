@@ -58,7 +58,7 @@ htobit <- function(formula, data, subset, na.action,
 htobit_control <- function(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
 {
   if(is.logical(hessian)) hessian <- if(hessian) "optim" else "none"
-  if(is.character(hessian)) hessian <- match.arg(tolower(hessian), c("optim", "numderiv", "none"))
+  if(is.character(hessian)) hessian <- match.arg(tolower(hessian), c("numderiv", "optim", "none"))
   ctrl <- c(
     list(maxit = maxit, start = start, grad = grad, hessian = hessian),
     list(...)
