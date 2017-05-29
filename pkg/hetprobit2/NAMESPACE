@@ -1,0 +1,15 @@
+import("stats", "Formula")
+
+export(
+  "hetprobit2",
+  "hetprobit2_control",
+  "hetprobit2_fit"
+)
+
+## methods for hetprobit
+S3method("coef", "hetprobit2")
+S3method("logLik", "hetprobit2")
+S3method("print", "hetprobit2")
+S3method("terms", "hetprobit2")
+S3method("model.frame", "hetprobit2")
+S3method("model.matrix", "hetprobit2")

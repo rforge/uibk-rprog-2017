@@ -1,0 +1,10 @@
+Package: hetprobit2
+Title: Heteroscedastic Probit Regression Models v2 
+Version: 0.0-1
+Date: 2017-05-24
+Authors@R: person("Stjepan", "Srhoj", role = c("aut", "cre"), email = "stjepan.srhoj@unidu.hr")
+Depends: R (>= 3.0.0)
+Imports: stats, Formula
+Suggests: glmx, lmtest
+Description: For non-linear model like standard probit models, heteroscedasticity can have severe consequences: the maximum likelihood estimates of the parameters will be biased (in an unknown direction), as well as inconsistent (unless the likelihood function is modified to correctly take into account the precise form of heteroskedasticity). Greene points simply computing a robust covariance matrix for an otherwise inconsistent estimator does not give it redemption. Consequently, the virtue of a robust covariance matrix in this setting is unclear. Heteroscedastic probit models allow the error terms to vary systematically.
+License: GPL-2 | GPL-3
