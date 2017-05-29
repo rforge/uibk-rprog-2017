@@ -56,13 +56,13 @@ difit <- function(y, family = NO(), weights = NULL,
   names(eta) <- names(starteta)
   par <- family$linkinv(eta)
   
-  estfun <- if(estfun) family$sdist(y, eta = obj$par, sum = FALSE) else NULL
+  ef <- if(estfun) family$sdist(y, eta = obj$par, sum = FALSE) else NULL
   
   rval <- list(object = obj,
                coefficients = par,
                loglik = -obj$value,
                nobs = length(y),
-               estfun = estfun,
+               estfun = ef,
                familylist = family,
                family = family$family.name
   )
