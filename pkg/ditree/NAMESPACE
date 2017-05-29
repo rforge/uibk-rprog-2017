@@ -1,0 +1,45 @@
+import("partykit")
+import("gamlss.dist")
+importFrom("disttree", "make_dist_list")
+importFrom("graphics",
+  "plot",
+  "hist",
+  "lines"
+)
+importFrom("stats",
+  "nobs",
+  "optim",
+  "qnorm",
+  "weighted.mean"
+)
+
+#importFrom("sandwich",
+#  "bread",
+#  "estfun"
+#)
+
+export(
+  ## core distribution fitting function
+  "difit",
+
+  ## distributional tree using 'mob'
+  "ditree",
+
+  ## generating optimization control list
+  "di_ocontrol"
+)
+
+## methods
+S3method("coef", "difit")
+S3method("logLik", "difit")
+S3method("nobs", "difit")
+S3method("predict", "difit")
+S3method("estfun", "difit")
+
+S3method("print", "ditree")
+S3method("coef", "ditree")
+S3method("predict", "ditree")
+S3method("logLik", "ditree")
+S3method("nobs", "ditree")
+
+
