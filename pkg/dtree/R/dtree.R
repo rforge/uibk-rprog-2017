@@ -119,6 +119,10 @@ predict.dfit <- function(object, type = "response", OOB = FALSE, ...){
   }
 }
 
+estfun.dfit <- function(object, ...) {                         
+  return(object$estfun)
+}
+
 
 
 
