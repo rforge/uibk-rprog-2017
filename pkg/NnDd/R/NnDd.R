@@ -260,7 +260,7 @@ NnDd <- function(formula, data,
   #mf <- model.frame(formula, data = fdata)
   Y <- as.numeric(model.part(formula_dd,  lhs = 1L, rhs = 0L, data = mf)[[1]])
   X <- model.matrix(mt, mf)
-  reg <- lm.fit(Y,Y)
+  reg <- lm.fit(X,Y)
   reg$xlevels <- .getXlevels(mt, mf)
   
   #adapt call 
@@ -275,8 +275,8 @@ NnDd <- function(formula, data,
   reg$terms <- mt
   #reg$model <- mf
   reg$contrasts <- attr(X, "contrasts")
-  if(y) rval$y <- Y
-  if(x) rval$x <- X
+  if(y) reg$y <- Y
+  if(x) reg$x <- X
   
   ###############################
   #add information from matching#
