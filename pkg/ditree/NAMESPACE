@@ -11,7 +11,14 @@ importFrom("stats",
   "optim",
   "qnorm",
   "weighted.mean"
+  "as.formula", 
+  "coef", 
+  "family", 
+  "integrate",
+  "logLik", 
+  "predict"
 )
+
 importFrom("sandwich",
   "bread",
   "estfun"
