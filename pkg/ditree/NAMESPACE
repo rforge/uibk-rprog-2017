@@ -9,15 +9,16 @@ importFrom("graphics",
 importFrom("stats",
   "nobs",
   "optim",
-  "qnorm",
-  "weighted.mean"
-  "as.formula", 
+  "qnorm", 
   "coef", 
   "family", 
   "integrate",
   "logLik", 
-  "predict"
+  "predict",
+  "as.formula", 
+  "weighted.mean"
 )
+
 
 importFrom("sandwich",
   "bread",
