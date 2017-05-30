@@ -40,11 +40,11 @@ di_ocontrol(maxit = 5000, grad = TRUE, hessian = TRUE, \ldots)
   \item{ocontrol}{List with control parameters passed to
     \code{\link[stats]{optim}}.}
   \item{y}{vector with the response values to which a distribution should be fitted.}
-  \item{start, \dots}{optional starting values passed on to \code{\link[stats]{optim}}.}
-  \item{estfun, \dots}{logical value indicating whether the values of the score function should be returned.}
-  \item{bd, \dots}{binomial denominator}
+  \item{start}{optional starting values passed on to \code{\link[stats]{optim}}.}
+  \item{estfun}{logical value indicating whether the values of the score function should be returned.}
+  \item{bd}{binomial denominator}
   \item{control, \dots}{Arguments passed to \code{\link[partykit]{mob_control}}.}
-  \item{maxit, start}{a list of control parameters passed to \code{\link[stats]{optim}}.}
+  \item{maxit}{a list of control parameters passed to \code{\link[stats]{optim}}.}
   \item{grad}{logical. Should gradients be used for optimization? If \code{TRUE},
     the default \code{method} is \code{"BFGS"}. Otherwise \code{method = "Nelder-Mead"}
     is used.}
