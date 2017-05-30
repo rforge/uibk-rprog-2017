@@ -17,7 +17,7 @@ fgamma(formula, data, subset, na.action,
 
 fgamma_fit(x, y, z = NULL, control)
 
-fgamma_control(maxit = 5000, start = NULL, ...)
+fgamma_control(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
 }
 
 \arguments{
@@ -40,6 +40,16 @@ fgamma_control(maxit = 5000, start = NULL, ...)
   \item{\dots}{arguments to be used to form the default \code{control} argument
     if it is not supplied directly.}
   \item{maxit, start, control}{a list of control parameters passed to \code{\link{optim}} .}
+    \item{grad}{logical. Should gradients be used for optimization? If \code{TRUE},
+    the default \code{method} is \code{"BFGS"}. Otherwise \code{method = "Nelder-Mead"}
+    is used.}
+  \item{hessian}{logical or character. Should a numeric approximation of the
+    (negative) Hessian matrix be computed? Either \code{FALSE} (or equivalently
+    \code{"none"}) or \code{TRUE}. Alternatively, in the latter case,
+    \code{hessian = "numDeriv"} could be specified to signal that the Hessian should
+    be approximated by \code{\link[numDeriv]{hessian}}. Another option is
+    \code{hessian = "numDeriv"} so that \code{\link[stats]{optim}} is used
+    for computing the Hessian.}
 }
 
 \details{
