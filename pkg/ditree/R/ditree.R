@@ -149,7 +149,7 @@ ditree <- function(formula, data, subset, na.action, family = NO(),
   
   ## formula
   oformula <- as.formula(formula)
-  formula <- Formula::as.Formula(formula)
+  formula <- as.Formula(formula)
   if(length(formula)[2L]  >= 2L) {
     stop("formula can only have one RHS consisting of the partitioning variables")
   }
@@ -251,7 +251,7 @@ print.ditree <- function(x, title = NULL, objfun = "negative log-likelihood", ..
   if(inherits(x$family, "gamlss.family")) familyname <- paste(x$family[[1]][2], "Distribution")
   if(is.list(family)) familyname <- x$info$family$family.name
   if(is.null(title)) title <- sprintf("Distributional regression tree (%s)", familyname)
-  partykit::print.modelparty(x, title = title, objfun = objfun, ...)
+  print.modelparty(x, title = title, objfun = objfun, ...)
 }
 
 
@@ -387,7 +387,7 @@ make_dist_list <- function(family, bd = NULL)
           input <- c(input, par[par.id])
           input$bd <- bd
           val <- do.call(fun, input)
-          ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+          ny <- if(is.Surv(y)) dim(y)[1] else length(y)
           if(length(val) == 1L) val <- rep(val, ny)
           return(val)
         }
@@ -397,7 +397,7 @@ make_dist_list <- function(family, bd = NULL)
           input$y <- y
           input <- c(input, par[par.id])
           val <- do.call(fun, input)
-          ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+          ny <- if(is.Surv(y)) dim(y)[1] else length(y)
           if(length(val) == 1L) val <- rep(val, ny)
           return(val)
         }    
@@ -408,14 +408,14 @@ make_dist_list <- function(family, bd = NULL)
           input <- list()
           input <- c(input, par[par.id])
           input$bd <- bd
-          ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+          ny <- if(is.Surv(y)) dim(y)[1] else length(y)
           return(rep(do.call(fun, input), ny))
         }
       } else {
         derivfun <- function(y, par) {
           input <- list()
           input <- c(input, par[par.id])
-          ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+          ny <- if(is.Surv(y)) dim(y)[1] else length(y)
           return(rep(do.call(fun, input), ny))
         }    
       }
@@ -601,7 +601,7 @@ make_dist_list <- function(family, bd = NULL)
       # for each observation a matrix of size (1x1) is stored in d2list
       
       d2list <- list()
-      ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+      ny <- if(is.Surv(y)) dim(y)[1] else length(y)
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i),]
@@ -695,7 +695,7 @@ make_dist_list <- function(family, bd = NULL)
       # for each observation a matrix of size (2x2) is stored in d2list
       
       d2list <- list()
-      ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+      ny <- if(is.Surv(y)) dim(y)[1] else length(y)
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i, ny+i),]
@@ -793,7 +793,7 @@ make_dist_list <- function(family, bd = NULL)
       # for each observation a matrix of size (3x3) is stored in d2list
       
       d2list <- list()
-      ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+      ny <- if(is.Surv(y)) dim(y)[1] else length(y)
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i, ny+i, 2*ny+i),]
@@ -894,7 +894,7 @@ make_dist_list <- function(family, bd = NULL)
       # for each observation a matrix of size (4x4) is stored in d2list
       
       d2list <- list()
-      ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+      ny <- if(is.Surv(y)) dim(y)[1] else length(y)
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i, ny+i, 2*ny+i, 3*ny+i),]
@@ -962,7 +962,7 @@ make_dist_list <- function(family, bd = NULL)
     eval <- do.call(get(paste0("d", family$family[[1]])), input)
     if(sum) {
       if(is.null(weights) || (length(weights)==0L)) {
-        ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+        ny <- if(is.Surv(y)) dim(y)[1] else length(y)
         weights <- rep.int(1, ny)
       }
       eval <- sum(weights * eval)
@@ -990,7 +990,7 @@ make_dist_list <- function(family, bd = NULL)
     score <- as.matrix(score)
     colnames(score) <- etanames
     if(sum) {
-      ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+      ny <- if(is.Surv(y)) dim(y)[1] else length(y)
       if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
       score <- colSums(weights * score)
     }
@@ -1000,7 +1000,7 @@ make_dist_list <- function(family, bd = NULL)
   
   ## hessian (second-order partial derivatives of the (positive) log-likelihood function)
   hdist <- function(y, eta, weights = NULL) {    
-    ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+    ny <- if(is.Surv(y)) dim(y)[1] else length(y)
     if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
     
     par <- linkinv(eta)
