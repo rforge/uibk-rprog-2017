@@ -1,9 +1,0 @@
-Package: nndd
-Title: Nearest Neighbour Matching (NN) followed by a Linear Model with Difference in Differences (DD) 
-Version: 0.0-1
-Date: 2017-05-24
-Authors@R: person("Michal", "Lapinski", role = c("aut", "cre"), email = "Michael.Lapinski@JKU.at") 
-Depends: R (>= 3.0.0)
-Imports: stats, Formula
-Description: The treatment effect is estimated by applying nearest neighbours matching (NN) and difference in differences (DD). Nearest neighbours are matched by aplying a GLM over an individual time horizont. In the following a liner model is estimated with a difference in defference setup. Each estimation (NN or DD) can depend on different covariates. Simple evaluation methods of the combined estimation are provided.
-License: GPL-2 | GPL-3
