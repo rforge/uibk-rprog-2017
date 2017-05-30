@@ -1,10 +1,10 @@
 Package: ditree
 Title: Distributional Tree
 Version: 0.0-1
-Date: 2017-05-17
+Date: 2017-05-30
 Author: Lisa Schlosser
 Maintainer: Lisa Schlosser <Lisa.Schlosser@uibk.ac.at>
 Description: Build a tree fitting a distributional model in each node
 Depends: R (>= 3.1.0), partykit (>= 1.2-0), gamlss.dist
-Imports: graphics, stats, disttree, sandwich
+Imports: graphics, stats, disttree, sandwich, survival, Formula
 License: GPL-2 | GPL-3
