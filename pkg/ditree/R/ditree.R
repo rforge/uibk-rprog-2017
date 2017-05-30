@@ -161,14 +161,14 @@ ditree <- function(formula, data, subset, na.action, family = NO(),
   #if("..." %in% names(mf)) mf[["..."]] <- NULL
   
   ## glue code for calling difit() with given family in mob()
-  d_family_fit <- function(y, x = NULL, start = NULL, weights = NULL, offset = NULL, estfun = TRUE, object = TRUE, ...)
+  d_family_fit <- function(y, x = NULL, start = NULL, weights = NULL, offset = NULL, object = TRUE, ...)
   {
-    mod <- difit(y, family = family, weights = weights, start = start, estfun = estfun, ocontrol = ocontrol, ...)
+    mod <- difit(y, family = family, weights = weights, start = start, estfun = TRUE, ocontrol = ocontrol, ...)
     
     rval <- list(
       coefficients = mod$coefficients,
       objfun = - mod$loglik,     
-      estfun = if(estfun) mod$estfun else NULL,   ## rval$estfun contains the scores of the positive loglik 
+      estfun = mod$estfun,   ## rval$estfun contains the scores of the positive loglik 
       object = if(object) mod else NULL
     )
     return(rval)
