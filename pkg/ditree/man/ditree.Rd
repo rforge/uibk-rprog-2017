@@ -1,7 +1,8 @@
 \name{ditree}
 
 \alias{ditree}
-\alias{print.ditree}
+\alias{difit}
+\alias{di_ocontrol}
 
 \title{Distributional Regression Tree}
 
@@ -13,14 +14,14 @@
 
 \usage{
 ditree(formula, data, subset, na.action, family = NO(), 
-                  weights = NULL, control = mob_control(...), 
+                  control = mob_control(\ldots), weights = NULL, 
                   ocontrol = di_ocontrol(), \ldots) 
                   
 difit(y, family = NO(), weights = NULL, 
                  start = NULL, estfun = TRUE, bd = NULL, 
-                 ocontrol = di_ocontrol())
+                 ocontrol = di_ocontrol(\ldots), \ldots)
 
-di_ocontrol(maxit = 5000, grad = TRUE, hessian = TRUE, ...)
+di_ocontrol(maxit = 5000, grad = TRUE, hessian = TRUE, \ldots)
 }
                   
 \arguments{
@@ -35,11 +36,15 @@ di_ocontrol(maxit = 5000, grad = TRUE, hessian = TRUE, ...)
   \item{family}{Specification of the response distribution.
     Either a \code{\link[gamlss.dist]{gamlss.family}} object or
     a function generating such a family.}
-  \item{weights}{A vector with numeric values, one weight for each observation}
+  \item{weights}{vector with numeric values, one weight for each observation}
   \item{ocontrol}{List with control parameters passed to
     \code{\link[stats]{optim}}.}
+  \item{y}{vector with the response values to which a distribution should be fitted.}
+  \item{start, \dots}{optional starting values passed on to \code{\link[stats]{optim}}}.}
+  \item{estfun, \dots}{logical value indicating whether the values of the score function should be returned.}
+  \item{bd, \dots}{binomial denominator}.}
   \item{control, \dots}{Arguments passed to \code{\link[partykit]{mob_control}}.}
-    \item{control, maxit, start}{a list of control parameters passed to \code{\link[stats]{optim}} .}
+  \item{maxit, start}{a list of control parameters passed to \code{\link[stats]{optim}} .}
   \item{grad}{logical. Should gradients be used for optimization? If \code{TRUE},
     the default \code{method} is \code{"BFGS"}. Otherwise \code{method = "Nelder-Mead"}
     is used.}
