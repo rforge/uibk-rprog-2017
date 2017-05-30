@@ -12,6 +12,10 @@ importFrom("stats",
   "qnorm",
   "weighted.mean"
 )
+importFrom("sandwich",
+  "bread",
+  "estfun"
+)
 
 
 export(
