@@ -1,6 +1,7 @@
 import("partykit")
 import("gamlss.dist")
-importFrom("disttree", "make_dist_list")
+importFrom("disttree", 
+   "make_dist_list")
 importFrom("graphics",
   "plot",
   "hist",
@@ -18,8 +19,12 @@ importFrom("stats",
   "as.formula", 
   "weighted.mean"
 )
-
-
+importFrom("Formula",
+  "as.Formula"
+)
+importFrom("survival",
+  "is.Surv"
+)
 importFrom("sandwich",
   "bread",
   "estfun"
