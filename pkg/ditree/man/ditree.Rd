@@ -15,7 +15,7 @@
 \usage{
 ditree(formula, data, subset, na.action, family = NO(), 
                   control = mob_control(\ldots), weights = NULL, 
-                  ocontrol = di_ocontrol(), \ldots) 
+                  ocontrol = di_ocontrol(\ldots), \ldots) 
                   
 difit(y, family = NO(), weights = NULL, 
                  start = NULL, estfun = TRUE, bd = NULL, 
@@ -30,7 +30,7 @@ di_ocontrol(maxit = 5000, grad = TRUE, hessian = TRUE, \ldots)
     where \code{y} should be the response variable
     and \code{x1} and \code{x2} are used as partitioning variables.}
   \item{data}{An optional data frame containing the variables in the model.}
-  \item{subset}{An optional vector with indices choosing a subset of the data}
+  \item{subset}{An optional vector with indices choosing a subset of the data.}
   \item{na.action}{A function which indicates what should happen when the data
     contain \code{NA}s.}
   \item{family}{Specification of the response distribution.
@@ -40,11 +40,11 @@ di_ocontrol(maxit = 5000, grad = TRUE, hessian = TRUE, \ldots)
   \item{ocontrol}{List with control parameters passed to
     \code{\link[stats]{optim}}.}
   \item{y}{vector with the response values to which a distribution should be fitted.}
-  \item{start, \dots}{optional starting values passed on to \code{\link[stats]{optim}}}.}
+  \item{start, \dots}{optional starting values passed on to \code{\link[stats]{optim}}.}
   \item{estfun, \dots}{logical value indicating whether the values of the score function should be returned.}
-  \item{bd, \dots}{binomial denominator}.}
+  \item{bd, \dots}{binomial denominator}
   \item{control, \dots}{Arguments passed to \code{\link[partykit]{mob_control}}.}
-  \item{maxit, start}{a list of control parameters passed to \code{\link[stats]{optim}} .}
+  \item{maxit, start}{a list of control parameters passed to \code{\link[stats]{optim}}.}
   \item{grad}{logical. Should gradients be used for optimization? If \code{TRUE},
     the default \code{method} is \code{"BFGS"}. Otherwise \code{method = "Nelder-Mead"}
     is used.}
