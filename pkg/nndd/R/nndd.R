@@ -332,6 +332,7 @@ start <- as.numeric(object_nndd$nn_time[1])
 end <- as.numeric(object_nndd$nn_time[2])
 data <- object_nndd$model
 indexes <- object_nndd$call$indexes
+formula <- object_nndd$call$formula  
 if(start > end) stop('"nn_time" is wrong: start date is after end date')
 nn_fdata <- data[data$year >= start & data$year <= end, ]
 if(end - start > 0)
@@ -499,7 +500,7 @@ predict_fun_glm <- function(pformula, family = "binomial", data)
   
 }
 
-predict.nndd <- function(object, prediction = c("Nn", "Dd"), newdata, ...)
+predict.nndd <- function(object, prediction = c("nn", "dd"), newdata, ...)
 {
   
   nn_pscore <- NA
@@ -546,10 +547,10 @@ nn_pscore <- object$get_nn_pscore(data)
   }
   
   if(length(grep("nn",prediction)) == 0 & length(grep("dd",prediction)) == 0){
-    stop('"prediction" is specified in a wrong way; only "Nn" or "Dd" (case-insensitive) is allowed' )
+    stop('"prediction" is specified in a wrong way; only "nn" or "dd" (case-insensitive) is allowed' )
   }
   
-  if(length(grep("nn",prediction)) == 1 & length(grep("Dd",prediction)) == 1)
+  if(length(grep("nn",prediction)) == 1 & length(grep("dd",prediction)) == 1)
     {
     return(as.data.frame(cbind("nn_pscore" = nn_pscore, "lm_predict" = lm_predict)))
     }else {

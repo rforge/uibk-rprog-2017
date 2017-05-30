@@ -14,7 +14,7 @@ Performs a ttest on a \code{"nndd"} object. The ttest is applied on only on the 
 
 nndd_ttest(ttest_data, indexes = c("year", "firm_id", "tg"), nn_time, \dots)
 
-\method{predict}{nndd}(object, prediction = c("Nn", "Dd"), newdata, \dots)
+\method{predict}{nndd}(object, prediction = c("nn", "dd"), newdata, \dots)
 
 predict_fun_glm(pformula, family = "binomial", data)
 
@@ -37,7 +37,7 @@ predict_fun_glm(pformula, family = "binomial", data)
 \item{pformula}{
     a formula expression of the form \code{tg | outcome ~ x | z} where
     \code{tg} is the response and \code{z} regressor variable of the GLM. \code{outcome} is the response and \code{x} the regressor variable of the DD model.}
-\item{prediction}{a list containing specifying which model should be applied for the prediction. If the list contains "Nn" the pscores of the GLM model are predicted. In the case of containing "Dd" the prediction of the linear difference in differences model is returned. Both predictions are returned if the list is specified as "Nn", "Dd".}
+\item{prediction}{a list containing specifying which model should be applied for the prediction. If the list contains "nn" the pscores of the GLM model are predicted. In the case of containing "dd" the prediction of the linear difference in differences model is returned. Both predictions are returned if the list is specified as "nn", "dd".}
 
 \item{newdata}{a data.frame containing the data on which the prediction should be based on.}
 
