@@ -57,7 +57,7 @@ htobit <- function(formula, data, subset, na.action,
 
 htobit_control <- function(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
 {
-  if(is.logical(hessian)) hessian <- if(hessian) "optim" else "none"
+  if(is.logical(hessian)) hessian <- if(hessian) "numderiv" else "none"
   if(is.character(hessian)) hessian <- match.arg(tolower(hessian), c("numderiv", "optim", "none"))
   ctrl <- c(
     list(maxit = maxit, start = start, grad = grad, hessian = hessian),
@@ -404,7 +404,7 @@ print.summary.htobit <- function(x, digits = max(3, getOption("digits") - 3), ..
 
     if(getOption("show.signif.stars") & any(do.call("rbind", x$coefficients)[, 4L] < 0.1, na.rm = TRUE))
       cat("---\nSignif. codes: ", "0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1", "\n")
-    cat("Log-likelihood:", formatC(x$loglik, digits = digits),
+    cat("\nLog-likelihood:", formatC(x$loglik, digits = digits),
       "on", sum(sapply(x$coefficients, NROW)), "Df\n")
     cat(paste("Number of iterations in", x$method, "optimization:", x$count[2L], "\n"))
   }
@@ -418,4 +418,54 @@ residuals.htobit <- function(object, type = c("standardized", "pearson", "respon
   } else {
     object$residuals/object$fitted.values$scale
   }
+}
+
+update.htobit <- function (object, formula., ..., evaluate = TRUE)
+{
+  call <- object$call
+  if(is.null(call)) stop("need an object with call component")
+  extras <- match.call(expand.dots = FALSE)$...
+  if(!missing(formula.)) call$formula <- formula(update(Formula(formula(object)), formula.))
+  if(length(extras)) {
+    existing <- !is.na(match(names(extras), names(call)))
+    for (a in names(extras)[existing]) call[[a]] <- extras[[a]]
+    if(any(!existing)) {
+      call <- c(as.list(call), extras[!existing])
+      call <- as.call(call)
+    }
+  }
+  if(evaluate) eval(call, parent.frame())
+  else call
+}
+
+Boot.htobit <- function(object, f = coef, labels = names(f(object)), R = 999, method = "case") {
+  if(!(requireNamespace("boot"))) stop("The 'boot' package is missing")
+  f0 <- f(object)
+  if(is.null(labels) || length(labels) != length(f0)) labels <- paste("V", seq(length(f0)), sep = "")
+  method <- match.arg(method, c("case", "residual"))
+  opt<-options(show.error.messages = FALSE)
+  if(method == "case") {
+    boot.f <- function(data, indices, .fn) {
+      assign(".boot.indices", indices, envir = .carEnv)
+      mod <- try(update(object, subset = get(".boot.indices", envir = .carEnv), start = coef(object)))
+      if(class(mod) == "try-error") {
+        out <- .fn(object)
+        out <- rep(NA, length(out))
+      } else {
+        out <- .fn(mod)
+      }
+      out
+    }
+  } else {
+    stop("currently not implemented")
+  }
+  b <- boot::boot(data.frame(update(object, model = TRUE)$model), boot.f, R, .fn = f)
+  colnames(b$t) <- labels
+  if(exists(".y.boot", envir = .carEnv)) remove(".y.boot", envir = .carEnv)
+  if(exists(".boot.indices", envir = .carEnv)) remove(".boot.indices", envir = .carEnv)
+  options(opt)
+  d <- dim(na.omit(b$t))[1]
+  if(d != R) cat( paste("\n","Number of bootstraps was", d, "out of", R, "attempted", "\n"))
+
+  return(b)
 }
