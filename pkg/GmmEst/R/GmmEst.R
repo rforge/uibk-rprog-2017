@@ -64,16 +64,25 @@ GmmEst = function(func, theta0, data,
   .calc_s = function(param){
     gt = .calc_gt(param)
     gt = scale(gt, center=TRUE, scale=FALSE)
-    s = (t(gt) %*% gt) / (NObs - KParams)
+    s = (t(gt) %*% gt) / NObs
   }
 
-  # Gradient of gt_mean
+  # Jacobian of gt_mean
   .calc_d = function(param)
   {
     d = numDeriv::jacobian(.calc_gt_mean, param)
+    return(d)
   }
 
-  
+  .calc_vcov = function(param, S)
+  {
+    d = .calc_d(param)
+    Sinv = solve(S)
+    vcov = solve(t(d) %*% Sinv %*% d) / (NObs - KParams)
+    return(vcov)
+  }
+
+
   # =================================================
   # Calculations
   # ===================
@@ -109,14 +118,16 @@ GmmEst = function(func, theta0, data,
     }
   }
   
-  
+  vcov = .calc_vcov(opt$par, S)
+
+
   # =================================================
   # Save important output values in list object
   # ===================
   names(opt)[1:2] <- c("coefficients", "jstat")
   opt$jstat = opt$jstat*NObs
-
   opt$nobs = NObs
+  opt$vcov = vcov
   opt$kparams = KParams
   opt$kmoms = KMoms
   opt$df = NObs - KParams
@@ -137,8 +148,8 @@ GmmEst_control <- function(maxit = 5000, tol_gmm_iter=1e-12, maxit_gmm_iter=100,
   ctrl = c(list(maxit = maxit, tol_gmm_iter=tol_gmm_iter, maxit_gmm_iter=maxit_gmm_iter), list(...))
   if(!is.null(ctrl$fnscale)) warning("fnscale must not be modified")
   ctrl$fnscale = 1
-  if(is.null(ctrl$reltol)) ctrl$reltol = .Machine$double.eps^(1/1.2)
-  if(is.null(ctrl$abstol)) ctrl$abstol = .Machine$double.eps^(1/1.2)
+  if(is.null(ctrl$reltol)) ctrl$reltol = .Machine$double.eps^(1)
+  if(is.null(ctrl$abstol)) ctrl$abstol = .Machine$double.eps^(1)
   invisible(ctrl)
 }
 
@@ -150,14 +161,24 @@ coef.GmmEst = function(object, ...) {
   return(cf)
 }
 
+nobs.GmmEst = function(object, ...) {
+  nobs = object$nobs
+  return(nobs)
+}
+
+vcov.GmmEst = function(object, ...) {
+  vcov = object$vcov
+  return(vcov)
+}
+
 print.GmmEst <- function(x, digits = max(3, getOption("digits") - 3), ...)
 {
-  cat(sprintf("%s GMM estimation \n\n", switch(x$est_type,
-                                                                          "2step" = "two-step",
-                                                                          "1step" = "one-step",
-                                                                          "iter" = "iterated")))
+  cat(sprintf("%s GMM estimation \n\n", switch(x$est_type,"2step" = "two-step",
+                                                          "1step" = "one-step",
+                                                          "iter" = "iterated")))
   cat("Coefficients:\n")
   print.default(format(x$coefficients, digits = digits), print.gap = 2, quote = FALSE)
+
   if(x$kmoms>x$kparams){
     cat(sprintf("\nJ statistic: %s on %s Df (p=%s)\n", format(x$jstat, digits = digits), x$kmoms - x$kparams, format(1-pchisq(x$jstat, df = x$kmoms - x$kparams), digits=digits)))
     }else{
@@ -174,6 +195,8 @@ print.GmmEst <- function(x, digits = max(3, getOption("digits") - 3), ...)
 # =================================
 ########## TO_DO ##################
 # =================================
+# * Better example needed.
 # * Separate fitting function from obj function
 # * NA handling
 # * Add formulas for linear models
+# * vcov for 1-step

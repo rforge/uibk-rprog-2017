@@ -7,4 +7,6 @@ export(
 
 ## methods for GmmEst
 S3method("coef", "GmmEst")
+S3method("nobs", "GmmEst")
+S3method("vcov", "GmmEst")
 S3method("print", "GmmEst")

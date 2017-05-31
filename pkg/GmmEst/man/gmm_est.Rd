@@ -32,7 +32,7 @@ GmmEst_control(maxit = 5000, tol_gmm_iter=1e-12, maxit_gmm_iter=100, ...)
 \seealso{Will be available soon}
 
 \examples{
-# Description
+# Description (better example will be implemented soon)
 # A minimal example of a regression estimated by two-step GMM based on the mtcars dataset
 
 ## Data
