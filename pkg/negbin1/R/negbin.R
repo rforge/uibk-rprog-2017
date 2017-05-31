@@ -214,7 +214,7 @@ model.matrix.negbin1 <- function(object, ...) {
 
 predict.negbin1 <- function(object, newdata = NULL,
                             type = c("response", "location", "probability", "quantile"),
-                            na.action = na.pass, at = 0, ...)
+                            na.action = na.pass, at = 0.5, ...)
 {
     ## types of prediction
     ## response/location
@@ -236,8 +236,8 @@ predict.negbin1 <- function(object, newdata = NULL,
     ## compute result
     rval <- switch(type,
       "response" = location,
-      "probability" = dnbinom(at, mu = location, size = mu / alpha),
-      "quantile" = qnbinom(at, size = mu / alpha * location, mu = location)
+      "probability" = dnbinom(at, mu = location, size = alpha),
+      "quantile" = qnbinom(at, size = alpha, mu = location)
     )   
     return(rval)
 }
