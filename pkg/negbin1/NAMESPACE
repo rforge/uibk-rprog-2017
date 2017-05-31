@@ -1,4 +1,6 @@
-import("stats", "Formula", "numDeriv")
+import("stats", "Formula")
+importFrom("sandwich", "bread", "estfun")
+importFrom("numDeriv", "grad", "hessian")
 
 export(
   "negbin1",
