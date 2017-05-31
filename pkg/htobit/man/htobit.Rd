@@ -3,6 +3,10 @@
 \alias{htobit_fit}
 \alias{htobit_control}
 
+\alias{getSummary.htobit}
+\alias{Boot.htobit}
+
+
 \title{Heteroscedastic Tobit Regression}
 
 \description{

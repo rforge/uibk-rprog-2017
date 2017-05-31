@@ -1,17 +1,16 @@
 import("stats", "Formula")
 importFrom("sandwich", "bread", "estfun")
 importFrom("numDeriv", "grad", "hessian")
-importFrom("car", "Boot")
 
 export(
   "htobit",
   "htobit_control",
   "htobit_fit",
+  "Boot.htobit",
   "getSummary.htobit"
 )
 
 ## methods for htobit
-S3method("Boot", "htobit")
 S3method("bread", "htobit")
 S3method("coef", "htobit")
 S3method("estfun", "htobit")
