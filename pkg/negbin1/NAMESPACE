@@ -1,4 +1,4 @@
-import("stats", "Formula")
+import("stats", "Formula", "numDeriv")
 
 export(
   "negbin1",
