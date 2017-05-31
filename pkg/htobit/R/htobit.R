@@ -446,23 +446,15 @@ Boot.htobit <- function(object, f = coef, labels = names(f(object)), R = 999, me
   opt<-options(show.error.messages = FALSE)
   if(method == "case") {
     boot.f <- function(data, indices, .fn) {
-      assign(".boot.indices", indices, envir = .carEnv)
-      mod <- try(update(object, subset = get(".boot.indices", envir = .carEnv), start = coef(object)))
-      if(class(mod) == "try-error") {
-        out <- .fn(object)
-        out <- rep(NA, length(out))
-      } else {
-        out <- .fn(mod)
-      }
+      mod <- try(update(object, subset = indices, hessian = FALSE, start = coef(object)))
+      out <- if(class(mod) == "try-error") f0 + NA else .fn(mod)
       out
     }
   } else {
     stop("currently not implemented")
   }
-  b <- boot::boot(data.frame(update(object, model = TRUE)$model), boot.f, R, .fn = f)
+  b <- boot::boot(model.frame(object), boot.f, R, .fn = f)
   colnames(b$t) <- labels
-  if(exists(".y.boot", envir = .carEnv)) remove(".y.boot", envir = .carEnv)
-  if(exists(".boot.indices", envir = .carEnv)) remove(".boot.indices", envir = .carEnv)
   options(opt)
   d <- dim(na.omit(b$t))[1]
   if(d != R) cat( paste("\n","Number of bootstraps was", d, "out of", R, "attempted", "\n"))
@@ -489,11 +481,10 @@ getSummary.htobit <- function(obj, alpha = 0.05, ...) {
   return(list(
     coef = acf,
     sumstat = c(
-      "N" = obj$n,
-      "pseudo.r.squared" = s$pseudo.r.squared,
+      "N" = obj$nobs,
       "logLik" = as.vector(logLik(obj)),
       "AIC" = AIC(obj),
-      "BIC" = AIC(obj, k = log(obj$n))
+      "BIC" = AIC(obj, k = log(obj$nobs))
     ),
     contrasts = obj$contrasts,
     xlevels = obj$xlevels,
@@ -501,9 +492,10 @@ getSummary.htobit <- function(obj, alpha = 0.05, ...) {
   ))
 }
 
-setSummaryTemplate("htobit" = c(
-  "Log-likelihood" = "($logLik:f#)",
-  "AIC" = "($AIC:f#)",
-  "BIC" = "($BIC:f#)",
-  "N" = "($N:d)"
-))
+## setSummaryTemplate("htobit" = c(
+##   "Log-likelihood" = "($logLik:f#)",
+##   "AIC" = "($AIC:f#)",
+##   "BIC" = "($BIC:f#)",
+##   "N" = "($N:d)"
+## ))
+
