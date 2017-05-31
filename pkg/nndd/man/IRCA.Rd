@@ -54,7 +54,7 @@ formula <- Formula(treated | v_crime ~ officers_pc + income + p_crime | officers
 ma <- nndd(formula = formula, data = IRCA, indexes = c("year", "county", "treated", "v_crime"), nn_time = c("1985","1985" ), t_time = "1986" )
 
 ma
-plot(ma, IRCA)
+#plot(ma, IRCA)
 }
 
 \keyword{datasets}
