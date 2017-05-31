@@ -12,7 +12,7 @@ Obtains predictions from a fitted negative binomial 1 model object.
 \usage{
 \method{predict}{negbin1}(object, newdata = NULL,
                 type = c("response", "location", "probability", "quantile"),
-                na.action = na.pass, at = 0, ...)
+                na.action = na.pass, at = 0.5, ...)
 }
 
 \arguments{
@@ -69,7 +69,7 @@ dgp <- function(n = 1000, coef = c(2, 3, 0, 0.7)) {
     x2 = runif(n, -1, 1)
     )
   d$mu <- exp(coef[1] + coef[2] * d$x1 + coef[3] * d$x2)
-  d$y <- rnbinom(n, mu = d$mu, size = coef[4] * d$mu)
+  d$y <- rnbinom(n, mu = d$mu, size = d$mu / coef[4])
   return(d)
 }
 
@@ -78,7 +78,7 @@ set.seed(2007-05-15)
 d <- dgp()
 
 ## model
-m1 <- negbin1(y ~ x1 + x2, data = d, control = list(maxit = 5000))
+m1 <- negbin1(y ~ x1 + x2, data = d)
 
 ## predictions
 newd <- data.frame(x1 = c(2, 0, 1, 4), x2 = c(1, 0, -1, 1))
