@@ -58,12 +58,15 @@ hetprobit <- function(formula, data, subset, na.action,
   return(rval)
 }
 
-hetprobit_control <- function(maxit = 5000, start = NULL, ...)
+hetprobit_control <- function(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
 {
   ctrl <- c(
-    list(maxit = maxit,
-    start = start), list(...)
+    list(maxit = maxit, start = start, grad = grad, hessian = hessian),
+    list(...)
   )
+  if(is.null(ctrl$method)){
+    ctrl$method <- if(grad) "BFGS" else "Nelder-Mead"
+  }
   if(!is.null(ctrl$fnscale)) warning("fnscale must not be modified")
   ctrl$fnscale <- 1
   if(is.null(ctrl$reltol)) ctrl$reltol <- .Machine$double.eps^(1/1.2)
@@ -93,6 +96,32 @@ hetprobit_fit <- function(x, y, z = NULL, control)
     -sum(ll)
   }
 
+  ## negative gradient contributions
+  ngr <- function(par, sum = TRUE) {
+    beta <- opt$par[1:m]
+    gamma <- opt$par[m + (1:p)]
+    mu <- x %*% beta
+    scale <- exp(z %*% gamma)
+
+    rval <- matrix(0, nrow = nrow(x), ncol = ncol(x) + ncol(z)) 
+ 
+  ## partial derivative w.r.t mu
+    rval[,1:m] <- as.numeric(y * (dnorm(mu/scale)/pnorm(mu/scale))) * (x/ as.numeric(scale)) - as.numeric((1- y) *(dnorm(mu/scale)/(1 - pnorm(mu/scale)))) * (x/as.numeric(scale)) 
+
+  ## partial derivative w.r.t sigma
+    rval[, m + (1:p)] <- as.numeric(y * (dnorm(mu/scale)/pnorm(mu/scale)) * (-mu/scale)) * z - as.numeric((1 - y) * (dnorm(mu/scale)/(1 - pnorm(mu/scale))) * (-mu/scale)) * z
+  
+    if(sum) 
+      rval <- colSums(rval)
+  return(-rval) 
+}
+
+  ## clean up control arguments
+  grad <- control$grad
+  hess <- control$hessian
+  meth <- control$method
+  control$grad <- control$hessian <- control$method <- NULL
+
   ## starting values (by default coefficients from probit model)
   if(is.null(control$start)) {  
     start <- glm.fit(x, y, family = binomial(link = "probit"))
@@ -104,7 +133,26 @@ hetprobit_fit <- function(x, y, z = NULL, control)
   control$start <- NULL 
 
   ## optimization
-  opt <- optim(par = start, fn = nll, control = control)
+  opt <- if(grad) {
+    optim(par = start, fn = nll, gr = ngr, control = control, method = meth, hessian = (hess == "optim"))
+  } else {
+    optim(par = start, fn = nll, control = control, method = meth, hessian = (hess == "optim"))
+  }
+
+## compute hessian (if necessary)
+  if(hess == "none") {
+    opt <- c(opt, list(hessian = NULL))
+  } else if(hess == "numderiv") {
+    opt$hessian <- numDeriv::hessian(nll, opt$par)
+  }
+  if(!is.null(opt$hessian)) {
+    rownames(opt$hessian) <- colnames(opt$hessian) <- c(
+      colnames(x), paste("(scale)", colnames(z), sep = "_"))
+    opt$vcov <- solve(opt$hessian)
+    opt$hessian <- NULL
+  }
+
+ 
 
   ## collect information
   names(opt)[1:2] <- c("coefficients", "loglik")

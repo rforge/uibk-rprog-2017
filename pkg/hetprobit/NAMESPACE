@@ -1,4 +1,5 @@
 import("stats", "Formula")
+importFrom("numDeriv", "grad", "hessian")
 
 export(
   "hetprobit",
