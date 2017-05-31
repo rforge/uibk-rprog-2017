@@ -18,7 +18,7 @@ negbin1(formula, data, subset, na.action,
 
 negbin1_fit(y, x, control)
 
-negbin1_control(maxit = 5000, start = NULL, ...)
+negbin1_control(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
 }
 
 \arguments{
@@ -29,7 +29,9 @@ negbin1_control(maxit = 5000, start = NULL, ...)
   \item{model, y, x}{logicals. If TRUE the corresponding components of the fit are returned.}
   \item{control}{a list of parameters for controlling the fitting process. For \code{negbin1_fit} this is passed to \code{negbin1_control}.}
   \item{\dots}{additional arguments to be passed.}
-  \item{maxit, start}{control arguments passed to \code{\link[stats]{optim}}.}
+  \item{maxit, start}{control arguments passed to
+  \code{\link[stats]{optim}}.}
+  \item{grad, hessian}{gradient and hessian.}
 }
 
 \details{
@@ -85,7 +87,7 @@ dgp <- function(n = 1000, coef = c(2, 3, 0, 0.7)) {
     x2 = runif(n, -1, 1)
     )
   d$mu <- exp(coef[1] + coef[2] * d$x1 + coef[3] * d$x2)
-  d$y <- rnbinom(n, mu = d$mu, size = coef[4] * d$mu)
+  d$y <- rnbinom(n, mu = d$mu, size = d$mu / coef[4])
   return(d)
 }
 
@@ -94,7 +96,7 @@ set.seed(2007-05-15)
 d <- dgp()
 
 ## model (with function negbin1)
-m1 <- negbin1(y ~ x1 + x2, data = d, control = list(maxit = 5000))
+m1 <- negbin1(y ~ x1 + x2, data = d)
     
 ## model (with vglm from VGAM package)
 m2 <- vglm(y ~ x1 + x2, negbinomial(parallel = TRUE, zero = NULL), data = d, trace = TRUE)    
@@ -110,15 +112,15 @@ cbind(m1$coefficients$location, coef(m2, matrix = TRUE)[1:3,1], coef(m3))
 cbind(m1$loglik, logLik(m2))
 
 ## model comparison
-m0 <- negbin1(y ~ x1, data = d, control = list(maxit = 5000))
+m0 <- negbin1(y ~ x1, data = d)
 AIC(m0, m1)
 BIC(m0, m1)
 lrtest(m0, m1)
 
-## comparison of theta
-thetam1 <- m1$coefficients$theta
+## comparison of alpha
+alpham1 <- m1$coefficients$alpha
 co <- coef(m2, matrix = TRUE)
-thetam2 <- exp(co["(Intercept)", "loge(size)"] - co["(Intercept)", "loge(mu)"]) 
+alpham2 <- exp(co["(Intercept)", "loge(size)"] - co["(Intercept)", "loge(mu)"]) 
     
 ## benefit of formula/terms interface
 update(m1, subset = x2 > 0)
