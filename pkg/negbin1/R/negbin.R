@@ -46,12 +46,17 @@ negbin1 <- function(formula, data, subset, na.action,
     return(rval)
 }
 
-negbin1_control <- function(maxit = 5000, start = NULL,...)
+negbin1_control <- function(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
 {
+    if(is.logical(hessian)) hessian <- if(hessian) "optim" else "none"
+    if(is.character(hessian)) hessian <- match.arg(tolower(hessian),
+                                                   c("optim", "numderiv", "none"))
     ctrl <- c(
-        list(maxit = maxit,
-             start = start), list(...)
+        list(maxit = maxit, start = start, grad = grad, hessian = hessian), list(...)
     )
+    if(is.null(ctrl$method)) {
+      ctrl$method <- if(grad) "BFGS" else "Nelder-Mead"
+        }
     if(!is.null(ctrl$fnscale)) warning("fnscale must not be modified")
     ctrl$fnscale <- 1L
     if(is.null(ctrl$reltol)) ctrl$reltol <- .Machine$double.eps^(1/1.2)
@@ -68,12 +73,39 @@ negbin1_fit <- function(y, x, control)
     ## negative log-likelihood
     nll <- function(par) {
         beta <- par[1L:m]
+        alpha <- par[m+1L]
         mu <- exp(x %*% beta)
-        theta <- mu * par[m+1L]
+        theta <- mu / alpha
         ll <- dnbinom(y, size = theta, mu = mu, log = TRUE)
         -sum(ll)
         }
 
+    ## negative gradient (contributions)
+    ngr <- function(par, sum = TRUE) {
+        ## parameters
+        beta <- par[1L:m]
+        alpha <- par[m+1L]
+        mu <- exp(x %*% beta)
+        theta <- mu / alpha
+        
+        j <- sum(0L:y[n - 1L])
+        grbeta <- sapply(1L:n, function(i) (mu[i] / alpha) / ( sum(0L:(y[i] - 1)) + mu[i] / alpha) * x[i, , drop = FALSE] + mu[i] / alpha * x[i, , drop = FALSE])
+        grbeta <- t(grbeta)
+        gralpha <- sapply(1L:n, function(i) (1L / alpha^2) * (- (mu[i] / (sum(0L:y[i]) + 1 / alpha)) - 1 / alpha^2 * mu[i] * log(1 + alpha) - alpha / (1L + alpha) + mu[i] * alpha))      
+        rval <- cbind(grbeta, gralpha)
+        #colnames(rval) <- NULL
+        
+        ## sum (if desired) and change sign
+        if(sum) rval <- colSums(rval)
+        return(-rval)
+    }
+    
+    ## clean up control arguments
+    grad <- control$grad
+    hess <- control$hessian
+    meth <- control$method
+    control$grad <- control$hessian <- control$method <- NULL
+    
     ## starting values (by default Poisson)
     if(is.null(control$start)) {
         start <- glm(y ~ -1L + x, family = "poisson")
@@ -85,15 +117,41 @@ negbin1_fit <- function(y, x, control)
     control$start <- NULL
     
     ## optimization
-    opt <- optim(par = start, fn = nll, control = control)
+    opt <- if(grad) {
+               opt <- optim(par = start, fn = nll, gr = ngr, control = control, method = meth, hessian = (hess == "optim"))
+           } else {
+               optim(par = start, fn = nll, control = control, method = meth, hessian = (hess == "optim"))
+               }
 
+    ## compute hessian (if necessary)
+    if(hess == "none") {
+        opt <- c(opt, list(hessian = NULL))
+    } else if(hess == "numderiv") {
+        opt$hessian <- numDeriv::hessian(nll, opt$par)
+        }
+    if(!is.null(opt$hessian)) {
+        rownames(opt$hessian) <- colnames(opt$hessian) <- c(colnames(x), "alpha")
+        opt$vcov <- solve(opt$hessian)
+        opt$hessian <- NULL
+    }
+    
     ## collect information
-    names(opt)[1:2] <- c("coefficients", "loglik")
+    names(opt)[1L:2L] <- c("coefficients", "loglik")
     opt$coefficients <- list(
         location = opt$coefficients[1L:m],
-        theta = opt$coefficients[m+1L]
+        alpha = opt$coefficients[m+1L]
     )
-    names(opt$coefficients$location) <- colnames(x)
+    names(opt$coefficients$location) <-  colnames(x)
+    names(opt$coefficients$alpha) <- "alpha"
+   
+    ## residuals and fitted values
+    mu <- drop(x %*% opt$coefficients$location)
+    opt$residuals <- y - mu
+    opt$alpha <- opt$coefficients$alpha
+    opt$fitted.values <- list(location = mu, alpha = opt$coefficients$alpha)
+    
+    ## other information
+    opt$method <- meth
     opt$loglik <- -opt$loglik
     opt$nobs <- n
     opt$df <- m + 1L
@@ -123,12 +181,12 @@ print.negbin1 <- function(x, digits = max(3, getOption("digits") - 3), ...)
       } else {
         cat("No coefficients\n\n")  
       }
-        if(length(x$coefficients$theta)){
-        cat("Theta:")
-        print.default(format(x$coefficients$theta, digits = digits), print.gap = 2, quote = FALSE)
+        if(length(x$coefficients$alpha)){
+        cat("Alpha:")
+        print.default(format(x$coefficients$alpha, digits = digits), print.gap = 2, quote = FALSE)
         cat("\n")
         } else {
-          cat("No coefficient theta\n\n")  
+          cat("No coefficient alpha\n\n")  
         }
         cat(paste("Log-likelihood: ", format(x$loglik, digits = digits), "\n", sep = ""))
       if(length(x$df)) {
@@ -173,13 +231,17 @@ predict.negbin1 <- function(object, newdata = NULL,
 
     ## predicted parameters
     location <- drop(X %*% object$coefficients$location)
-    theta <- object$coefficients$theta
+    alpha <- object$coefficients$alpha
     
     ## compute result
     rval <- switch(type,
       "response" = location,
-      "probability" = dnbinom(at, mu = location, size = theta),
-      "quantile" = qnbinom(at, size = theta * location, mu = location)
+      "probability" = dnbinom(at, mu = location, size = mu / alpha),
+      "quantile" = qnbinom(at, size = mu / alpha * location, mu = location)
     )   
     return(rval)
 }
+
+bread.negbin1 <- function(x, ...) x$vcov * nobs
+
+
