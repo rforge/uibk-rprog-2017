@@ -1,9 +1,8 @@
-import("stats")
+import("stats","numDeriv")
 
 export(
   "GmmEst",
-  "GmmEst_est_control",
-  "GmmEst_optim_control"
+  "GmmEst_control"
 )
 
 ## methods for GmmEst

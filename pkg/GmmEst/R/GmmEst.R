@@ -1,8 +1,7 @@
 GmmEst = function(func, theta0, data, 
                   est_type=c("2step","1step","iter"), initial_W=NULL, 
                   optim_method=c("BFGS","Nelder-Mead", "CG", "L-BFGS-B", "SANN"),
-                  est_control = GmmEst_est_control(...),
-                  optim_control = GmmEst_optim_control(...), ...)
+                  control = GmmEst_control(...), ...)
 {
   
   # =================================================
@@ -21,30 +20,59 @@ GmmEst = function(func, theta0, data,
   optim_method = match.arg(optim_method)
 
   # =================================================
+  # User input processing
+  # ===================
+
+  # * Control function
+  maxit_gmm_iter = control$maxit_gmm_iter
+  tol_gmm_iter = control$tol_gmm_iter
+  control$tol_gmm_iter <- control$maxit_gmm_iter <- NULL
+
+  # =================================================
   # Internal functions
   # ===================
   
+  # * Calculate gt
+  .calc_gt = function(param)
+  {
+    gt = as.matrix(func(param, data))
+    return(gt)
+  }
+
+  # * Calculate column means of gt 
+  .calc_gt_mean = function(param)
+  {
+    gt = .calc_gt(param)
+    gt_mean = as.vector(colMeans(gt))
+    return(gt_mean)
+  }
+
   # * Calculate Q
   .calc_q = function(param, W=NULL){
-    gt = as.matrix(func(param, data))
-    gt_mean = as.vector(colMeans(gt))
+    gt_mean = .calc_gt_mean(param)
     q = as.numeric(gt_mean %*% W %*% gt_mean)
     return(q)
   }
 
   # * Optimization
   .min_q = function(theta0=NULL, W=NULL){
-    opt = optim(par = theta0, fn = .calc_q, W=W, method=optim_method, control=optim_control,...)
+    opt = optim(par = theta0, fn = .calc_q, W=W, method=optim_method, control=control,...)
     return(opt)
   }
   
   # * Calculate S matrix
   .calc_s = function(param){
-    gt = as.matrix(func(param, data))
+    gt = .calc_gt(param)
     gt = scale(gt, center=TRUE, scale=FALSE)
     s = (t(gt) %*% gt) / (NObs - KParams)
   }
-  
+
+  # Gradient of gt_mean
+  .calc_d = function(param)
+  {
+    d = numDeriv::jacobian(.calc_gt_mean, param)
+  }
+
   
   # =================================================
   # Calculations
@@ -53,72 +81,67 @@ GmmEst = function(func, theta0, data,
     W = diag(KMoms)
   }
   
+  # First step
   opt = .min_q(theta0=theta0, W=W)
   theta = opt$par
   S = .calc_s(theta)
   
+  # Second step
   if (est_type!="1step"){
     Sinv = solve(S)
     opt = .min_q(theta0=theta0, W=Sinv)
   }
   
+  # Iterative
   if (est_type=="iter"){
     test_val = 100
     niter = 0
     theta0s = opt$par
     
-    while(test_val>est_control$tolit_gmm | niter<est_control$maxit_gmm){
-      theta = opt$par
-      norm_old = sqrt(sum(theta^2))
-      S = .calc_s(theta)
+    while(test_val>tol_gmm_iter & niter<maxit_gmm_iter){
+      theta_old = opt$par
+      S = .calc_s(theta_old)
       Sinv = solve(S)
       opt = .min_q(theta0=theta0s, W=Sinv)
-      norm_new = sqrt(sum(opt$par^2))
-      test_val = abs(norm_old - norm_new)
+      theta_new = opt$par
+      test_val = sqrt(sum((theta_new - theta_old)^2))
       niter = niter + 1
     }
   }
   
   
   # =================================================
-  # Output
+  # Save important output values in list object
   # ===================
   names(opt)[1:2] <- c("coefficients", "jstat")
   opt$jstat = opt$jstat*NObs
+
   opt$nobs = NObs
   opt$kparams = KParams
   opt$kmoms = KMoms
   opt$df = NObs - KParams
   opt$est_type = est_type
-  opt$gmm_niter = switch(opt$est_type,
-                         "2step" = 2,
-                         "1step" = 1,
-                         "iter" = 2 + niter)
-  opt$SMat = S
+  opt$S = S
+  opt$W = solve(S)
   class(opt) = "GmmEst"
   return(opt)
 }
 
 
-  # =================================================
-  # Control functions
-  # ===================
+# =================================================
+# Control function
+# ===================
 
-GmmEst_optim_control <- function(maxit = 5000, ...)
+GmmEst_control <- function(maxit = 5000, tol_gmm_iter=1e-12, maxit_gmm_iter=100, ...)
 {
-  ctrl <- c(list(maxit = maxit), list(...))
+  ctrl = c(list(maxit = maxit, tol_gmm_iter=tol_gmm_iter, maxit_gmm_iter=maxit_gmm_iter), list(...))
   if(!is.null(ctrl$fnscale)) warning("fnscale must not be modified")
-  ctrl$fnscale <- 1
-  if(is.null(ctrl$reltol)) ctrl$reltol <- .Machine$double.eps^(1/1.2)
-  if(is.null(ctrl$abstol)) ctrl$abstol <- .Machine$double.eps^(1/1.2)
+  ctrl$fnscale = 1
+  if(is.null(ctrl$reltol)) ctrl$reltol = .Machine$double.eps^(1/1.2)
+  if(is.null(ctrl$abstol)) ctrl$abstol = .Machine$double.eps^(1/1.2)
   invisible(ctrl)
 }
 
-GmmEst_est_control <- function(maxit_gmm = 100, tolit_gmm=1e-03)
-{
-  ctrl <- c(list(maxit_gmm = maxit_gmm, tolit_gmm=tolit_gmm))
-  invisible(ctrl)
-}
 
 # =================================================
 # S3 Methods
@@ -129,13 +152,17 @@ coef.GmmEst = function(object, ...) {
 
 print.GmmEst <- function(x, digits = max(3, getOption("digits") - 3), ...)
 {
-  cat(sprintf("%s Generalized Methods of Moments estimation \n\n", switch(x$est_type,
+  cat(sprintf("%s GMM estimation \n\n", switch(x$est_type,
                                                                           "2step" = "two-step",
                                                                           "1step" = "one-step",
-                                                                          "iter" = "iterative")))
+                                                                          "iter" = "iterated")))
   cat("Coefficients:\n")
   print.default(format(x$coefficients, digits = digits), print.gap = 2, quote = FALSE)
-  cat(sprintf("\nJ statistic: %s on %s Df\n", format(x$jstat, digits = digits), x$df))
+  if(x$kmoms>x$kparams){
+    cat(sprintf("\nJ statistic: %s on %s Df (p=%s)\n", format(x$jstat, digits = digits), x$kmoms - x$kparams, format(1-pchisq(x$jstat, df = x$kmoms - x$kparams), digits=digits)))
+    }else{
+    cat(sprintf("\nJ statistic: %s on %s Df (model not over-identified)\n", format(x$jstat, digits = digits), x$kmoms - x$kparams)) 
+    }
   
   invisible(x)
 }
