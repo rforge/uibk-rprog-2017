@@ -60,7 +60,9 @@ hetprobit <- function(formula, data, subset, na.action,
 
 hetprobit_control <- function(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
 {
-  ctrl <- c(
+  if(is.logical(hessian)) hessian <- if(hessian) "optim" else "none"
+  if(is.character(hessian)) hessian <- match.arg(tolower(hessian), c("optim", "numderiv", "none"))
+ctrl <- c(
     list(maxit = maxit, start = start, grad = grad, hessian = hessian),
     list(...)
   )
@@ -98,22 +100,22 @@ hetprobit_fit <- function(x, y, z = NULL, control)
 
   ## negative gradient contributions
   ngr <- function(par, sum = TRUE) {
-    beta <- opt$par[1:m]
-    gamma <- opt$par[m + (1:p)]
+    beta <- par[1:m]
+    gamma <-par[m + (1:p)]
     mu <- x %*% beta
     scale <- exp(z %*% gamma)
 
     rval <- matrix(0, nrow = nrow(x), ncol = ncol(x) + ncol(z)) 
  
   ## partial derivative w.r.t mu
-    rval[,1:m] <- as.numeric(y * (dnorm(mu/scale)/pnorm(mu/scale))) * (x/ as.numeric(scale)) - as.numeric((1- y) *(dnorm(mu/scale)/(1 - pnorm(mu/scale)))) * (x/as.numeric(scale)) 
+    rval[, 1:m] <- as.numeric(y * (dnorm(mu/scale)/pnorm(mu/scale))) * (x/ as.numeric(scale)) - as.numeric((1- y) *(dnorm(mu/scale)/(1 - pnorm(mu/scale)))) * (x/as.numeric(scale)) 
 
   ## partial derivative w.r.t sigma
     rval[, m + (1:p)] <- as.numeric(y * (dnorm(mu/scale)/pnorm(mu/scale)) * (-mu/scale)) * z - as.numeric((1 - y) * (dnorm(mu/scale)/(1 - pnorm(mu/scale))) * (-mu/scale)) * z
   
     if(sum) 
       rval <- colSums(rval)
-  return(-rval) 
+    return(-rval) 
 }
 
   ## clean up control arguments
@@ -138,8 +140,8 @@ hetprobit_fit <- function(x, y, z = NULL, control)
   } else {
     optim(par = start, fn = nll, control = control, method = meth, hessian = (hess == "optim"))
   }
-
-## compute hessian (if necessary)
+  
+  ## compute hessian (if necessary)
   if(hess == "none") {
     opt <- c(opt, list(hessian = NULL))
   } else if(hess == "numderiv") {
