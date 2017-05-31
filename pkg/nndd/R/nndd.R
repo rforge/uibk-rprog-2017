@@ -496,15 +496,15 @@ plot.nndd<- function(x, data, ...)
 
   
  
-  ag <- aggregate( formula(paste(formula(x$call$formula, lhs = 2, rhs = 0)[[2]], "~", x$indexes[2], "+", formula(x$call$formula, lhs = 1, rhs = 0)[[2]]))
+  ag <- aggregate( formula(paste(formula(x$call$formula, lhs = 2, rhs = 0)[[2]], "~", x$indexes[1], "+", formula(x$call$formula, lhs = 1, rhs = 0)[[2]]))
                    ,FUN = mean, data =x$model)
-  plot(formula(paste(formula(x$call$formula,lhs=2, rhs= 0)[[2]], "~", x$indexes[2] )), 
+  plot(formula(paste(formula(x$call$formula,lhs=2, rhs= 0)[[2]], "~", x$indexes[1] )), 
              data = ag[ag[paste(formula(x$call$formula, lhs = 1, rhs = 0)[[2]])] == 1,], 
-             ylim = c(15,30), main = "Observed Outcome")
+              main = "Observed Outcome")
        
-  lines(formula(paste(formula(x$call$formula,lhs=2, rhs= 0)[[2]], "~", x$indexes[2] )) , 
+  lines(formula(paste(formula(x$call$formula,lhs=2, rhs= 0)[[2]], "~", x$indexes[1] )) , 
         data = ag[ag[,tg_id] == 0,], col = "red")
-  lines(formula(paste(formula(x$call$formula,lhs=2, rhs= 0)[[2]], "~", x$indexes[2] )), 
+  lines(formula(paste(formula(x$call$formula,lhs=2, rhs= 0)[[2]], "~", x$indexes[1] )), 
         data = ag[ag[paste(formula(x$call$formula, lhs = 1, rhs = 0)[[2]])] == 1,], col = "blue")
   
 #   x$model$lm_prediction <- predict(x, prediction = "Dd")
