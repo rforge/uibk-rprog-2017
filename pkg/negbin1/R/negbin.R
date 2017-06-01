@@ -48,9 +48,9 @@ negbin1 <- function(formula, data, subset, na.action,
 
 negbin1_control <- function(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
 {
-    if(is.logical(hessian)) hessian <- if(hessian) "optim" else "none"
+    if(is.logical(hessian)) hessian <- if(hessian) "numderiv" else "none"
     if(is.character(hessian)) hessian <- match.arg(tolower(hessian),
-                                                   c("optim", "numderiv", "none"))
+                                                   c("numderiv", "optim", "none"))
     ctrl <- c(
         list(maxit = maxit, start = start, grad = grad, hessian = hessian), list(...)
     )
@@ -58,7 +58,7 @@ negbin1_control <- function(maxit = 5000, start = NULL, grad = TRUE, hessian = T
       ctrl$method <- if(grad) "BFGS" else "Nelder-Mead"
         }
     if(!is.null(ctrl$fnscale)) warning("fnscale must not be modified")
-    ctrl$fnscale <- 1L
+    ctrl$fnscale <- 1
     if(is.null(ctrl$reltol)) ctrl$reltol <- .Machine$double.eps^(1/1.2)
     ctrl
 }
@@ -75,8 +75,7 @@ negbin1_fit <- function(y, x, control)
         beta <- par[1L:m]
         alpha <- par[m+1L]
         mu <- exp(x %*% beta)
-        theta <- mu / alpha
-        ll <- dnbinom(y, size = theta, mu = mu, log = TRUE)
+        ll <- dnbinom(y, size = mu / alpha, mu = mu, log = TRUE)
         -sum(ll)
         }
 
@@ -86,15 +85,13 @@ negbin1_fit <- function(y, x, control)
         beta <- par[1L:m]
         alpha <- par[m+1L]
         mu <- exp(x %*% beta)
-        theta <- mu / alpha
         
-        j <- sum(0L:y[n - 1L])
-        grbeta <- sapply(1L:n, function(i) (mu[i] / alpha) / ( sum(0L:(y[i] - 1)) + mu[i] / alpha) * x[i, , drop = FALSE] + mu[i] / alpha * x[i, , drop = FALSE])
-        grbeta <- t(grbeta)
-        gralpha <- sapply(1L:n, function(i) (1L / alpha^2) * (- (mu[i] / (sum(0L:y[i]) + 1 / alpha)) - 1 / alpha^2 * mu[i] * log(1 + alpha) - alpha / (1L + alpha) + mu[i] * alpha))      
-        rval <- cbind(grbeta, gralpha)
-        #colnames(rval) <- NULL
-        
+        rval <- cbind(
+            t(sapply(1L:n, function(i) (mu[i] / alpha) / ( sum(0L:(y[i] - 1)) + mu[i] / alpha) * x[i, , drop = FALSE] + mu[i] / alpha * x[i, , drop = FALSE])),
+            sapply(1L:n, function(i) (1 / alpha^2) * (- (mu[i] / ( sum( 0L:(y[i] - 1) ) + 1 / alpha )) - (1 / alpha^2) * mu[i] * log(1 + alpha) -
+                                                      alpha / (1 + alpha) + y[i] * alpha))
+        )      
+                    
         ## sum (if desired) and change sign
         if(sum) rval <- colSums(rval)
         return(-rval)
@@ -108,17 +105,17 @@ negbin1_fit <- function(y, x, control)
     
     ## starting values (by default Poisson)
     if(is.null(control$start)) {
-        start <- glm(y ~ -1L + x, family = "poisson")
-        start <- c(start$coefficients, 1L)
+        start <- glm.fit(x, y, family = poisson(link = "log"))
+        start <- c(start$coefficients, 1)
     } else {
         start <- control$start
-        stopifnot(length(start) == m + 1L)
+        stopifnot(length(start) == m + 1)
     }
     control$start <- NULL
     
     ## optimization
     opt <- if(grad) {
-               opt <- optim(par = start, fn = nll, gr = ngr, control = control, method = meth, hessian = (hess == "optim"))
+               optim(par = start, fn = nll, gr = ngr, control = control, method = meth, hessian = (hess == "optim"))
            } else {
                optim(par = start, fn = nll, control = control, method = meth, hessian = (hess == "optim"))
                }
@@ -142,13 +139,13 @@ negbin1_fit <- function(y, x, control)
         alpha = opt$coefficients[m+1L]
     )
     names(opt$coefficients$location) <-  colnames(x)
-    names(opt$coefficients$alpha) <- "alpha"
+    names(opt$coefficients$alpha) <- ""
    
     ## residuals and fitted values
     mu <- drop(x %*% opt$coefficients$location)
     opt$residuals <- y - mu
     opt$alpha <- opt$coefficients$alpha
-    opt$fitted.values <- list(location = mu, alpha = opt$coefficients$alpha)
+    opt$fitted.values <- list(location = mu, alpha = opt$alpha)
     
     ## other information
     opt$method <- meth
