@@ -31,7 +31,7 @@ negbin1 <- function(formula, data, subset, na.action,
     n <- length(Y)
     
     ## call the actual workhorse: negbin1_fit()
-    rval <- negbin1_fit(Y, X, control)
+    rval <- negbin1_fit(X, Y, control)
     
     ## further model information
     rval$call <- cl
@@ -63,7 +63,7 @@ negbin1_control <- function(maxit = 5000, start = NULL, grad = TRUE, hessian = T
     ctrl
 }
 
-negbin1_fit <- function(y, x, control)
+negbin1_fit <- function(x, y, control)
 {
     ## dimemsions
     n <- length(y)
@@ -85,11 +85,13 @@ negbin1_fit <- function(y, x, control)
         beta <- par[1L:m]
         alpha <- par[m+1L]
         mu <- exp(x %*% beta)
-        
+
+        rval <- matrix(0, nrow = nrow(x), ncol = ncol(x) + 1L)
         rval <- cbind(
-            t(sapply(1L:n, function(i) (mu[i] / alpha) / ( sum(0L:(y[i] - 1)) + mu[i] / alpha) * x[i, , drop = FALSE] + mu[i] / alpha * x[i, , drop = FALSE])),
-            sapply(1L:n, function(i) (1 / alpha^2) * (- (mu[i] / ( sum( 0L:(y[i] - 1) ) + 1 / alpha )) - (1 / alpha^2) * mu[i] * log(1 + alpha) -
-                                                      alpha / (1 + alpha) + y[i] * alpha))
+        as.vector(((y / mu - (y + mu / alpha) / (mu + mu / alpha)) + (1 / alpha) *
+         ( digamma(y + mu / alpha) - digamma(mu / alpha) + log(mu / alpha) + 1 - log(mu + mu / alpha) - (y + mu / alpha) / (mu + mu / alpha) ) ) * mu) * x[, , drop = FALSE]
+       ,
+       (- mu / (alpha)^2) * ( digamma(y + mu / alpha) - digamma(mu / alpha) + log(mu / alpha) + 1 - log(mu + mu / alpha) - (y + mu / alpha) / (mu + mu / alpha))
         )      
                     
         ## sum (if desired) and change sign
@@ -241,4 +243,165 @@ predict.negbin1 <- function(object, newdata = NULL,
 
 bread.negbin1 <- function(x, ...) x$vcov * nobs
 
+estfun.negbin1 <- function(x, ...)
+{
+    ## observed data and fit
+    if(is.null(x$y) || is.null(x$x)) {
+        mf <- model.frame(x)
+        x$y <- model.response(mf)
+        x$x <- model.matrix(x$terms$location, mf)
+    }
+  
+    mu <- exp(x$x$location %*% x$coefficients$location)
+    alpha <- x$x$coefficients$alpha
 
+    rval <- matrix(0, nrow = x$nobs, ncol = x$df)
+    rval <- cbind(
+        t(sapply(1L:n, function(i) (mu[i] / alpha) / ( sum(0L:(x$y[i] - 1)) + mu[i] / alpha) * x$x[i, , drop = FALSE] +
+                                   mu[i] / alpha * x$x[i, , drop = FALSE])),
+        sapply(1L:n, function(i) (1 / alpha^2) * (- (mu[i] / ( sum( 0L:(x$y[i] - 1) ) + 1 / alpha )) - (1 / alpha^2) * mu[i] * log(1 + alpha) -
+                                                  alpha / (1 + alpha) + x$y[i] * alpha))
+    )
+    
+    ## nice column names
+    colnames(rval) <- c(colnames(x$x$location), colnames(x$x$alpha))
+    return(rval)
+    }
+
+
+vcov.negbin1 <- function(object, ...) object$vcov
+ 
+summary.negbin1 <- function(object, ...)
+{
+  ## residuals
+  object$residuals <- object$residuals/object$fitted.values$location
+
+  ## extend coefficient table
+  k <- length(object$coefficients$location)
+  m <- length(object$coefficients$alpha)
+  cf <- as.vector(do.call("c", object$coefficients))
+  se <- sqrt(diag(object$vcov))
+  cf <- cbind(cf, se, cf/se, 2 * pnorm(-abs(cf/se)))
+  colnames(cf) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
+  cf <- list(location = cf[seq.int(length.out = k), , drop = FALSE], alpha = cf[seq.int(length.out = m) + k, , drop = FALSE])
+  rownames(cf$location) <- names(object$coefficients$location)
+  object$coefficients <- cf
+
+  ## delete some slots
+  object$fitted.values <- object$terms <- object$levels <- object$contrasts <- NULL
+
+  ## return
+  class(object) <- "summary.negbin1"
+  object
+}
+
+print.summary.negbin1 <- function(x, digits = max(3, getOption("digits") - 3), ...)
+{
+  cat("\nCall:", deparse(x$call, width.cutoff = floor(getOption("width") * 0.85)), "", sep = "\n")
+  
+  if(x$convergence > 0L) {
+    cat("model did not converge\n")
+  } else {
+    cat(paste("Standardized residuals:\n", sep = ""))
+    print(structure(round(as.vector(quantile(x$residuals)), digits = digits),
+      .Names = c("Min", "1Q", "Median", "3Q", "Max")))
+
+    if(NROW(x$coefficients$location)) {
+      cat(paste("\nCoefficients:\n", sep = ""))
+      printCoefmat(x$coefficients$location, digits = digits, signif.legend = FALSE)
+    } else cat("\nNo coefficients\n")
+
+    if(NROW(x$coefficients$alpha)) {
+      cat(paste("\nCoefficient alpha:\n", sep = ""))
+      printCoefmat(x$coefficients$alpha, digits = digits, signif.legend = FALSE)
+    } else cat("\nNo coefficient alpha\n")
+
+    if(getOption("show.signif.stars") & any(do.call("rbind", x$coefficients)[, 4L] < 0.1, na.rm = TRUE))
+      cat("---\nSignif. codes: ", "0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1", "\n")
+    cat("\nLog-likelihood:", formatC(x$loglik, digits = digits),
+      "on", sum(sapply(x$coefficients, NROW)), "Df\n")
+    cat(paste("Number of iterations in", x$method, "optimization:", x$count[2L], "\n"))
+  }
+
+  invisible(x)
+}
+
+residuals.negbin1 <- function(object, type = c("standardized", "pearson", "response"), ...) {
+  if(match.arg(type) == "response") {
+    object$residuals 
+  } else {
+    object$residuals/object$fitted.values$location
+  }
+}
+
+update.negbin1 <- function (object, formula., ..., evaluate = TRUE)
+{
+  call <- object$call
+  if(is.null(call)) stop("need an object with call component")
+  extras <- match.call(expand.dots = FALSE)$...
+  if(!missing(formula.)) call$formula <- formula(update(Formula(formula(object)), formula.))
+  if(length(extras)) {
+    existing <- !is.na(match(names(extras), names(call)))
+    for (a in names(extras)[existing]) call[[a]] <- extras[[a]]
+    if(any(!existing)) {
+      call <- c(as.list(call), extras[!existing])
+      call <- as.call(call)
+    }
+  }
+  if(evaluate) eval(call, parent.frame())
+  else call
+}
+
+Boot.negbin1 <- function(object, f = coef, labels = names(f(object)), R = 999, method = "case") {
+  if(!(requireNamespace("boot"))) stop("The 'boot' package is missing")
+  f0 <- f(object)
+  if(is.null(labels) || length(labels) != length(f0)) labels <- paste("V", seq(length(f0)), sep = "")
+  method <- match.arg(method, c("case", "residual"))
+  opt<-options(show.error.messages = FALSE)
+  if(method == "case") {
+    boot.f <- function(data, indices, .fn) {
+      mod <- try(update(object, subset = indices, hessian = FALSE, start = coef(object)))
+      out <- if(class(mod) == "try-error") f0 + NA else .fn(mod)
+      out
+    }
+  } else {
+    stop("currently not implemented")
+  }
+  b <- boot::boot(model.frame(object), boot.f, R, .fn = f)
+  colnames(b$t) <- labels
+  options(opt)
+  d <- dim(na.omit(b$t))[1]
+  if(d != R) cat( paste("\n","Number of bootstraps was", d, "out of", R, "attempted", "\n"))
+
+  return(b)
+}
+
+getSummary.negbin1 <- function(obj, Alpha = 0.05, ...) {
+  ## extract coefficient summary
+  s <- summary(obj)
+  cf <- s$coefficients
+  ## augment with confidence intervals
+  cval <- qnorm(1 - Alpha/2)
+  for(i in seq_along(cf)) cf[[i]] <- cbind(cf[[i]],
+    cf[[i]][, 1] - cval * cf[[i]][, 2],
+    cf[[i]][, 1] + cval * cf[[i]][, 2])
+  ## collect in array
+  nam <- unique(unlist(lapply(cf, rownames)))
+  acf <- array(dim = c(length(nam), 6, length(cf)),
+    dimnames = list(nam, c("est", "se", "stat", "p", "lwr", "upr"), names(cf)))
+  for(i in seq_along(cf)) acf[rownames(cf[[i]]), , i] <- cf[[i]]
+  
+  ## return everything
+  return(list(
+    coef = acf,
+    sumstat = c(
+      "N" = obj$nobs,
+      "logLik" = as.vector(logLik(obj)),
+      "AIC" = AIC(obj),
+      "BIC" = AIC(obj, k = log(obj$nobs))
+    ),
+    contrasts = obj$contrasts,
+    xlevels = obj$xlevels,
+    call = obj$call
+  ))
+}
