@@ -89,9 +89,8 @@ negbin1_fit <- function(x, y, control)
         rval <- matrix(0, nrow = nrow(x), ncol = ncol(x) + 1L)
         rval <- cbind(
         as.vector(((y / mu - (y + mu / alpha) / (mu + mu / alpha)) + (1 / alpha) *
-         ( digamma(y + mu / alpha) - digamma(mu / alpha) + log(mu / alpha) + 1 - log(mu + mu / alpha) - (y + mu / alpha) / (mu + mu / alpha) ) ) * mu) * x[, , drop = FALSE]
-       ,
-       (- mu / (alpha)^2) * ( digamma(y + mu / alpha) - digamma(mu / alpha) + log(mu / alpha) + 1 - log(mu + mu / alpha) - (y + mu / alpha) / (mu + mu / alpha))
+         ( digamma(y + mu / alpha) - digamma(mu / alpha) + log(mu / alpha) + 1 - log(mu + mu / alpha) - (y + mu / alpha) / (mu + mu / alpha) ) ) * mu) * x[, , drop = FALSE],
+       (- mu / alpha^2) * ( digamma(y + mu / alpha) - digamma(mu / alpha) + log(mu / alpha) + 1 - log(mu + mu / alpha) - (y + mu / alpha) / (mu + mu / alpha))
         )      
                     
         ## sum (if desired) and change sign
@@ -241,7 +240,7 @@ predict.negbin1 <- function(object, newdata = NULL,
     return(rval)
 }
 
-bread.negbin1 <- function(x, ...) x$vcov * nobs
+bread.negbin1 <- function(x, ...) x$vcov * x$nobs
 
 estfun.negbin1 <- function(x, ...)
 {
@@ -253,15 +252,14 @@ estfun.negbin1 <- function(x, ...)
     }
   
     mu <- exp(x$x$location %*% x$coefficients$location)
-    alpha <- x$x$coefficients$alpha
+    alpha <- x$coefficients$alpha
 
     rval <- matrix(0, nrow = x$nobs, ncol = x$df)
-    rval <- cbind(
-        t(sapply(1L:n, function(i) (mu[i] / alpha) / ( sum(0L:(x$y[i] - 1)) + mu[i] / alpha) * x$x[i, , drop = FALSE] +
-                                   mu[i] / alpha * x$x[i, , drop = FALSE])),
-        sapply(1L:n, function(i) (1 / alpha^2) * (- (mu[i] / ( sum( 0L:(x$y[i] - 1) ) + 1 / alpha )) - (1 / alpha^2) * mu[i] * log(1 + alpha) -
-                                                  alpha / (1 + alpha) + x$y[i] * alpha))
-    )
+        rval <- cbind(
+        as.vector(((x$y / mu - (x$y + mu / alpha) / (mu + mu / alpha)) + (1 / alpha) *
+         ( digamma(x$y + mu / alpha) - digamma(mu / alpha) + log(mu / alpha) + 1 - log(mu + mu / alpha) - (x$y + mu / alpha) / (mu + mu / alpha) ) ) * mu) * x$x[, , drop = FALSE],
+       (- mu / alpha^2) * ( digamma(x$y + mu / alpha) - digamma(mu / alpha) + log(mu / alpha) + 1 - log(mu + mu / alpha) - (x$y + mu / alpha) / (mu + mu / alpha))
+        )
     
     ## nice column names
     colnames(rval) <- c(colnames(x$x$location), colnames(x$x$alpha))
@@ -350,30 +348,6 @@ update.negbin1 <- function (object, formula., ..., evaluate = TRUE)
   }
   if(evaluate) eval(call, parent.frame())
   else call
-}
-
-Boot.negbin1 <- function(object, f = coef, labels = names(f(object)), R = 999, method = "case") {
-  if(!(requireNamespace("boot"))) stop("The 'boot' package is missing")
-  f0 <- f(object)
-  if(is.null(labels) || length(labels) != length(f0)) labels <- paste("V", seq(length(f0)), sep = "")
-  method <- match.arg(method, c("case", "residual"))
-  opt<-options(show.error.messages = FALSE)
-  if(method == "case") {
-    boot.f <- function(data, indices, .fn) {
-      mod <- try(update(object, subset = indices, hessian = FALSE, start = coef(object)))
-      out <- if(class(mod) == "try-error") f0 + NA else .fn(mod)
-      out
-    }
-  } else {
-    stop("currently not implemented")
-  }
-  b <- boot::boot(model.frame(object), boot.f, R, .fn = f)
-  colnames(b$t) <- labels
-  options(opt)
-  d <- dim(na.omit(b$t))[1]
-  if(d != R) cat( paste("\n","Number of bootstraps was", d, "out of", R, "attempted", "\n"))
-
-  return(b)
 }
 
 getSummary.negbin1 <- function(obj, Alpha = 0.05, ...) {
