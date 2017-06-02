@@ -3,6 +3,8 @@
 \alias{negbin1_control}
 \alias{negbin1_fit}
 
+\alias{getSummary.negbin1}
+
 \title{
 Negative Binomial 1 Regression
 }
@@ -14,11 +16,11 @@ Fit negative binomial (NB) regression models with NB1 response distribution. The
 \usage{
 negbin1(formula, data, subset, na.action,
   model = TRUE, y = TRUE, x = TRUE,
-  control = negbin1_control(...), ...)
+  control = negbin1_control(\dots), \dots)
 
-negbin1_fit(y, x, control)
+negbin1_fit(x, y, control)
 
-negbin1_control(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
+negbin1_control(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, \dots)
 }
 
 \arguments{
@@ -29,9 +31,17 @@ negbin1_control(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
   \item{model, y, x}{logicals. If TRUE the corresponding components of the fit are returned.}
   \item{control}{a list of parameters for controlling the fitting process. For \code{negbin1_fit} this is passed to \code{negbin1_control}.}
   \item{\dots}{additional arguments to be passed.}
-  \item{maxit, start}{control arguments passed to
-  \code{\link[stats]{optim}}.}
-  \item{grad, hessian}{gradient and hessian.}
+  \item{maxit, start}{control arguments passed to \code{\link[stats]{optim}}.}
+  \item{grad}{logical. Should gradients be used for optimization? If \code{TRUE},
+    the default \code{method} is \code{"BFGS"}. Otherwise \code{method = "Nelder-Mead"}
+    is used.}
+  \item{hessian}{logical or character. Should a numeric approximation of the
+    (negative) Hessian matrix be computed? Either \code{FALSE} (or equivalently
+    \code{"none"}) or \code{TRUE}. Alternatively, in the latter case,
+    \code{hessian = "numDeriv"} could be specified to signal that the Hessian should
+    be approximated by \code{\link[numDeriv]{hessian}}. Another option is
+    \code{hessian = "numDeriv"} so that \code{\link[stats]{optim}} is used
+    for computing the Hessian.}
 }
 
 \details{
