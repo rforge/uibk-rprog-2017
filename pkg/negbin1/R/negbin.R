@@ -75,7 +75,7 @@ negbin1_fit <- function(x, y, control)
         beta <- par[1L:m]
         alpha <- par[m+1L]
         mu <- exp(x %*% beta)
-        ll <- dnbinom(y, size = mu / alpha, mu = mu, log = TRUE)
+        ll <- dnbinom(y, size = exp(mu / alpha), mu = mu, log = TRUE)
         -sum(ll)
         }
 
@@ -89,8 +89,10 @@ negbin1_fit <- function(x, y, control)
         rval <- matrix(0, nrow = nrow(x), ncol = ncol(x) + 1L)
         rval <- cbind(
         as.vector(((y / mu - (y + mu / alpha) / (mu + mu / alpha)) + (1 / alpha) *
-         ( digamma(y + mu / alpha) - digamma(mu / alpha) + log(mu / alpha) + 1 - log(mu + mu / alpha) - (y + mu / alpha) / (mu + mu / alpha) ) ) * mu) * x[, , drop = FALSE],
-       (- mu / alpha^2) * ( digamma(y + mu / alpha) - digamma(mu / alpha) + log(mu / alpha) + 1 - log(mu + mu / alpha) - (y + mu / alpha) / (mu + mu / alpha))
+                   ( digamma(y + mu / alpha) - digamma(mu / alpha) + log(mu / alpha) + 1 - log(mu + mu / alpha) -
+                     (y + mu / alpha) / (mu + mu / alpha) ) ) * mu) * x[, , drop = FALSE],
+        (- mu / alpha^2) * ( digamma(y + mu / alpha) - digamma(mu / alpha) + log(mu / alpha) + 1 - log(mu + mu / alpha) -
+                             (y + mu / alpha) / (mu + mu / alpha))
         )      
                     
         ## sum (if desired) and change sign
