@@ -1,5 +1,5 @@
 import("stats", "Formula")
-importFrom("numDeriv", "grad", "hessian")
+importFrom("sandwich", "bread", "estfun")
 
 export(
   "hetprobit",
@@ -8,11 +8,13 @@ export(
 )
 
 ## methods for hetprobit
+S3method("bread", "hetprobit")
 S3method("coef", "hetprobit")
+S3method("estfun", "hetprobit")
 S3method("logLik", "hetprobit")
-S3method("print", "hetprobit")
-S3method("terms", "hetprobit")
 S3method("model.frame", "hetprobit")
 S3method("model.matrix", "hetprobit")
 S3method("predict", "hetprobit")
-
+S3method("print", "hetprobit")
+S3method("terms", "hetprobit")
+S3method("vcov", "hetprobit")

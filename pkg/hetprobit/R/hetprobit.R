@@ -88,30 +88,31 @@ hetprobit_fit <- function(x, y, z = NULL, control)
   p <- ncol(z)
   stopifnot(n == nrow(x), n == nrow(z))
 
-  ## negative log-likelihood    
+  ## negative log-likelihood (contributions)    
   nll <- function(par) {
     beta <- par[1:m]
     gamma <- par[m + (1:p)]
+    mu <- x %*% beta
     scale <- exp(z %*% gamma)
-    eta <- x %*% beta
-    ll <- y * pnorm(eta/scale, log.p = TRUE) + (1 - y) * pnorm(-eta/scale, log.p = TRUE)
+    ll <- y * pnorm(mu/scale, log.p = TRUE) + (1 - y) * pnorm(-mu/scale, log.p = TRUE)
     -sum(ll)
   }
 
-  ## negative gradient contributions
+  ## negative gradient (contributions)
   ngr <- function(par, sum = TRUE) {
     beta <- par[1:m]
     gamma <-par[m + (1:p)]
     mu <- x %*% beta
     scale <- exp(z %*% gamma)
+    pi <- pnorm(mu/scale)
 
     rval <- matrix(0, nrow = nrow(x), ncol = ncol(x) + ncol(z)) 
  
-  ## partial derivative w.r.t mu
-    rval[, 1:m] <- as.numeric(y * (dnorm(mu/scale)/pnorm(mu/scale))) * (x/ as.numeric(scale)) - as.numeric((1- y) *(dnorm(mu/scale)/(1 - pnorm(mu/scale)))) * (x/as.numeric(scale)) 
+    ## partial derivative of ll w.r.t beta
+    rval[, 1:m] <- as.numeric(y * (dnorm(mu/scale)/pi)) * (x/as.numeric(scale)) - as.numeric((1 - y) * (dnorm(mu/scale)/(1 - pi))) * (x/as.numeric(scale)) 
 
-  ## partial derivative w.r.t sigma
-    rval[, m + (1:p)] <- as.numeric(y * (dnorm(mu/scale)/pnorm(mu/scale)) * (-mu/scale)) * z - as.numeric((1 - y) * (dnorm(mu/scale)/(1 - pnorm(mu/scale))) * (-mu/scale)) * z
+    ## partial derivative of ll w.r.t gamma
+    rval[, m + (1:p)] <- as.numeric(y * (dnorm(mu/scale)/pi) * (-mu/scale)) * z - as.numeric((1 - y) * (dnorm(mu/scale)/(1 - pi)) * (-mu/scale)) * z
   
     if(sum) 
       rval <- colSums(rval)
@@ -266,5 +267,60 @@ predict.hetprobit <- function(object, newdata = NULL,
     "scale" = scale
   )
   return(rval)
+}
+
+bread.hetprobit <- function(x, ...) x$vcov * x$nobs
+
+estfun.hetprobit <- function(x, ...)
+{
+  ## observed data and fit
+  if(is.null(x$y) || is.null(x$x)) {
+    mf <- model.frame(x)
+    x$y <- model.response(mf)
+    x$x <- list(
+      "mean" = model.matrix(x$terms$mean, mf),
+      "scale" = model.matrix(x$terms$scale, mf)
+    )
+  }
+  mu <- x$x$mean %*% x$coefficients$mean
+  scale <- exp(x$x$scale %*% x$coefficients$scale)
+  pi <- pnorm(mu/scale)
+
+  m <- ncol(x$x$mean)
+  p <- ncol(x$x$scale)
+
+  rval <- matrix(0, nrow = x$nobs, ncol = x$df) 
+ 
+  ## partial derivative of ll w.r.t beta
+  rval[, 1:m] <- as.numeric(x$y * (dnorm(mu/scale)/pi)) * (x$x$mean/as.numeric(scale)) - as.numeric((1 - x$y) * (dnorm(mu/scale)/(1 - pi))) * (x$x$mean/as.numeric(scale)) 
+
+  ## partial derivative of ll w.r.t gamma
+  rval[, m + (1:p)] <- as.numeric(x$y * (dnorm(mu/scale)/pi) * (-mu/scale)) * x$x$scale - as.numeric((1 - x$y) * (dnorm(mu/scale)/(1 - pi)) * (-mu/scale)) * x$x$scale
+
+
+  ## nice column names
+  colnames(rval) <- c(colnames(x$x$mean), paste("(scale)", colnames(x$x$scale), sep = "_"))
+  return(rval)
+}
+
+vcov.hetprobit <- function(object, model = c("full", "mean", "scale"), ...)
+{
+  vc <- object$vcov
+  k <- length(object$coefficients$mean)
+  m <- length(object$coefficients$scale)
+  model <-  match.arg(model)
+  switch(model,
+    "mean" = {
+      vc[seq.int(length.out = k), seq.int(length.out = k), drop = FALSE]
+    },
+    "scale" = {
+      vc <- vc[seq.int(length.out = m) + k, seq.int(length.out = m) + k, drop = FALSE]
+      colnames(vc) <- rownames(vc) <- names(object$coefficients$scale)
+      vc
+    },
+    "full" = {
+      vc
+    }
+  )
 }
 
