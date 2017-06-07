@@ -1,0 +1,151 @@
+\documentclass[nojss]{jss}
+\usepackage{thumbpdf}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{multicol}
+%% need no \usepackage{Sweave}
+
+\newcommand{\newoperator}[3]{\newcommand*{#1}{\mathop{#2}#3}}
+\newcommand{\renewoperator}[3]{\renewcommand*{#1}{\mathop{#2}#3}}
+\newcommand{\vx}{\bm x}
+\newcommand{\vbeta}{\bm \beta}
+\newcommand{\Pe}{\mathrm{P}}
+\newcommand{\Meand}{\mathrm{Mean}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\expo}{\mathrm{exp}}
+
+\author{Susanne Berger\\University of Innsbruck}
+\title{An Implementation of Negative Binomial 1 Regression in \proglang{R}}
+
+\Plainauthor{Susanne Berger}
+\Plaintitle{An Implementation of Negative Binomial 1 Regression in R}
+\Shorttitle{Negative Binomial 1 Regression in R}
+
+\Keywords{negative binomial, NB1, count data, \proglang{R}}
+\Plainkeywords{negative binomial, NB1, count data, R}
+
+\Abstract{ 	
+An implementation of negative binomial 1 regression models is provided. The negative binomial distribution is an often used alternative to the Poisson model, especially when doubts arise regarding the independence of the underlying process and the inclusion of all relevant regressors.
+}
+
+\Address{
+  Susanne Berger\\
+  Department of Statistics\\
+  Faculty of Economics and Statistics\\
+  Universit\"at Innsbruck\\
+  Universit\"atsstr.~15\\
+  6020 Innsbruck, Austria\\
+  Telephone: +43/512/507-7113\\
+  E-mail: \email{susanne.berger@uibk.ac.at}
+}
+
+\begin{document}
+
+\SweaveOpts{engine=R,eps=FALSE}
+%\VignetteIndexEntry{An Implementation of Negative Binomial 1 Regression in R}
+%\VignetteDepends{}
+%\VignetteKeywords{negative binomial, NB1, count data, R}
+%\VignettePackage{negbin1}
+
+<<preliminaries,echo=FALSE,results=hide>>=
+library("negbin1")
+library("VGAM")
+library("gamlss")
+library("MASS")
+library("lmtest")
+library("Formula")
+library("numDeriv")
+options(prompt = "R> ", continue = "+   ")
+@ 
+
+
+<<dgp,echo=FALSE,results=hide>>=
+### data-generating process
+dgp <- function(n = 1000, coef = c(2, 3, 0, 0.7)) {
+  d <- data.frame(
+    x1 = runif(n, -1, 1),
+    x2 = runif(n, -1, 1)
+    )
+  d$mu <- exp(coef[1] + coef[2] * d$x1 + coef[3] * d$x2)
+  d$y <- rnbinom(n, mu = d$mu, size = exp(d$mu /coef[4]))
+  return(d)
+}
+
+## simulate data
+set.seed(2017-05-15)
+d <- dgp()
+@
+
+\section{Idea} \label{sec:idea}
+According to \cite{nb1:Winkelmann:2013}, ``the negative binomial distribution is the most commonly used alternative to
+the Poisson model when it is doubtful whether the strict requirements of independence
+of the underlying process, and inclusion of all relevant regressors, are
+satisfied.'' 
+
+The negative binomial 1 model (NB1) is obtained by letting $\alpha$ vary across individuals such that $\alpha = \sigma^{-2}\expo(x^\top\beta)$ and the conditional expectiation function is 
+\begin{equation}
+  \E(y|x) = \expo(x^\top\beta),
+\end{equation}  
+which produces a conditional variance that is a linear function of the mean \citep{nb1:Winkelmann:2013}:
+\begin{equation}
+  \Var(y|x) = (1 + \sigma^2)\expo(x^\top\beta)
+\end{equation}
+For more details, see also \cite{nb1:Cameron+Trivedi:2013}.
+
+\section{Implementation} \label{sec:impl}
+The workhorse function of \pkg{negbin1} is the function \code{negbin1_fit}, which is normally not called directly,
+but when the model response and model matrix have already been calculated.
+Starting values in the optimization are by default taken from Poisson regression.
+
+Below, the computation time of \code{negbin1} is compared to NB1 implementations from other packages, as \code{vglm} from
+\pkg{VGAM} and \code{gamlss} from package \pkg{gamlss}. The simulated dataset comprises 1,000 observations.
+
+<<models,echo=TRUE>>=
+system.time(m11 <- negbin1(y ~ x1 + x2, data = d))
+system.time(m12 <- negbin1(y ~ x1 + x2, data = d, grad = TRUE))
+system.time(m2 <- vglm(y ~ x1 + x2, negbinomial(parallel = TRUE, zero = NULL),
+                       data = d, trace = FALSE)) 
+system.time(m3 <- gamlss(y ~ x1 + x2, family = NBI, data = d, trace = FALSE))
+@ 
+
+\section{Example} \label{sec:ex}
+Data on the number of publications produced by Ph.D. biochemists, 
+taken from \cite{nb1:Long:1990} are employed to test the \code{negbin1} function \citep[see also][]{nb1:Long:1997}.
+The data are loaded from the \pkg{negbin1} package.
+
+<<data,echo=TRUE>>=
+data("publications", package = "negbin1")
+@ 
+
+In a next step, a benchmark Poisson model is estimated, where the number of publications produced by Ph.D. biochemist appears as a dependent variable. Explanatory variables are \code{gender}, marriage status (\code{married}), number of children under age six (\code{kids}), prestige of Ph.D. program (\code{prestige}) and articles by mentor in the last three years (\code{mentor}).
+
+<<poisson,echo=TRUE>>=
+poi <- glm(articles ~ gender + married + kids + prestige + mentor,
+  family = "poisson", data = publications)
+summary(poi)
+@ 
+
+However, the variance of the number of publications is more than twice the mean.
+
+<<sum,echo=TRUE>>=
+var(publications$articles) / mean(publications$articles)
+@ 
+
+As the data exhibit overdispersion (of course without taking any covariates into account),
+a negative binomial 1 regression offers some remedy in such a situation.
+
+<<nb1,echo=TRUE>>=
+nb1 <- negbin1(articles ~ gender + married + kids + prestige + mentor,
+   data = publications)
+summary(nb1)
+@ 
+
+While both sets of parameter estimates would lead to the same conclusions, the standard errors reported reveal that ordinary Poisson regression underestimates the standard errors.
+
+<<se,echo=TRUE>>=
+cbind("Poisson" = sqrt(diag(vcov(poi))), "NB1" = sqrt(diag(vcov(nb1)))[-7])
+@ 
+
+
+\bibliography{negbin1}
+
+\end{document}
