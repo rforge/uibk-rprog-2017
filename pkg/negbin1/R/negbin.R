@@ -164,6 +164,10 @@ logLik.negbin1 <- function(object, ...) {
     structure(object$loglik, df = object$df, class = "logLik")
 }
 
+coef.negbin1 <- function(object, ...) {
+    object$coefficients$location
+}
+
 print.negbin1 <- function(x, digits = max(3, getOption("digits") - 3), ...)
 {
     cat("Negbin 1 model\n\n")
