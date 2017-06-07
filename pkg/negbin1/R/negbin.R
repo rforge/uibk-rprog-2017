@@ -165,7 +165,10 @@ logLik.negbin1 <- function(object, ...) {
 }
 
 coef.negbin1 <- function(object, ...) {
-    object$coefficients$location
+    cf <- object$coefficients
+    names(cf$alpha) <- "alpha"
+    structure(c(cf$location, cf$alpha),
+               .Names = c(names(cf$location), names(cf$alpha)))
 }
 
 print.negbin1 <- function(x, digits = max(3, getOption("digits") - 3), ...)
