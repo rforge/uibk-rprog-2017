@@ -91,13 +91,13 @@ require("lmtest")
 require("MASS")
 
 ## data generating process
-dgp <- function(n = 1000, coef = c(2, 3, 0, 0.7)) {
+dgp <- function(n = 1000, coef = c(0.2, 0.3, 0, 2)) {
   d <- data.frame(
     x1 = runif(n, -1, 1),
     x2 = runif(n, -1, 1)
     )
   d$mu <- exp(coef[1] + coef[2] * d$x1 + coef[3] * d$x2)
-  d$y <- rnbinom(n, mu = d$mu, size = exp(d$mu / coef[4]))
+  d$y <- rnbinom(n, mu = d$mu, size = d$mu / coef[4])
   return(d)
 }
 
