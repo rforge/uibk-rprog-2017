@@ -11,6 +11,7 @@ export(
 
 S3method("bread", "negbin1")
 S3method("estfun", "negbin1")
+S3method("coef", "negbin1")
 S3method("logLik", "negbin1")
 S3method("model.frame", "negbin1")
 S3method("model.matrix", "negbin1")
