@@ -5,13 +5,24 @@ importFrom("numDeriv", "grad", "hessian")
 export(
   "fgamma",
   "fgamma_fit",
-  "fgamma_control"
+  "fgamma_control",
+  "Boot.fgamma",
+  "getSummary.fgamma"
 )
 
-S3method("logLik", "fgamma")
+## methods for fgamma
+S3method("bread", "fgamma")
 S3method("coef", "fgamma")
+S3method("estfun", "fgamma")
+S3method("fitted", "fgamma")
+S3method("logLik", "fgamma")
 S3method("model.frame", "fgamma")
 S3method("model.matrix", "fgamma")
 S3method("predict", "fgamma")
 S3method("print", "fgamma")
+S3method("residuals", "fgamma")
+S3method("summary", "fgamma")
+S3method("print", "summary.fgamma")
 S3method("terms", "fgamma")
+S3method("update", "fgamma")
+S3method("vcov", "fgamma")
