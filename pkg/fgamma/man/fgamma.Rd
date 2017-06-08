@@ -3,6 +3,9 @@
 \alias{fgamma_fit}
 \alias{fgamma_control}
 
+\alias{getSummary.fgamma}
+\alias{Boot.fgamma}
+
 \title{
 Full Gamma Regression 
 }
