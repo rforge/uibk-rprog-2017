@@ -5,6 +5,6 @@ Date: 2017-06-06
 Authors@R: person("Judith", "Santer", role = c("aut", "cre"), email = "Judith.Santer@uibk.ac.at")
 Description: Heteroscedastic probit models are provided. In standard probit models the variance of the error term is assumed to be constant. Heteroscedastic probit models allow the error terms to vary systematically.
 Depends: R (>= 3.0.0)
-Imports: stats, Formula, sandwich
-Suggests: glmx, lmtest, numDeriv
+Imports: stats, Formula, sandwich, numDeriv
+Suggests: glmx, lmtest
 License: GPL-2 | GPL-3

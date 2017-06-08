@@ -61,8 +61,8 @@ hetprobit <- function(formula, data, subset, na.action,
 hetprobit_control <- function(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
 {
   if(is.logical(hessian)) hessian <- if(hessian) "optim" else "none"
-  if(is.character(hessian)) hessian <- match.arg(tolower(hessian), c("optim", "numderiv", "none"))
-ctrl <- c(
+  if(is.character(hessian)) hessian <- match.arg(tolower(hessian), c("numderiv", "optim", "none"))
+  ctrl <- c(
     list(maxit = maxit, start = start, grad = grad, hessian = hessian),
     list(...)
   )
@@ -158,6 +158,7 @@ hetprobit_fit <- function(x, y, z = NULL, control)
  
 
   ## collect information
+  # mean and scale coefficients and loglikelihood
   names(opt)[1:2] <- c("coefficients", "loglik")
   opt$coefficients <- list(
     mean = opt$coefficients[1:m], 
@@ -165,6 +166,9 @@ hetprobit_fit <- function(x, y, z = NULL, control)
   )
   names(opt$coefficients$mean) <- colnames(x)
   names(opt$coefficients$scale) <- colnames(z)
+
+  # other model information
+  opt$method <- meth
   opt$loglik <- -opt$loglik 
   opt$nobs <- n
   opt$df <- m + p
