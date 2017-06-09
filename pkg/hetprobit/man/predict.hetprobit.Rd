@@ -21,10 +21,10 @@ Obtains predictions from a fitted heteroscedastic probit model object.
     predict can be supplied. If omitted, the fitted linear predictors are used.}
   \item{type}{the type of prediction required. The default is on the scale of the response, i.e. 
     probabilities. The alternative \code{link} is on the scale of the scaled linear predictor 
-    FIXME(description needs improvement) and \code{scale} returns predictions for the scale parameter 
-    sigma.}
-  \item{na.action}{function determining what should be done with missing values in \code{newdata}. The 
-    default is to predict NA.}
+    FIXME(description needs improvement) and \code{scale} returns predictions for the scale 
+    parameter sigma.}
+  \item{na.action}{function determining what should be done with missing values in \code{newdata}. 
+    The default is to predict NA.}
   \item{\ldots}{further arguments to be passed.}
 }
 
