@@ -142,7 +142,7 @@ hetprobit_fit <- function(x, y, z = NULL, control)
     optim(par = start, fn = nll, control = control, method = meth, hessian = (hess == "optim"))
   }
   
-  ## compute hessian (if necessary)
+  ## compute hessian for vcov-calculation (per default the hessian is not returned)
   if(hess == "none") {
     opt <- c(opt, list(hessian = NULL))
   } else if(hess == "numderiv") {
@@ -177,7 +177,7 @@ hetprobit_fit <- function(x, y, z = NULL, control)
 }
  
 
-  ## defining methods for hetprobit
+## defining methods for hetprobit
 
 logLik.hetprobit <- function(object, ...) {
   structure(object$loglik, df = object$df, class = "logLik")
