@@ -20,8 +20,9 @@ Extracts the estimated coefficients from a fitted heteroscedastic probit model o
 }
 
 \details{
-  The default extracts the coefficients of the full model (mean and scale). With \code{mean} or \code
-  {scale} the estimated coefficients of the \emph{mean} or \emph{scale} part of the model are returned. 
+  The default extracts the coefficients of the full model (mean and scale). With \code{mean} or 
+  \code{scale} the estimated coefficients of the \emph{mean} or \emph{scale} part of the model are 
+  returned. 
 }
 
 \value{
