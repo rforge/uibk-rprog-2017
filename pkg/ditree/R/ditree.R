@@ -17,16 +17,21 @@ difit <- function(y, family = NO(), weights = NULL,
   ## check weights
   if(is.null(weights) || (length(weights)==0L)) weights <- as.vector(rep.int(1, NROW(y)))
   if(length(weights) != NROW(y)) stop("number of observations and length of weights are not equal")
+  if(is.table(weights)) weights <- as.vector(weights)
   
-  ## check whether the input is a gamlss.family object (or function) or a list of the required type
+  ## check whether the input is a a character string, a gamlss.family object (or function), a function or a list of the required type
+  if(is.character(family)) {
+    family <- try(getAnywhere(paste("dist", family, sep = "_")), silent = TRUE)
+    if(inherits(family, "try-error")) family <- try(getAnywhere(family), silent = TRUE)
+    if(inherits(family, "try-error")) stop("unknown 'family' specification")
+  }
   if(is.function(family)) family <- family()
   
-  ## get and check family list
   if(inherits(family, "gamlss.family")) family <- make_dist_list(family, bd = bd)
   # if(is.character(family)) family <- ...     # for biniomial distributions: bd should be handed over once, but not appear in the list from here on
   if(!is.list(family)) stop ("unknown family specification")
   if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
-  
+  # linkinvdr only used in the method vcov for type = "parameter"
   
   
   # set up negative log-likelihood
@@ -45,12 +50,14 @@ difit <- function(y, family = NO(), weights = NULL,
   
   # optimize
   usegrad <- ocontrol$grad
-  gethessian <- ocontrol$hessian
-  ocontrol$grad <- ocontrol$hessian <- NULL
+  hessian <- ocontrol$hessian
+  gethessian <- !(hessian == "none")
+  method <- ocontrol$method
+  ocontrol$grad <- ocontrol$hessian <- ocontrol$method <- NULL
   if(usegrad) {
-    obj <- optim(par = starteta, fn = nll, gr = grad, control = ocontrol, hessian = gethessian)
+    obj <- optim(par = starteta, fn = nll, gr = grad, control = ocontrol, hessian = gethessian, method = method)
   } else {
-    obj <- optim(par = starteta, fn = nll, control = ocontrol, hessian = gethessian)
+    obj <- optim(par = starteta, fn = nll, control = ocontrol, hessian = gethessian, method = method)
   }  
   eta <- obj$par
   names(eta) <- names(starteta)
@@ -58,13 +65,52 @@ difit <- function(y, family = NO(), weights = NULL,
   
   ef <- if(estfun) family$sdist(y, eta = obj$par, sum = FALSE) else NULL
   
-  rval <- list(object = obj,
+  
+  ## compute hessian (if necessary)
+  if(hessian == "none") {
+    hess <- NULL
+    vcov <- NULL
+  } else {
+    if(hessian == "numeric") {
+      hess <- -opt$hessian
+    }
+    if(hessian == "analytic") {
+      hess <- family$hdist(y, eta, weights = weights)
+    }
+    hess <- as.matrix(hess)
+    colnames(hess) <- rownames(hess) <- names(eta)
+    
+    #vcov for link coefficients eta
+    vc <- try(solve(-hess), silent = TRUE)
+    if(inherits(vc, "try-error")) {
+      vc <- try(qr.solve(-hess), silent = TRUE)
+      if(inherits(vc, "try-error")) {
+        vc <- try(chol2inv(chol(-hess)))
+        if(inherits(vc, "try-error")) {
+          print(-hess)
+          print("hessian matrix is 'numerically' singular")
+        }
+      }
+    }
+    vc <- as.matrix(vc)
+    colnames(vc) <- rownames(vc) <- colnames(hess)
+    vcov <- vc
+  }
+  
+  rval <- list(y = y,
+               call = cl,
+               object = obj,
                coefficients = par,
+               eta = eta,
                loglik = -obj$value,
                nobs = length(y),
                estfun = ef,
+               method = method,
+               df = length(par),
+               vcov = vcov,
                familylist = family,
-               family = family$family.name
+               family = family$family.name,
+               convergence = obj$convergence
   )
   
   class(rval) <- "difit"
@@ -78,29 +124,23 @@ difit <- function(y, family = NO(), weights = NULL,
 
 ###########
 # difit methods
-coef.difit <- function(object, ...) {
-  return(object$coefficients)
-}
-
-logLik.difit <- function(object, ...) {
-  structure(object$loglik, df = length(object$coefficients), class = "logLik")
-}
-
 nobs.difit <- function(object, ...) return(object$nobs)
 
-predict.difit <- function(object, type = "response", OOB = FALSE, ...){
+coef.difit <- function(object, ...) return(object$coefficients)
+
+predict.difit <- function(object, type = c("response", "parameters"), ...){
   # calculation of the expected value 
   # of the given distribution with the calculated parameters
   if(type == "response") {
     
-    if("censored" %in% strsplit(object$family, " ")[[1]])
-    {
-      par <- coef(object, type = "parameter")
-      expv <- par[1]
-      #lat.expv <- par[1]
-      #object$ddist() / object$pdist()
-      return(expv)
-    } 
+    #if("censored" %in% strsplit(object$family, " ")[[1]])
+    #{
+    #  par <- coef(object, type = "parameter")
+    #  expv <- par[1]
+    #  #lat.expv <- par[1]
+    #  #object$ddist() / object$pdist()
+    #  return(expv)
+    #} 
     
     
     f <- function(x){x * object$familylist$ddist(y = x, eta = object$familylist$linkfun(object$coefficients), log = FALSE)}
@@ -116,17 +156,198 @@ predict.difit <- function(object, type = "response", OOB = FALSE, ...){
       }
     }
     return(expv[[1]])
+  } else return(object$coefficients)
+}
+
+vcov.difit <- function(object, type = c("parameter", "link"), ...) {
+  if(type == "link") return(object$vcov)
+  if(type == "parameter"){
+    ## delta method
+    delta.m <- diag(object$familylist$linkinvdr(object$eta))
+    colnames(delta.m) <- rownames(delta.m) <- names(object$coefficients)
+    return(delta.m %*% object$vcov %*% delta.m)
   }
 }
 
-estfun.difit <- function(object, ...) {                         
-  return(object$estfun)
+estfun.difit <- function(object, ...) return(object$estfun)
+
+logLik.difit <- function(object, ...) structure(object$loglik, df = object$df, class = "logLik")
+
+bread.difit <- function(object, type = "parameter", ...) {
+  if(type == "parameter") return(vcov(object, type = "parameter") * object$nobs)
+  if(type == "link") return(object$vcov * object$nobs)
+}
+
+print.difit <- function(x, digits = max(3, getOption("digits") - 3), ...)
+{
+  cat("Fitted distributional model (", x$family, ")\n\n")
+  if(!(x$familylist$mle) && x$convergence > 0L) {
+    cat("Model did not converge\n")
+  } else {
+    if(length(x$coefficients)) {
+      cat("Coefficients:\n")
+      print.default(format(x$coefficients, digits = digits), print.gap = 2, quote = FALSE)
+      cat("\n")
+    } else {
+      cat("No coefficients \n\n")
+    }
+    cat(paste("Log-likelihood: ", format(x$loglik, digits = digits), "\n", sep = ""))
+    if(length(x$df)) {
+      cat(paste("Df: ", format(x$df, digits = digits), "\n", sep = ""))
+    }
+    cat("\n")
+  }
+  
+  invisible(x)
+}
+
+
+
+summary.difit <- function(object, ...)
+{
+  ## residuals
+  object$residuals <- object$y - predict.difit(object, type = "response")
+  if(length(object$coefficients)>1) {
+    object$residuals <- object$residuals / object$coefficients[2]
+  } else {warning("one-parametric distribution, residuals are not standardized")}
+  
+  ## extend coefficient table
+  cf <- as.vector(object$coefficients)
+  se <- sqrt(diag(vcov(object, type = "parameter")))
+  cf <- cbind(cf, se)
+  colnames(cf) <- c("Estimate", "Std. Error")
+  rownames(cf) <- names(object$coefficients)
+  object$coefficients <- cf
+  
+  ## return
+  class(object) <- "summary.difit"
+  object
+}
+
+
+print.summary.difit <- function(x, digits = max(3, getOption("digits") - 3), ...)
+{
+  cat("\nCall:", deparse(x$call, width.cutoff = floor(getOption("width") * 0.85)), "", sep = "\n")
+  
+  if(!(x$familylist$mle) && x$convergence > 0L) {
+    cat("model did not converge\n")
+  } else {
+    cat(paste("Distribution Family:\n", x$family, "\n\n", sep = ""))
+    
+    cat(paste("Standardized residuals:\n", sep = ""))
+    print(structure(round(as.vector(quantile(x$residuals)), digits = digits),
+                    .Names = c("Min", "1Q", "Median", "3Q", "Max")))
+    
+    if(NROW(x$coefficients)) {
+      cat(paste("\nDistribution parameter(s):\n", sep = ""))
+      printCoefmat(as.data.frame(x$coefficients), digits = digits, signif.legend = FALSE)
+    } else cat("\nNo parameters\n")
+    
+    cat("\nLog-likelihood:", formatC(x$loglik, digits = digits), "on", x$df, "Df\n")
+    if(!x$familylist$mle)
+      cat(paste("Number of iterations in", x$method, "optimization:\n",
+                "function:", x$object$counts[1L], "\n",
+                "gradient:", x$object$counts[2L]))
+  }
+  
+  invisible(x)
+}
+
+
+residuals.difit <- function(object, type = c("standardized", "pearson", "response"), ...) {
+  if(match.arg(type) == "response") {
+    object$y - predict.difit(object, type = "response")
+  } else {
+    if(length(object$coefficients)>1) {
+      (object$y - predict.difit(object, type = "response")) / object$coefficients[2]
+      } else {stop("one-parametric distribution, residuals are not standardized")}
+  }
+}
+
+update.difit <- function (object, subset = NULL, start = NULL, ..., evaluate = TRUE)
+{
+  cl <- match.call()
+  call <- object$call
+  if(is.null(call)) stop("need an object with call component")
+  if(!is.null(subset)) {
+    ys <- object$y[subset] 
+    call[[2]] <- ys
+  }
+  if(!is.null(start)) {
+    call$start <- start
+  }
+  extras <- match.call(expand.dots = FALSE)$...
+  if(length(extras)) {
+    existing <- !is.na(match(names(extras), names(call)))
+    for (a in names(extras)[existing]) call[[a]] <- extras[[a]]
+    if(any(!existing)) {
+      call <- c(as.list(call), extras[!existing])
+      call <- as.call(call)
+    }
+  }
+  if(evaluate) eval(call, parent.frame())
+  else call
+}
+
+
+## FIX ME
+Boot.difit <- function(object, f = coef, labels = names(f(object)), R = 999, method = "case") 
+{
+  if(!(requireNamespace("boot"))) stop("The 'boot' package is missing")
+  f0 <- f(object)
+  if(is.null(labels) || length(labels) != length(f0)) labels <- paste("V", seq(length(f0)), sep = "")
+  method <- match.arg(method, c("case", "residual"))
+  opt<-options(show.error.messages = FALSE)
+  if(method == "case") {
+    boot.f <- function(data, indices, .fn) {
+      mod <- try(update(object, subset = indices, start = coef(object)))
+      out <- if(class(mod) == "try-error") f0 + NA else .fn(mod)
+      out
+    }
+  } else {
+    stop("currently not implemented")
+  }
+  b <- boot::boot(object, boot.f, R, .fn = f)
+  colnames(b$t) <- labels
+  options(opt)
+  d <- dim(na.omit(b$t))[1]
+  if(d != R) cat( paste("\n","Number of bootstraps was", d, "out of", R, "attempted", "\n"))
+  
+  return(b)
 }
 
 
 
 
+getSummary.difit <- function(obj, alpha = 0.05, ...) {
+  ## extract coefficient summary
+  s <- summary(obj)
+  cf <- s$coefficients
+  ## augment with confidence intervals
+  cval <- qnorm(1 - alpha/2)
+  cf <- cbind(cf,
+              cf[, 1] - cval * cf[, 2],
+              cf[, 1] + cval * cf[, 2])
+  
+  colnames(cf) <- c("est", "se", "lwr", "upr")
 
+  ## return everything
+  return(list(
+    family = obj$family,
+    coef = cf,
+    sumstat = c(
+      "N" = obj$nobs,
+      "logLik" = as.vector(logLik(obj)),
+      "AIC" = AIC(obj),
+      "BIC" = AIC(obj, k = log(obj$nobs))
+    ),
+    call = obj$call
+  ))
+}
+
+
+
+#########################
 ## tree building function using mob
 ditree <- function(formula, data, subset, na.action, family = NO(), 
                   control = mob_control(...), weights = NULL,
@@ -214,6 +435,34 @@ ditree <- function(formula, data, subset, na.action, family = NO(),
 
             
 
+
+
+####################
+# list generating function di_ocontrol
+# returns list containing control arguments for optim
+di_ocontrol <- function(maxit = 5000, grad = TRUE, hessian = TRUE, ...)
+{
+  if(is.logical(hessian)) hessian <- if(hessian) "analytic" else "none"
+  if(is.character(hessian)) hessian <- match.arg(tolower(hessian), c("numeric", "analytic", "none"))
+  ctrl <- c(list(maxit = maxit,
+                 grad = grad,
+                 hessian = hessian),
+            list(...))
+  if(is.null(ctrl$method)) {
+    ctrl$method <- if(grad) "BFGS" else "Nelder-Mead"
+  }
+  if(!is.null(ctrl$fnscale)) warning("fnscale must not be modified")
+  ctrl$fnscale <- 1
+  if(is.null(ctrl$reltol)) ctrl$reltol <- .Machine$double.eps^(1/1.2)
+  ctrl
+}
+
+
+
+
+
+
+
 ###########
 # ditree methods
 coef.ditree <- function(object, ...) {
@@ -248,29 +497,15 @@ predict.ditree <- function (object, newdata = NULL, type = c("parameter", "node"
 
 print.ditree <- function(x, title = NULL, objfun = "negative log-likelihood", ...)
 {
-  if(inherits(x$family, "gamlss.family")) familyname <- paste(x$family[[1]][2], "Distribution")
-  if(is.list(family)) familyname <- x$info$family$family.name
+  familyname <- if(inherits(x$family, "gamlss.family")) {
+    paste(x$family[[1]][2], "Distribution")
+  } else {x$family$family.name}
   if(is.null(title)) title <- sprintf("Distributional regression tree (%s)", familyname)
   print.modelparty(x, title = title, objfun = objfun, ...)
 }
 
 
 
-
-
-di_ocontrol <- function(maxit = 5000, grad = TRUE, hessian = TRUE, ...)
-{
-  ctrl <- c(
-    list(maxit = maxit,
-         grad = grad,
-         hessian = hessian
-    )
-  )
-  if(!is.null(ctrl$fnscale)) warning("fnscale must not be modified")
-  ctrl$fnscale <- 1
-  if(is.null(ctrl$reltol)) ctrl$reltol <- .Machine$double.eps^(1/1.2)
-  ctrl
-}
 
 
 
@@ -387,7 +622,7 @@ make_dist_list <- function(family, bd = NULL)
           input <- c(input, par[par.id])
           input$bd <- bd
           val <- do.call(fun, input)
-          ny <- if(is.Surv(y)) dim(y)[1] else length(y)
+          ny <- NROW(y)
           if(length(val) == 1L) val <- rep(val, ny)
           return(val)
         }
@@ -397,7 +632,7 @@ make_dist_list <- function(family, bd = NULL)
           input$y <- y
           input <- c(input, par[par.id])
           val <- do.call(fun, input)
-          ny <- if(is.Surv(y)) dim(y)[1] else length(y)
+          ny <- NROW(y)
           if(length(val) == 1L) val <- rep(val, ny)
           return(val)
         }    
@@ -408,14 +643,14 @@ make_dist_list <- function(family, bd = NULL)
           input <- list()
           input <- c(input, par[par.id])
           input$bd <- bd
-          ny <- if(is.Surv(y)) dim(y)[1] else length(y)
+          ny <- NROW(y)
           return(rep(do.call(fun, input), ny))
         }
       } else {
         derivfun <- function(y, par) {
           input <- list()
           input <- c(input, par[par.id])
-          ny <- if(is.Surv(y)) dim(y)[1] else length(y)
+          ny <- NROW(y)
           return(rep(do.call(fun, input), ny))
         }    
       }
@@ -601,7 +836,7 @@ make_dist_list <- function(family, bd = NULL)
       # for each observation a matrix of size (1x1) is stored in d2list
       
       d2list <- list()
-      ny <- if(is.Surv(y)) dim(y)[1] else length(y)
+      ny <- NROW(y)
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i),]
@@ -695,7 +930,7 @@ make_dist_list <- function(family, bd = NULL)
       # for each observation a matrix of size (2x2) is stored in d2list
       
       d2list <- list()
-      ny <- if(is.Surv(y)) dim(y)[1] else length(y)
+      ny <- NROW(y)
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i, ny+i),]
@@ -793,7 +1028,7 @@ make_dist_list <- function(family, bd = NULL)
       # for each observation a matrix of size (3x3) is stored in d2list
       
       d2list <- list()
-      ny <- if(is.Surv(y)) dim(y)[1] else length(y)
+      ny <- NROW(y)
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i, ny+i, 2*ny+i),]
@@ -894,7 +1129,7 @@ make_dist_list <- function(family, bd = NULL)
       # for each observation a matrix of size (4x4) is stored in d2list
       
       d2list <- list()
-      ny <- if(is.Surv(y)) dim(y)[1] else length(y)
+      ny <- NROW(y)
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i, ny+i, 2*ny+i, 3*ny+i),]
@@ -962,7 +1197,7 @@ make_dist_list <- function(family, bd = NULL)
     eval <- do.call(get(paste0("d", family$family[[1]])), input)
     if(sum) {
       if(is.null(weights) || (length(weights)==0L)) {
-        ny <- if(is.Surv(y)) dim(y)[1] else length(y)
+        ny <- NROW(y)
         weights <- rep.int(1, ny)
       }
       eval <- sum(weights * eval)
@@ -990,7 +1225,7 @@ make_dist_list <- function(family, bd = NULL)
     score <- as.matrix(score)
     colnames(score) <- etanames
     if(sum) {
-      ny <- if(is.Surv(y)) dim(y)[1] else length(y)
+      ny <- NROW(y)
       if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
       score <- colSums(weights * score)
     }
@@ -1000,7 +1235,7 @@ make_dist_list <- function(family, bd = NULL)
   
   ## hessian (second-order partial derivatives of the (positive) log-likelihood function)
   hdist <- function(y, eta, weights = NULL) {    
-    ny <- if(is.Surv(y)) dim(y)[1] else length(y)
+    ny <- NROW(y)
     if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
     
     par <- linkinv(eta)
