@@ -3,6 +3,7 @@
 \alias{ditree}
 \alias{difit}
 \alias{di_ocontrol}
+\alias{getSummary.difit}
 
 \title{Distributional Regression Tree}
 
@@ -16,7 +17,7 @@
 ditree(formula, data, subset, na.action, family = NO(), 
                   control = mob_control(\ldots), weights = NULL, 
                   ocontrol = di_ocontrol(\ldots), \ldots) 
-                  
+
 difit(y, family = NO(), weights = NULL, 
                  start = NULL, estfun = TRUE, bd = NULL, 
                  ocontrol = di_ocontrol(\ldots), \ldots)
@@ -33,9 +34,8 @@ di_ocontrol(maxit = 5000, grad = TRUE, hessian = TRUE, \ldots)
   \item{subset}{An optional vector with indices choosing a subset of the data.}
   \item{na.action}{A function which indicates what should happen when the data
     contain \code{NA}s.}
-  \item{family}{Specification of the response distribution.
-    Either a \code{\link[gamlss.dist]{gamlss.family}} object or
-    a function generating such a family.}
+  \item{family}{specification of the response distribution.
+    Either a \code{\link[gamlss.dist]{gamlss.family}} object or a family list.}
   \item{weights}{vector with numeric values, one weight for each observation}
   \item{ocontrol}{List with control parameters passed to
     \code{\link[stats]{optim}}.}
@@ -69,7 +69,23 @@ fitting takes place.
 }
 
 \value{
-  An object of S3 class \code{"ditree"} inheriting from class \code{"modelparty"}.
+  \code{"ditree"} returns an object of S3 class \code{"ditree"} inheriting from class \code{"modelparty"}.
+  \code{"difit"} returns an object of class \code{"distfit"} which is a list with
+  the following components:
+  \item{y}{numeric vector of the response}
+  \item{call}{function call}
+  \item{nobs}{number of observations}
+  \item{family}{name of the distribution family}
+  \item{familylist}{if the input argument 'family' was already a list, this list is returned. Otherwise the generated family list is returned.}
+  \item{object}{list returned by optim}
+  \item{coefficients}{fitted distribution parameters (on parameter scale)}
+  \item{loglik}{value of the maximized log-likelihood function}
+  \item{estfun}{matrix with the scores for the estimated parameters. Each line represents an observation and each column a parameter.}
+  \item{method}{optimization method used in \code{optim}}
+  \item{df}{degrees of freedom}
+  \item{object}{variance-covariance-matrix (only if hessian is calculated)}
+  \item{convergence}{convergence argument returned by \code{optim}}
+  \code{"di_ocontrol"} returns a list with control arguments passed to \code{optim}
 }
 
 \seealso{\code{\link[partykit]{mob}}, \code{\link[disttree]{disttree}}}
