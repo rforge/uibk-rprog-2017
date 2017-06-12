@@ -1,7 +1,7 @@
 Package: htobit
 Title: Heteroscedastic Tobit Regression Models
 Version: 0.0-2
-Date: 2017-05-26
+Date: 2017-06-13
 Authors@R: person(given = "Achim", family = "Zeileis", role = c("aut", "cre"), email = "Achim.Zeileis@R-project.org")
 Depends: R (>= 3.0.0)
 Imports: stats, Formula, numDeriv, sandwich
