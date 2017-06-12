@@ -167,6 +167,13 @@ hetprobit_fit <- function(x, y, z = NULL, control)
   names(opt$coefficients$mean) <- colnames(x)
   names(opt$coefficients$scale) <- colnames(z)
 
+  ## fitted values and raw residuals
+  mu <- drop(x %*% opt$coefficients$mean)
+  scale <- exp(drop(z %*% opt$coefficients$scale))
+  opt$fitted.values <- list(mean = mu, scale = scale)
+  opt$residuals <- y - mu
+
+
   # other model information
   opt$method <- meth
   opt$loglik <- -opt$loglik 
@@ -240,6 +247,8 @@ model.matrix.hetprobit <- function(object, model = c("mean", "scale"), ...) {
     else model.matrix(object$terms[[model]], model.frame(object), contrasts = object$contrasts[[model]])
   return(rval)
 }
+
+fitted.hetprobit <- function(object, type = c("mean", "scale"), ...) object$fitted.values[[match.arg(type)]]
 
 predict.hetprobit <- function(object, newdata = NULL,
   type = c("response", "link", "scale"),
@@ -327,4 +336,13 @@ vcov.hetprobit <- function(object, model = c("full", "mean", "scale"), ...)
     }
   )
 }
+
+residuals.hetprobit <- function(object, type = c("standardized", "pearson", "response"), ...) {
+  if(match.arg(type) == "response") {
+    object$residuals 
+  } else {
+    object$residuals/object$fitted.values$scale
+  }
+}
+
 
