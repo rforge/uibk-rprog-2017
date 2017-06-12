@@ -60,7 +60,7 @@ hetprobit <- function(formula, data, subset, na.action,
 
 hetprobit_control <- function(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
 {
-  if(is.logical(hessian)) hessian <- if(hessian) "optim" else "none"
+  if(is.logical(hessian)) hessian <- if(hessian) "numderiv" else "none"
   if(is.character(hessian)) hessian <- match.arg(tolower(hessian), c("numderiv", "optim", "none"))
   ctrl <- c(
     list(maxit = maxit, start = start, grad = grad, hessian = hessian),
@@ -343,6 +343,81 @@ residuals.hetprobit <- function(object, type = c("standardized", "pearson", "res
   } else {
     object$residuals/object$fitted.values$scale
   }
+}
+
+summary.hetprobit <- function(object, ...)
+{
+  ## standardized/Pearson residuals  
+  object$residuals <- object$residuals/object$fitted.values$scale
+
+  ## extend coefficient table
+  k <- length(object$coefficients$mean)
+  m <- length(object$coefficients$scale)
+  cf <- as.vector(do.call("c", object$coefficients))
+  se <- sqrt(diag(object$vcov))
+  cf <- cbind(cf, se, cf/se, 2 * pnorm(-abs(cf/se)))
+  colnames(cf) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
+  cf <- list(mean = cf[seq.int(length.out = k), , drop = FALSE], scale = cf[seq.int(length.out = m) + k, , drop = FALSE])
+  rownames(cf$mean) <- names(object$coefficients$mean)
+  rownames(cf$scale) <- names(object$coefficients$scale)
+  object$coefficients <- cf
+
+  ## delete some slots
+  object$fitted.values <- object$terms <- object$levels <- object$contrasts <- NULL
+
+  ## return
+  class(object) <- "summary.hetprobit"
+  object
+}
+
+
+print.summary.hetprobit <- function(x, digits = max(3, getOption("digits") - 3), ...)
+{
+  cat("\nCall:", deparse(x$call, width.cutoff = floor(getOption("width") * 0.85)), "", sep = "\n")
+  
+  if(x$convergence > 0L) {
+    cat("model did not converge\n")
+  } else {
+    cat(paste("Standardized residuals:\n", sep = ""))
+    print(structure(round(as.vector(quantile(x$residuals)), digits = digits),
+      .Names = c("Min", "1Q", "Median", "3Q", "Max")))
+
+    if(NROW(x$coefficients$mean)) {
+      cat(paste("\nCoefficients (binomial model with probit link):\n", sep = ""))
+      printCoefmat(x$coefficients$mean, digits = digits, signif.legend = FALSE)
+    } else cat("\nNo coefficients (in mean model)\n")
+
+    if(NROW(x$coefficients$scale)) {
+      cat(paste("\nLatent scale model coefficients (with log link):\n", sep = ""))
+      printCoefmat(x$coefficients$scale, digits = digits, signif.legend = FALSE)
+    } else cat("\nNo coefficients (in scale model)\n")
+
+    if(getOption("show.signif.stars") & any(do.call("rbind", x$coefficients)[, 4L] < 0.1, na.rm = TRUE))
+      cat("---\nSignif. codes: ", "0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1", "\n")
+    cat("\nLog-likelihood:", formatC(x$loglik, digits = digits),
+      "on", sum(sapply(x$coefficients, NROW)), "Df\n")
+    cat(paste("Number of iterations in", x$method, "optimization:", x$count[2L], "\n"))
+  }
+
+  invisible(x)
+}
+
+update.hetprobit <- function (object, formula., ..., evaluate = TRUE)
+{
+  call <- object$call
+  if(is.null(call)) stop("need an object with call component")
+  extras <- match.call(expand.dots = FALSE)$...
+  if(!missing(formula.)) call$formula <- formula(update(Formula(formula(object)), formula.))
+  if(length(extras)) {
+    existing <- !is.na(match(names(extras), names(call)))
+    for (a in names(extras)[existing]) call[[a]] <- extras[[a]]
+    if(any(!existing)) {
+      call <- c(as.list(call), extras[!existing])
+      call <- as.call(call)
+    }
+  }
+  if(evaluate) eval(call, parent.frame())
+  else call
 }
 
 
