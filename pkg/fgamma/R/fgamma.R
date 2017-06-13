@@ -104,11 +104,9 @@ fgamma_fit <- function(x, y, z = NULL, control)
     
     rval <- matrix(0, nrow = nrow(x), ncol = ncol(x) + ncol(z))
     
-    ## dldmu
-    rval[,1:m] <- as.numeric(((y - mu) * 1/(sigma^2*mu^2))*mu)*x[,, drop = FALSE]
-    
-    ## dldsigma
-    rval[,m + (1:p)] <- as.numeric((2/sigma^3*(y/mu - log(y) + log(mu) + log(sigma^2) - 1 + digamma(1/sigma^2)))*sigma)*z
+    ## dldmu / dldsigma
+    rval <- cbind(as.numeric(((y - mu) * 1/(sigma^2*mu^2))*mu)*x[,, drop = FALSE],
+                  as.numeric((2/sigma^3*(y/mu - log(y) + log(mu) + log(sigma^2) - 1 + digamma(1/sigma^2)))*sigma)*z)
     
     ## sum (if desired) and change sign
     if(sum) rval <- colSums(rval)
@@ -302,11 +300,9 @@ estfun.fgamma <- function(x, ...)
   sigma <- exp(x$x$sigma %*% x$coefficients$sigma)
   rval <- matrix(0, nrow = nrow(x), ncol = ncol(x) + ncol(z))
   
-  ## dldmu
-  rval[,1:m] <- as.numeric(((y - mu) * 1/(sigma^2*mu^2))*mu)*x[,, drop = FALSE]
-  
-  ## dldsigma
-  rval[,m + (1:p)] <- as.numeric((2/sigma^3*(y/mu - log(y) + log(mu) + log(sigma^2) - 1 + digamma(1/sigma^2)))*sigma)*z
+  ## dldmu / dldsigma
+  rval <- cbind(as.numeric(((y - mu) * 1/(sigma^2*mu^2))*mu)*x[,, drop = FALSE],
+                as.numeric((2/sigma^3*(y/mu - log(y) + log(mu) + log(sigma^2) - 1 + digamma(1/sigma^2)))*sigma)*z)
   
   ## nice column names
   colnames(rval) <- c(colnames(x$x$mu), paste("(sigma)", colnames(x$x$sigma), sep = "_"))
