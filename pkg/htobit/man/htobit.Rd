@@ -70,7 +70,7 @@ htobit_control(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
   
   which is only observed if positive and zero otherwise: \eqn{y_i = \max(0, y_i^*)}{y = max(0, y*)}.
   The latent mean \eqn{\mu_i}{mu} and scale \eqn{\sigma_i}{sigma} (latent standard deviation)
-  or linked to two different linear predictors
+  are linked to two different linear predictors
 
   \deqn{\mu_i = x_i^\top \beta}{mu = x'b}
 
