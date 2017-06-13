@@ -435,13 +435,28 @@ nndd_reshape_other <- function(call, data)
   
 }
 
-plot.nndd<- function(x, data, ...)
+plot.nndd<- function(x, data, which = c(1L:7L, 8L), ask = prod(par("mfcol")) < length(which) && dev.interactive(), ...)
 {
   
 #   colnames(x$model)[which(colnames(x$model)== x$indexes[2])] <- "year"
 #   colnames(x$model)[which(colnames(x$model)== x$indexes[1])] <- "firm_id"
 #   colnames(x$model)[which(colnames(x$model)== paste(formula(x$call$formula, lhs = 2, rhs = 0)[[1]]))] <- "tg"
 #   
+  
+  if (!is.numeric(which) || any(which < 1) || any(which > 10)) 
+    stop("'which' must be in 1:8")
+  show <- rep(FALSE, 8)
+  show[which] <- TRUE
+  
+  one.fig <- prod(par("mfcol")) == 1
+  if (ask) {
+    oask <- devAskNewPage(TRUE)
+    on.exit(devAskNewPage(oask))
+  }
+  
+  
+  
+  
   time_id <- x$indexes[1]
   firm_id <- x$indexes[2]
   tg_id <-paste(formula(x$call$formula, lhs = 1, rhs = 0)[[2]])
@@ -454,15 +469,22 @@ plot.nndd<- function(x, data, ...)
   
   x$model$pscore <- as.numeric(predict.nndd(x, prediction = "Nn")[[1]])
   
-  windows()
+  #windows()
   #make restriction if data is vorhanden or not
-  par(mfrow = c(4,2) )
+  #par(mfrow = c(4,2) )
+ 
+  if(show[1L])
+  {
+    dev.hold()
   if(missing(data))
   {
-    warning("No data for pre NN overlap given; Plot omitted")
     
+    warning("No data for pre NN overlap given; Plot omitted")
+   
+   
     plot.new()
-    plot(density(x$model$pscore[x$model[,tg_id] == 1 & (x$model[,time_id] >= start & x$model[time_id] <= end)], from = 0 ,to = 1), main = "Post NN", col = "blue")
+   
+   
     
   }
   else
@@ -473,7 +495,6 @@ plot.nndd<- function(x, data, ...)
     
     data <- data[order(data[,x$call$indexes[1]],data[,x$call$indexes[2]]),]
     
-    
     data$pscore <- as.numeric(predict.nndd(x, prediction = "Nn", newdata =  data)[[1]])
     
     dref <- density(data[data[,tg_id] == 0 & (data[,time_id] >= start & data[,time_id] <= end), "pscore"], from = 0 ,to = 1)
@@ -482,30 +503,59 @@ plot.nndd<- function(x, data, ...)
    plot(dref, ylim = my_ylim, lty = 5, main = "Pre NN", col = "red")
    lines(density(data[data[,tg_id] == 1 & (data[,time_id] >= start & data[,time_id] <= end), "pscore"], from = 0 ,to = 1), lty = 3, col = "blue")
    
-   plot(density(x$model$pscore[x$model[,tg_id] == 1 & (x$model[,time_id] >= start & x$model[,time_id] <= end)],   from = 0 ,to = 1), ylim = my_ylim, main = "Post NN", col = "blue", lty = 3)
-   
-   
-    
   }
- 
-  lines(density(x$model$pscore[x$model[,tg_id] == 0 & (x$model[,time_id] >= start & x$model[,time_id] <= end)], from = 0 ,to = 1), col = "red", lty = 5)
+    dev.flush()
+  }
+  
+  if(show[2L])
+  {
+    dev.hold()
+    if(is.na(my_ylim[1]))
+    {
+      
+      plot(density(x$model$pscore[x$model[,tg_id] == 1 & (x$model[,time_id] >= start & x$model[time_id] <= end)], from = 0 ,to = 1), main = "Post NN", col = "blue")
+      
+     
+    }
+    else
+    {
+      
+      plot(density(x$model$pscore[x$model[,tg_id] == 1 & (x$model[,time_id] >= start & x$model[,time_id] <= end)],   from = 0 ,to = 1), ylim = my_ylim, main = "Post NN", col = "blue", lty = 3)
+      
+    }
+    lines(density(x$model$pscore[x$model[,tg_id] == 0 & (x$model[,time_id] >= start & x$model[,time_id] <= end)], from = 0 ,to = 1), col = "red", lty = 5)
+    dev.flush()
+  }
+  
+  
   
  
-   
-  plot(density(x$model$nn_pscore_dif[x$model[,tg_id]== 0 & (x$model[,time_id] >= start & x$model[,time_id] <= end)],   from = 0 ,to = 1), main = "NN Differences", lty = 3)
-
   
- 
-  ag <- aggregate( formula(paste(formula(x$call$formula, lhs = 2, rhs = 0)[[2]], "~", x$indexes[1], "+", formula(x$call$formula, lhs = 1, rhs = 0)[[2]]))
-                   ,FUN = mean, data =x$model)
-  plot(formula(paste(formula(x$call$formula,lhs=2, rhs= 0)[[2]], "~", x$indexes[1] )), 
-             data = ag[ag[paste(formula(x$call$formula, lhs = 1, rhs = 0)[[2]])] == 1,], 
-              main = "Observed Outcome")
-       
-  lines(formula(paste(formula(x$call$formula,lhs=2, rhs= 0)[[2]], "~", x$indexes[1] )) , 
-        data = ag[ag[,tg_id] == 0,], col = "red")
-  lines(formula(paste(formula(x$call$formula,lhs=2, rhs= 0)[[2]], "~", x$indexes[1] )), 
-        data = ag[ag[paste(formula(x$call$formula, lhs = 1, rhs = 0)[[2]])] == 1,], col = "blue")
+  if(show[3L])
+  {
+    dev.hold()
+    plot(density(x$model$nn_pscore_dif[x$model[,tg_id]== 0 & (x$model[,time_id] >= start & x$model[,time_id] <= end)],   from = 0 ,to = 1), main = "NN Differences", lty = 3)
+    dev.flush()
+  }
+  
+  
+  if(show[4L])
+  {
+    
+    ag <- aggregate( formula(paste(formula(x$call$formula, lhs = 2, rhs = 0)[[2]], "~", x$indexes[1], "+", formula(x$call$formula, lhs = 1, rhs = 0)[[2]]))
+                     ,FUN = mean, data =x$model)
+    dev.hold()
+    plot(formula(paste(formula(x$call$formula,lhs=2, rhs= 0)[[2]], "~", x$indexes[1] )), 
+         data = ag[ag[paste(formula(x$call$formula, lhs = 1, rhs = 0)[[2]])] == 1,], 
+         main = "Observed Outcome")
+    
+    lines(formula(paste(formula(x$call$formula,lhs=2, rhs= 0)[[2]], "~", x$indexes[1] )) , 
+          data = ag[ag[,tg_id] == 0,], col = "red")
+    lines(formula(paste(formula(x$call$formula,lhs=2, rhs= 0)[[2]], "~", x$indexes[1] )), 
+          data = ag[ag[paste(formula(x$call$formula, lhs = 1, rhs = 0)[[2]])] == 1,], col = "blue")
+    dev.flush()
+  }
+  
   
 #   x$model$lm_prediction <- predict(x, prediction = "Dd")
 #   
@@ -518,7 +568,8 @@ plot.nndd<- function(x, data, ...)
   
   
   class(x) <- "lm"
-  plot(x)
+  which <- which[which(which > 4)]-4
+  plot(x, which = which)
   invisible("NN DD Plot")
 }
 
