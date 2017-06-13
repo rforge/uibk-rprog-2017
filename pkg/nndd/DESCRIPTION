@@ -1,7 +1,7 @@
 Package: nndd
 Title: Nearest Neighbour Matching (NN) followed by a Linear Model with Difference in Differences (DD) 
 Version: 0.0-1
-Date: 2017-05-24
+Date: 2017-06-13
 Authors@R: person("Michal", "Lapinski", role = c("aut", "cre"), email = "Michael.Lapinski@JKU.at") 
 Depends: R (>= 3.0.0)
 Imports: stats, Formula
