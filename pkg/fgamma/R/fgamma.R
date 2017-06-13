@@ -298,14 +298,8 @@ estfun.fgamma <- function(x, ...)
       "sigma" = model.matrix(x$terms$sigma, mf)
     )
   }
-  mu <- x$x$mu %*% x$coefficients$mu
+  mu <- exp(x$x$mu %*% x$coefficients$mu)
   sigma <- exp(x$x$sigma %*% x$coefficients$sigma)
-  
-  ## auxiliary: censoring, inverse Mill's ratio, empty score matrix
-  y0 <- x$y <= 0
-  imr <- function(y, mean = 0, sd = 1) {
-    exp(dnorm(y, mean = mean, sd = sd, log = TRUE) - pnorm(y, mean = mean, sd = sd, log.p = TRUE))
-  }
   rval <- matrix(0, nrow = nrow(x), ncol = ncol(x) + ncol(z))
   
   ## dldmu
