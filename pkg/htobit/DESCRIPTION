@@ -1,11 +1,12 @@
 Package: htobit
 Title: Heteroscedastic Tobit Regression Models
-Version: 0.0-2
+Version: 0.0-3
 Date: 2017-06-13
 Authors@R: person(given = "Achim", family = "Zeileis", role = c("aut", "cre"), email = "Achim.Zeileis@R-project.org")
 Depends: R (>= 3.0.0)
 Imports: stats, Formula, numDeriv, sandwich
-Suggests: boot, car, crch, lmtest, memisc
+Suggests: boot, car, crch, knitr, lmtest, memisc, rmarkdown
+VignetteBuilder: knitr
 Description: Heteroscedastic tobit regression models are provided.
   These are Gaussian regression models with a response variable left-censored at zero
   and both distribution parameters (the latent location and scale) parameters

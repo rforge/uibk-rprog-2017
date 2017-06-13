@@ -1,0 +1,195 @@
+\documentclass[nojss]{jss}
+\usepackage{booktabs,dcolumn,thumbpdf,lmodern}
+
+\author{Achim Zeileis\\Universit\"at Innsbruck}
+\Plainauthor{Achim Zeileis}
+
+\title{Heteroscedastic Tobit Regression}
+
+\Keywords{heteroscedastic tobit, regression, \proglang{R}}
+\Plainkeywords{heteroscedastic tobit, regression, R}
+
+\Abstract{
+  The \pkg{htobit} package (\url{https://R-Forge.R-project.org/projects/uibk-rprog-2017/})
+  fits tobit regression models with conditional heteroscedasticy using maximum
+  likelihood estimation. A brief overview of the package is provided, along
+  with some illustrations and a replication of results from the \pkg{crch} package.
+}
+
+\Address{
+  Achim Zeileis\\
+  Department of Statistics\\
+  Faculty of Economics and Statistics\\
+  Universit\"at Innsbruck\\
+  Universit\"atsstr.~15\\
+  6020 Innsbruck, Austria\\
+  E-mail: \email{Achim.Zeileis@R-project.org}\\
+  URL: \url{https://statmath.wu.ac.at/~zeileis/}
+}
+
+%% Sweave/vignette information and metadata
+%% need no \usepackage{Sweave}
+%\VignetteIndexEntry{Heteroscedastic Tobit Regression}
+%\VignetteEngine{Sweave}
+%\VignetteDepends{htobit, car, crch, lmtest, memisc}
+%\VignetteKeywords{heteroscedastic tobit, regression, R}
+%\VignettePackage{htobit}
+
+<<preliminaries, echo=FALSE, results=hide>>=
+options(width = 70, prompt = "R> ", continue = "+  ")
+library("htobit")
+library("car")
+library("crch")
+library("lmtest")
+library("memisc")
+@
+
+
+\begin{document}
+
+\section{Introduction}
+
+The heteroscedastic tobit model assumes an underlying latent Gaussian variable
+\[
+  y_i^* \sim \mathcal{N}(\mu_i, \sigma_i^2)
+\]
+which is only observed if positive and zero otherwise: $y_i = \max(0, y_i^*)$.
+The latent mean $\mu_i$ and scale $\sigma_i$ (latent standard deviation)
+are linked to two different linear predictors
+\begin{eqnarray*}
+\mu_i & = & x_i^\top \beta \\
+\log(\sigma_i) & = & z_i^\top \gamma
+\end{eqnarray*}
+where the regressor vectors $x_i$ and $z_i$ can be set up without restrictions,
+i.e., they can be identical, overlapping or completely different or just including an intercept, etc.
+
+See also \cite{crch} for a more detailed introduction to this model class as well as
+a better implementation in the package \pkg{crch}. The main purpose of \pkg{htobit} is
+to illustrate how to create such a package \emph{from scratch}.
+
+
+\section{Implementation}
+
+As usual in many other regression packages for \proglang{R} \citep{R}, the main model fitting function \code{htobit()}
+uses a formula-based interface and returns an (\proglang{S}3) object of class \code{htobit}:
+%
+\begin{verbatim}
+htobit(formula, data, subset, na.action,
+  model = TRUE, y = TRUE, x = FALSE,
+  control = htobit_control(...), ...)
+\end{verbatim}
+%
+Actually, the \code{formula} can be a two-part \code{Formula} \citep{Formula}, specifying separate sets of regressors
+$x_i$ and $z_i$ for the location and scale submodels, respectively.
+
+The underlying workhorse function is \code{htobit_fit()} which has a matrix interface and returns an unclassed list.
+
+A number of standard \proglang{S}3 methods are provided, see Table~\ref{tab:methods}.
+
+\begin{table}[t!]
+\centering
+\begin{tabular}{lp{11.2cm}}
+\hline
+Method & Description \\ \hline
+\code{print()}       & Simple printed display with coefficients \\
+\code{summary()}     & Standard regression summary; returns \code{summary.htobit} object (with \code{print()} method) \\
+\code{coef()}	     & Extract coefficients \\
+\code{vcov()}	     & Associated covariance matrix \\
+\code{predict()}     & (Different types of) predictions for new data \\
+\code{fitted()}      & Fitted values for observed data \\
+\code{residuals()}   & Extract (different types of) residuals \\
+\code{terms()}       & Extract terms \\
+\code{model.matrix()}& Extract model matrix (or matrices) \\
+\code{nobs()}	     & Extract number of observations \\
+\code{logLik()}      & Extract fitted log-likelihood \\
+\code{bread()}       & Extract bread for \pkg{sandwich} covariance \\
+\code{estfun()}      & Extract estimating functions (= gradient contributions) for \pkg{sandwich} covariances \\
+\code{getSummary()}  & Extract summary statistics for \code{mtable()} \\
+\code{Boot()}	     & Bootstrap regression coefficients using \pkg{car} and \pkg{boot} \\ \hline
+\end{tabular}
+\caption{\label{tab:methods} \proglang{S}3 methods provided in \pkg{htobit}.}
+\end{table}
+
+Due to these methods a number of useful utilities work automatically, e.g., \code{AIC()}, \code{BIC()},
+\code{coeftest()} (\pkg{lmtest}), \code{lrtest()} (\pkg{lmtest}), \code{waldtest()} (\pkg{lmtest}),
+\code{linearHypothesis()} (\pkg{car}), \code{mtable()} (\pkg{memisc}), etc.
+
+
+\section{Illustration}
+
+To illustrate the package's use in practice, a comparison of several homoscedastic
+and heteroscedastic tobit regression models is applied to
+data on budget shares of alcohol and tobacco for 2724 Belgian households
+\citep[taken from][]{Verbeek:2004}. The homoscedastic model from \cite{Verbeek:2004} can
+be replicated by:
+
+<<verbeek>>=
+data("AlcoholTobacco", package = "htobit")
+library("htobit")
+ma <- htobit(alcohol ~ (age + adults) * log(expenditure) + oldkids + youngkids,
+  data = AlcoholTobacco)
+summary(ma)
+@
+
+This model is now modified in two directions: First, the variables influencing the location
+parameter are also employed in the scale submodel. Second, because the various coefficients
+for different numbers of persons in the household do not appear to be very different,
+a restricted specification for this is used. Using a Wald test for testing linear hypotheses
+from \pkg{car} \citep{car} yields
+
+<<restrictions>>=
+library("car")
+linearHypothesis(ma, "oldkids = youngkids")
+linearHypothesis(ma, "oldkids = adults")
+@
+
+Therefore, the following models are considered:
+
+<<alternative>>=
+AlcoholTobacco$persons <- with(AlcoholTobacco, adults + oldkids + youngkids)
+ma2 <- htobit(alcohol ~ (age + adults) * log(expenditure) + oldkids + youngkids |
+  (age + adults) * log(expenditure) + oldkids + youngkids, data = AlcoholTobacco)
+ma3 <- htobit(alcohol ~ age + log(expenditure) + persons | age +
+  log(expenditure) + persons, data = AlcoholTobacco)
+BIC(ma, ma2, ma3)
+@
+
+The BIC would choose the most parsimonious model but a likelihood ratio test would prefer
+the unconstrained person coefficients:
+
+<<lrtest>>=
+library("lmtest")
+lrtest(ma, ma2, ma3)
+@
+
+\section{Replication}
+
+To assess the reliability of the \code{htobit()} implementation, it is benchmarked against the \code{crch()}
+function of \citep{crch}, using the same restricted model as above.
+
+<<crch>>=
+library("crch")
+ca3 <- crch(alcohol ~ age + log(expenditure) + persons | age +
+  log(expenditure) + persons, data = AlcoholTobacco, left = 0)
+@
+
+Using a model table from \pkg{memisc} \citep{memisc} it can be easily seen the results can be
+replicated using both packages (see Table~\ref{tab:mtable}).
+
+<<mtable, eval=FALSE>>=
+library("memisc")
+mtable("htobit" = ma3, "crch" = ca3)
+@
+
+\begin{table}[t!]
+\centering
+<<mtable-latex, echo=FALSE, results=tex>>=
+toLatex(mtable("htobit" = ma3, "crch" = ca3))
+@
+\caption{\label{tab:mtable} Replication of \pkg{crch} results using \pkg{htobit}.}
+\end{table}
+
+
+\bibliography{htobit}
+
+\end{document}
