@@ -1,4 +1,4 @@
-import("stats", "Formula")
+import("stats", "Formula", "multiwayvcov")
 
 
 export("nndd_dgp", 
@@ -12,7 +12,8 @@ S3method("plot", "nndd")
 S3method("predict", "nndd")
 S3method("print", "nndd")
 S3method("t.test", "nndd")
-
+S3method("vcov", "nndd")
+S3method("summary","nndd")
 
 
 

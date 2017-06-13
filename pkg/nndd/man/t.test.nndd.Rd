@@ -5,6 +5,7 @@
 \alias{predict_fun_glm}
 \alias{print.nndd}
 \alias{plot.nndd}
+\alias{vcov.nndd}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ttest}
 \description{
@@ -22,6 +23,7 @@ predict_fun_glm(pformula, family = "binomial", data)
 
 \method{plot}{nndd}(x, data, \dots)
 
+\method{vcov}{nndd}{object, \dots}
 
 }
 \arguments{

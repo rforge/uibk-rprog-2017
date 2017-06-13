@@ -59,6 +59,9 @@ nndd_data2 <- function(treated = 1)
 }
 
 
+
+
+
 nndd_dgp <- function(treated.n = 1, control.n = 3)
 {
   fd <- nndd_data2( )
@@ -86,11 +89,19 @@ nndd_dgp <- function(treated.n = 1, control.n = 3)
 
 
 
+#fix Example! will not work without fiexed values in fuction! now fixed t_time and nn_time are excluded
+
+#fix what is cleaner set clustervariables to NA or not to define this variable if no variables are called 
+#later on the difference is to use length() or is.na... 
+
+
+#how should i request the data in the functions? now i always send the full element and do not use nonstandard evaluation (would be faster but maybe ... 
+
 nndd <- function(formula, data,
-                     indexes = c("year", "firm_id", "tg", "outcome"), nn_time = c("2001","2001"), t_time = "2002",
+                     indexes = c("year", "firm_id", "tg", "outcome"),  t_time , nn_time,
                      time_ids = c("year", ""),
-                     family = "binomial",
-                     subset , na.action,
+                     family = binomial,
+                     subset , na.action, clustervariables, 
                      model = TRUE, y = TRUE, x = FALSE,
                       ...)
 {
@@ -102,6 +113,22 @@ nndd <- function(formula, data,
   # x <- "X6+X9+X10+X11+X12"
   #formu <- "tg | outcome ~ X6+X9+X10+X11+X12 | X6+X9+X10+X11+X12"
   #formula <- Formula(tg | outcome ~ X6+X9+X10+X11+X12 | X6+X9+X10+X11+X12)
+  
+  
+  #Where to put in code? 
+  if(!missing(t_time))
+  {
+    #maybe save t_time as numeric variable if existing 
+    if(is.numeric(as.numeric(t_time)))
+    {
+      if(missing(nn_time))
+      {
+        #can cause trouble if t_time is not numeric!
+    
+        nn_time <- c(paste(as.numeric(t_time)-1), paste(as.numeric(t_time)-1))
+      }
+     }
+  }
   
   
   cl <- match.call()
@@ -184,12 +211,12 @@ nndd <- function(formula, data,
     
     
     gml_fomula_lags <-update(formula(formula,lhs = 1, rhs = 0), paste("","~. +",paste( names(mf_lags)[-c(1:2)], collapse = "+") ))
-    get_nn_pscore <- predict_fun_glm( pformula = gml_fomula_lags, family = "binomial", data = mf_lags)
+    get_nn_pscore <- predict_fun_glm( pformula = gml_fomula_lags, family = family, data = mf_lags)
     nn_pscore <- get_nn_pscore(mf_lags)
   }
   else {
     
-    get_nn_pscore <- predict_fun_glm( pformula = formula(formula,lhs = 1, rhs = 2), family = "binomial", data = nn_fdata)
+    get_nn_pscore <- predict_fun_glm( pformula = formula(formula,lhs = 1, rhs = 2), family = family, data = nn_fdata)
     nn_pscore <- get_nn_pscore(nn_fdata)
   }
   nn_fdata <- data[ data[,indexes[1]] == as.numeric(nn_time[2]), ]
@@ -292,6 +319,15 @@ nndd <- function(formula, data,
   if(y) reg$y <- Y
   if(x) reg$x <- X
   
+  ###fix vcov
+  if(!missing(clustervariables))
+  {
+    reg$clustervariables <- clustervariables
+    
+  }
+
+  
+  
   ###############################
   #add information from matching#
   ###############################
@@ -326,6 +362,7 @@ nndd <- function(formula, data,
   reg$nn_time <- nn_time
   reg$t_time <- t_time
   reg$time_ids <- time_ids
+  
   
   return(reg)
   #a <- lm(formula(paste(indexes[4],"~",x, "+ tg*post")), data = mnn_fdata)
@@ -680,7 +717,9 @@ print.nndd <- function(x, digits = max(3, getOption("digits") - 3), ...)
   
   
   cat("NN was computed as follows\n\n")
-  cat(paste("The time interval for Nn was:\n", "Start time:", x$nn_time[1], "\n" ,"End time:  ", x$nn_time[2], "\n\n"))
+  cat(paste("The time interval for Nn was:\n", "Start time:", x$nn_time[1], "\n" ,"End time:  ", x$nn_time[2], "\n"))
+  
+  print(x$call$family)
  
   cat(paste("Summary statistics of the pscore\n"))
   tab <- tapply2(x$model$nn_pscore, x$model[,tg_id], f = summary)
@@ -785,11 +824,51 @@ tapply2 <- function(x, group, f, ..., simplify = TRUE) {
 
 
 
+vcov.nndd <- function(object, ...){
+  
+  if(length(object$clustervariables)!= 0)
+  {
+    cluster.vcov_nndd(object, object$clustervariables)
+  }
+  else 
+  {
+    
+    stats:::vcov.lm(object, ...)
+  }
+  
+  
+}
 
 
 
+cluster.vcov_nndd <- function(model, cluster)
+{
+  
+  require(multiwayvcov)
+  cl = formula(paste("~", paste(cluster, collapse = " + "), sep = " "))
+  
+  mf <- model.frame(cl, data = model$model)
+  return(cluster.vcov(model, mf))
+  
+}
 
 
+
+summary.nndd <- function (object, correlation = FALSE, symbolic.cor = FALSE, 
+          ...) 
+{
+  if(length(object$clustervariables) == 0)
+  {
+    summary.lm(object, ...)
+  }
+  else
+  {
+    warning("The function summary is not implemented for clustered standard errors. Therefore, coeftest was applied.")
+    return(coeftest(object, ...))
+    
+  }
+  
+}
 
 
 
