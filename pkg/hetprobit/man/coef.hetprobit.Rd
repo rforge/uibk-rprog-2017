@@ -1,32 +1,42 @@
 \name{coef.hetprobit}
+
 \alias{coef.hetprobit}
+\alias{vcov.hetprobit}
+\alias{terms.hetprobit}
+\alias{model.matrix.hetprobit}
 
 \title{
-Extract Coefficients from a Fitted Heteroscedastic Model Object.
+  Method for extracting information from a Fitted Heteroscedastic Probit Model Object.
 }
 
 \description{
-Extracts the estimated coefficients from a fitted heteroscedastic probit model object. 
+  Extracts the estimated coefficients from a fitted heteroscedastic probit model object. 
 }
 
 \usage{
 \method{coef}{hetprobit}(object, model = c("full", "mean", "scale"), \ldots)
+\method{vcov}{hetprobit}(object, model = c("full", "mean", "scale"), \ldots)
+
+\method{terms}{hetprobit}(x, model = c("mean", "scale", "full"), \ldots)
+\method{model.matrix}{hetprobit}(object, model = c("mean", "scale"), \ldots)
 }
 
 \arguments{
-  \item{object}{a fitted model object of class \code{\link[hetprobit]{hetprobit}}.}
-  \item{model}{for which component of the model the estimated coefficients should be returned.} 
-  \item{\dots}{further arguments to be passed.}
+  \item{object, x}{a fitted model object of class \code{\link[hetprobit]{hetprobit}}.}
+  \item{model}{for which component of the model the information should be returned?} 
+  \item{\ldots}{currently not used.}
 }
 
 \details{
-  The default extracts the coefficients of the full model (mean and scale). With \code{mean} or 
-  \code{scale} the estimated coefficients of the \emph{mean} or \emph{scale} part of the model are 
+  The default extracts the information of the full model (mean and scale). With \code{mean} or 
+  \code{scale} information of the \emph{mean} or \emph{scale} part of the model is 
   returned. 
+
+  In addition to the methods above, a set of standard extractor functions for \code{"hetprobit"} objects is available, see \code{link[hetprobit]{hetprobit}} for an overview.
 }
 
 \value{
-  A vector of model coefficients.
+  A vector or matrix with model information.
 }
 
 \seealso{
@@ -60,8 +70,12 @@ coef(m1)
 
 ## extract coefficients of either the mean or scale model
 coef(m1, model = "mean")
-
 coef(m1, model = "scale")
+
+## corresponding model matrices
+head(model.matrix(m1, model = "mean"))
+head(model.matrix(m1, model = "scale"))
+
 }
 
 \keyword{regression}
