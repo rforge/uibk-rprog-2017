@@ -43,7 +43,7 @@ htobit_control(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
     included as a component of the returned value.}
   \item{x, y}{for \code{htobit}: logical. If \code{TRUE} the model matrix and
     response vector used for fitting are returned as components of the returned value.
-    For \code{htobit.fit}: \code{x} is a design matrix with regressors for the
+    For \code{htobit_fit}: \code{x} is a design matrix with regressors for the
     location and \code{y} is a vector of observations.}
   \item{z}{a design matrix with regressors for the scale.}
   \item{\dots}{arguments to be used to form the default \code{control} argument
@@ -104,7 +104,7 @@ htobit_control(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
 
 \value{
   \code{htobit} returns an object of class \code{"htobit"}, i.e., a list with components as follows.
-  \code{htobit.fit} returns an unclassed list with components up to \code{df}.
+  \code{htobit_fit} returns an unclassed list with components up to \code{df}.
   \item{coefficients}{a list with elements \code{"location"} and \code{"scale"}
     containing the coefficients from the respective models,}
   \item{counts}{count of function and gradient evaluations from \code{optim},}
