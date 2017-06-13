@@ -298,11 +298,11 @@ estfun.fgamma <- function(x, ...)
   }
   mu <- exp(x$x$mu %*% x$coefficients$mu)
   sigma <- exp(x$x$sigma %*% x$coefficients$sigma)
-  rval <- matrix(0, nrow = nrow(x), ncol = ncol(x) + ncol(z))
+  rval <- matrix(0, nrow = x$nobs, ncol = x$df)
   
   ## dldmu / dldsigma
-  rval <- cbind(as.numeric(((y - mu) * 1/(sigma^2*mu^2))*mu)*x[,, drop = FALSE],
-                as.numeric((2/sigma^3*(y/mu - log(y) + log(mu) + log(sigma^2) - 1 + digamma(1/sigma^2)))*sigma)*z)
+  rval <- cbind(as.numeric(((x$y - mu) * 1/(sigma^2*mu^2))*mu)*x$x$mu[,, drop = FALSE],
+                as.numeric((2/sigma^3*(x$y/mu - log(x$y) + log(mu) + log(sigma^2) - 1 + digamma(1/sigma^2)))*sigma)*x$x$sigma)
   
   ## nice column names
   colnames(rval) <- c(colnames(x$x$mu), paste("(sigma)", colnames(x$x$sigma), sep = "_"))
