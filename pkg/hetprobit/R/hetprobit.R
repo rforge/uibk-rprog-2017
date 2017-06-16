@@ -420,4 +420,33 @@ update.hetprobit <- function (object, formula., ..., evaluate = TRUE)
   else call
 }
 
+getSummary.hetprobit <- function(obj, alpha = 0.05, ...) {
+  ## extract coefficient summary
+  s <- summary(obj)
+  cf <- s$coefficients
+  ## augment with confidence intervals
+  cval <- qnorm(1 - alpha/2)
+  for(i in seq_along(cf)) cf[[i]] <- cbind(cf[[i]],
+    cf[[i]][, 1] - cval * cf[[i]][, 2],
+    cf[[i]][, 1] + cval * cf[[i]][, 2])
+  ## collect in array
+  nam <- unique(unlist(lapply(cf, rownames)))
+  acf <- array(dim = c(length(nam), 6, length(cf)),
+    dimnames = list(nam, c("est", "se", "stat", "p", "lwr", "upr"), names(cf)))
+  for(i in seq_along(cf)) acf[rownames(cf[[i]]), , i] <- cf[[i]]
+  
+  ## return everything
+  return(list(
+    coef = acf,
+    sumstat = c(
+      "N" = obj$nobs,
+      "logLik" = as.vector(logLik(obj)),
+      "AIC" = AIC(obj),
+      "BIC" = AIC(obj, k = log(obj$nobs))
+    ),
+    contrasts = obj$contrasts,
+    xlevels = obj$xlevels,
+    call = obj$call
+  ))
+}
 

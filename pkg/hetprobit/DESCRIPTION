@@ -1,10 +1,10 @@
 Package: hetprobit
 Title: Heteroscedastic Probit Regression Models
-Version: 0.0-2
-Date: 2017-06-06
+Version: 0.0-3
+Date: 2017-06-16
 Authors@R: person("Judith", "Santer", role = c("aut", "cre"), email = "Judith.Santer@uibk.ac.at")
 Description: Heteroscedastic probit models are provided. In standard probit models the variance of the error term is assumed to be constant. Heteroscedastic probit models allow the error terms to vary systematically.
 Depends: R (>= 3.0.0)
-Imports: stats, Formula, sandwich, numDeriv
+Imports: stats, Formula, sandwich, numDeriv, memisc
 Suggests: glmx, lmtest
 License: GPL-2 | GPL-3
