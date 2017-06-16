@@ -1,36 +1,46 @@
 \name{predict.hetprobit}
+
 \alias{predict.hetprobit}
+\alias{fitted.hetprobit}
+\alias{residuals.hetprobit}
 
 \title{
-Predict Method for Heteroscedastic Probit Fits
+Predictions and Residuals for Heteroscedastic Probit Models
 }
 
 \description{
-Obtains predictions from a fitted heteroscedastic probit model object.
+Methods for obtaining predictions, fitted values, and residuals from a fitted heteroscedastic probit model object.
 }
 
 \usage{
 \method{predict}{hetprobit}(object, newdata = NULL,
                                  type = c("response", "link", "scale"),
                                  na.action = na.pass, \ldots)
+\method{fitted}{hetprobit}(object, type = c("mean", "scale"),\ldots)
+\method{residuals}{hetprobit}(object, type = c("standardized", "pearson", "response"), \ldots)
 }
 
 \arguments{
   \item{object}{a fitted object of class inheriting from \code{\link[hetprobit]{hetprobit}}.}
   \item{newdata}{optional. A data frame in which to look for variables with which to 
     predict can be supplied. If omitted, the fitted linear predictors are used.}
-  \item{type}{the type of prediction required. The default is on the scale of the response, i.e. 
+  \item{type}{the type of prediction/residuals required. The default is on the scale of the response, i.e. 
     probabilities. The alternative \code{link} is on the scale of the scaled linear predictor 
     FIXME(description needs improvement) and \code{scale} returns predictions for the scale 
     parameter sigma.}
   \item{na.action}{function determining what should be done with missing values in \code{newdata}. 
     The default is to predict NA.}
-  \item{\ldots}{further arguments to be passed.}
+  \item{\ldots}{currently not used.}
 }
 
 \details{
   If \code{newdata} is omitted the predictions are based on the data used for fitting.
+
+  In addition to the methods above, a set of standard extractor functions for \code{"hetprobit"}
+  objects is available, see \code{\link[hetprobit]} for an overview.
 }
+
+\note{Currently, only residuals from the latent model are returned.}
 
 \value{
   A vector of predictions.
