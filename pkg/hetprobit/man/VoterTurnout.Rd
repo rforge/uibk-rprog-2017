@@ -30,7 +30,7 @@ Census data from the U.S. Presidential Elections 1984
 
 \source{
   Supplementary material to Altman and McDonald (2003).  
-  \url{http://dx.doi.org/10.1093/pan/mpg016}
+  \doi{10.1093/pan/mpg016}
 }
 
 \references{

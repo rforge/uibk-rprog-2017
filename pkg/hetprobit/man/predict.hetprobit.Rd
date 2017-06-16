@@ -37,7 +37,7 @@ Methods for obtaining predictions, fitted values, and residuals from a fitted he
   If \code{newdata} is omitted the predictions are based on the data used for fitting.
 
   In addition to the methods above, a set of standard extractor functions for \code{"hetprobit"}
-  objects is available, see \code{\link[hetprobit]} for an overview.
+  objects is available, see \code{\link[hetprobit]{hetprobit}} for an overview.
 }
 
 \note{Currently, only residuals from the latent model are returned.}
