@@ -6,11 +6,11 @@
 \alias{model.matrix.hetprobit}
 
 \title{
-  Method for extracting information from a Fitted Heteroscedastic Probit Model Object.
+  Extractor Methods for hetprobit Objects
 }
 
 \description{
-  Extracts the estimated coefficients from a fitted heteroscedastic probit model object. 
+  Methods for extracting information from fitted heteroscedastic probit model objects.
 }
 
 \usage{
@@ -32,7 +32,8 @@
   \code{scale} information of the \emph{mean} or \emph{scale} part of the model is 
   returned. 
 
-  In addition to the methods above, a set of standard extractor functions for \code{"hetprobit"} objects is available, see \code{link[hetprobit]{hetprobit}} for an overview.
+  In addition to the methods above, a set of standard extractor functions for \code{"hetprobit"}
+  objects is available, see \code{link[hetprobit]{hetprobit}} for an overview.
 }
 
 \value{
@@ -44,6 +45,10 @@
 }
 
 \examples{
+## packages
+require("glmx")
+
+## artificial example
 ## data-generating process
 dgp <- function(n = 500, coef = c(0.5, -1.5, 0, 1, 0)) {
   d <- data.frame(
@@ -76,6 +81,14 @@ coef(m1, model = "scale")
 head(model.matrix(m1, model = "mean"))
 head(model.matrix(m1, model = "scale"))
 
+## corresponding covariances 
+vcov(m1)
+
+## compare covariances with benchmark model m0 
+## using hetglm.fit from package glmx
+m0 <- hetglm(y ~ x1 + x2, data = d, method = "BFGS", hessian = TRUE)
+
+vcov(m0)
 }
 
 \keyword{regression}

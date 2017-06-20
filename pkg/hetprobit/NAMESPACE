@@ -1,12 +1,12 @@
 import("stats", "Formula")
 importFrom("sandwich", "bread", "estfun")
 importFrom("numDeriv", "grad", "hessian")
-importFrom("memisc", "getSummary")
 
 export(
   "hetprobit",
   "hetprobit_control",
-  "hetprobit_fit"
+  "hetprobit_fit",
+  "getSummary.hetprobit"
 )
 
 ## methods for hetprobit
@@ -14,7 +14,6 @@ S3method("bread", "hetprobit")
 S3method("coef", "hetprobit")
 S3method("estfun", "hetprobit")
 S3method("fitted", "hetprobit")
-S3method("getSummary", "hetprobit")
 S3method("logLik", "hetprobit")
 S3method("model.frame", "hetprobit")
 S3method("model.matrix", "hetprobit")
