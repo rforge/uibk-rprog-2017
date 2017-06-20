@@ -1,0 +1,12 @@
+Package: bookMatrix
+Title: Model to build a booking matrix and analyze it
+Version: 0.0-1
+Date: 2017-06-06
+Authors@R: person(given = "Simon", family = "Thielen", role = c("aut", "cre"), email = "simon.thielen@gmx.de")
+Depends: R (>= 3.0.0)
+Imports: stats, memisc
+Suggests: 
+Description: A prediction model for hotel bookings is provided.
+  The presented data is transformed in a cumulative booking matrix and then analyzed by a
+  linear regression model. 
+License: GPL-2 | GPL-3

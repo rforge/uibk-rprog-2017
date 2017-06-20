@@ -1,0 +1,12 @@
+import("stats", "memisc")
+
+export(
+  "findHorizon",
+  "fitCumuBookMat",
+  "rsq_by_lag",
+  "fitOneYearVar",
+  "runRegressions"	
+)
+
+## methods for bookMatrix
+
