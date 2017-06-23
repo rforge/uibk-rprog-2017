@@ -1,7 +1,6 @@
 \name{predict.hetprobit}
 
 \alias{predict.hetprobit}
-\alias{fitted.hetprobit}
 \alias{residuals.hetprobit}
 
 \title{
@@ -9,14 +8,13 @@ Predictions and Residuals for Heteroscedastic Probit Models
 }
 
 \description{
-Methods for obtaining predictions, fitted values, and residuals from a fitted heteroscedastic probit model object.
+  Methods for obtaining predictions and residuals from a fitted heteroscedastic probit model object.
 }
 
 \usage{
 \method{predict}{hetprobit}(object, newdata = NULL,
-                                 type = c("response", "link", "scale"),
-                                 na.action = na.pass, \ldots)
-\method{fitted}{hetprobit}(object, type = c("mean", "scale"),\ldots)
+    type = c("response", "link", "scale"),
+    na.action = na.pass, \ldots)
 \method{residuals}{hetprobit}(object, type = c("standardized", "pearson", "response"), \ldots)
 }
 
@@ -24,10 +22,11 @@ Methods for obtaining predictions, fitted values, and residuals from a fitted he
   \item{object}{a fitted object of class inheriting from \code{\link[hetprobit]{hetprobit}}.}
   \item{newdata}{optional. A data frame in which to look for variables with which to 
     predict can be supplied. If omitted, the fitted linear predictors are used.}
-  \item{type}{the type of prediction/residuals required. The default is on the scale of the response, i.e. 
+  \item{type}{the type of prediction/residuals required: The default is on the scale of the response, i.e. 
     probabilities. The alternative \code{link} is on the scale of the scaled linear predictor 
-    FIXME(description needs improvement) and \code{scale} returns predictions for the scale 
-    parameter sigma.}
+    and \code{scale} returns predictions for the scale parameter sigma.\cr
+    The default for \code{residuals} are standardized/Pearson residuals. Alternatively, raw response
+    residuals can be extracted by specifying \code{type = "response"}.}
   \item{na.action}{function determining what should be done with missing values in \code{newdata}. 
     The default is to predict NA.}
   \item{\ldots}{currently not used.}
@@ -40,10 +39,8 @@ Methods for obtaining predictions, fitted values, and residuals from a fitted he
   objects is available, see \code{\link[hetprobit]{hetprobit}} for an overview.
 }
 
-\note{Currently, only residuals from the latent model are returned.}
-
 \value{
-  A vector of predictions.
+  A vector of predictions/residuals.
 }
 
 \references{
@@ -87,7 +84,8 @@ d <- dgp()
 m1 <- hetprobit(y ~ x1 + x2, data = d)
 
 ## create some new data
-nd <- data.frame(x1 = seq(from = -1, to = 5, length.out = 10), x2 = seq(from = 0.5, to = 5, length.out = 10))
+nd <- data.frame(x1 = seq(from = -1, to = 5, length.out = 10), 
+                 x2 = seq(from = 0.5, to = 5, length.out = 10))
 
 ## predicted probabilities (default)
 p1 <- predict(m1, newdata = nd)

@@ -13,7 +13,6 @@ export(
 S3method("bread", "hetprobit")
 S3method("coef", "hetprobit")
 S3method("estfun", "hetprobit")
-S3method("fitted", "hetprobit")
 S3method("logLik", "hetprobit")
 S3method("model.frame", "hetprobit")
 S3method("model.matrix", "hetprobit")

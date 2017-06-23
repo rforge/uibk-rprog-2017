@@ -58,7 +58,7 @@ hetprobit_control(maxit = 5000, start = NULL,
     computed by \code{\link[stats]{optim}}.}
 }
 \details{
-  In standard probit regression models the probability of a success, i.e. \eqn{P(Y_i = 1)}, is 
+  In standard probit regression models the probability of a success, i.e. \eqn{P(Y_i = 1)}{P(Y = 1)}, is 
   modelled as 
 
   \deqn{P(Y_i = 1) = \pi_{i} = \Phi(x_i^\top \beta)}{P(Y = 1) = pi = F(x'b)} 
@@ -66,7 +66,7 @@ hetprobit_control(maxit = 5000, start = NULL,
   The general assumption that the variance of the error term is constant and due to identifiability 
   set to one is relaxed in the heteroscedastic probit model. The variance can vary systematically and 
   is now modelled as a multiplicative function of regressor variables, i.e. 
-  \eqn{\sigma_i^2 = \exp(z_i^\top \gamma)^2}{sigma^2 = exp(z'g)^2}. The probability of success is now 
+  \eqn{\sigma_i = \exp(z_i^\top \gamma)}{sigma = exp(z'g)}. The probability of success is now 
   represented by 
   \deqn{\pi_i = \Phi\left(\frac{x_i^\top \beta}{\exp(z_i^\top \gamma)}\right).}{pi = F(x'b / exp(z'g)).} 
   Note that the scale model is only identified without intercept. 
@@ -84,7 +84,7 @@ hetprobit_control(maxit = 5000, start = NULL,
   on some methods with non-standard arguments.
 
   This is a somewhat simpler reimplementation of \code{\link[glmx]{hetglm}} from the 
-  \pkg{glmx} package (Zeileis, Koenker, Doebler 2013).
+  \pkg{glmx} package (Zeileis, Koenker, Doebler 2015).
   Compared to \code{hetglm}, \code{hetprobit} does not offer:
   analytical Hessian, flexible link functions for the mean and scale submodel, 
   functionality for homoscedastic models, among further features.
@@ -147,7 +147,7 @@ hetprobit_control(maxit = 5000, start = NULL,
 ## packages
 require("glmx")
 
-## artificial data
+## artificial example
 ## data-generating process
 dgp <- function(n = 500, coef = c(0.5, -1.5, 0, 1, 0)) {
   d <- data.frame(

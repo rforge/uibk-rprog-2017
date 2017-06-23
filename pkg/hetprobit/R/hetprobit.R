@@ -170,8 +170,9 @@ hetprobit_fit <- function(x, y, z = NULL, control)
   ## fitted values and raw residuals
   mu <- drop(x %*% opt$coefficients$mean)
   scale <- exp(drop(z %*% opt$coefficients$scale))
-  opt$fitted.values <- list(mean = mu, scale = scale)
-  opt$residuals <- y - mu
+  pi <- pnorm(mu/scale)
+  opt$fitted.values <- pi
+  opt$residuals <- y - pi
 
 
   # other model information
@@ -247,8 +248,6 @@ model.matrix.hetprobit <- function(object, model = c("mean", "scale"), ...) {
     else model.matrix(object$terms[[model]], model.frame(object), contrasts = object$contrasts[[model]])
   return(rval)
 }
-
-fitted.hetprobit <- function(object, type = c("mean", "scale"), ...) object$fitted.values[[match.arg(type)]]
 
 predict.hetprobit <- function(object, newdata = NULL,
   type = c("response", "link", "scale"),
@@ -341,14 +340,14 @@ residuals.hetprobit <- function(object, type = c("standardized", "pearson", "res
   if(match.arg(type) == "response") {
     object$residuals 
   } else {
-    object$residuals/object$fitted.values$scale
+    object$residuals/sqrt(object$fitted.values * (1 - object$fitted.values))
   }
 }
 
 summary.hetprobit <- function(object, ...)
 {
   ## standardized/Pearson residuals  
-  object$residuals <- object$residuals/object$fitted.values$scale
+  object$residuals <- object$residuals/sqrt(object$fitted.values * (1 - object$fitted.values))
 
   ## extend coefficient table
   k <- length(object$coefficients$mean)
