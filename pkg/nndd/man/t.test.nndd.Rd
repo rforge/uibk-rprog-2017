@@ -17,13 +17,13 @@ nndd_ttest(ttest_data, indexes = c("year", "firm_id", "tg"), nn_time, \dots)
 
 \method{predict}{nndd}(object, prediction = c("nn", "dd"), newdata, \dots)
 
-predict_fun_glm(pformula, family = "binomial", data)
+predict_fun_glm(pformula, link = "logit", data)
 
 \method{print}{nndd}(x, digits = max(3, getOption("digits") - 3), \dots)
 
-\method{plot}{nndd}(x, data, \dots)
+\method{plot}{nndd}(x, data, which = c(1L:7L, 8L), ask = prod(par("mfcol")) < length(which) && dev.interactive(), ...)
 
-\method{vcov}{nndd}{object, \dots}
+\method{vcov}{nndd}(object, \dots)
 
 }
 \arguments{
@@ -43,13 +43,17 @@ predict_fun_glm(pformula, family = "binomial", data)
 
 \item{newdata}{a data.frame containing the data on which the prediction should be based on.}
 
-\item{family}{family of the GLM. #Fixme: not implemented in nndd, but in predict.nndd}
+\item{link}{family for the GLM either binomial or logistic.}
 
 \item{digits}{see \code{\link{print}}}    
 
 \item{data}{a data frame containing the variables occurring in the
     formulas such as time and group identifiers. The data has to be a panel.}
 \item{\dots}{space for objects to be passed on}
+
+\item{which}{if a subset of the plots is required, specify a subset of the numbers 1:8.}
+
+\item{ask}{logical; if TRUE, the user is asked before each plot, see \link{par}(ask=.).}
 
 }
 \details{...}

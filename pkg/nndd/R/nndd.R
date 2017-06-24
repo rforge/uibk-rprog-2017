@@ -1,90 +1,90 @@
-nndd_data2 <- function(treated = 1)
-{
-  m <- matrix(NA, nrow = 100, ncol = 50)
-  
-  m[,1] <- rep(x = seq(1997,2006),10 )
-  
-  m[,3] <- treated
-  
-  for(k in seq(1,100,10))
-  {
-    if(m[k,3] == 1)
-    {
-      m[k:(k+4),4] <- rnorm(5, mean = rnorm(n = 1,20,7/10), sd =abs(rnorm(1,0.5,4)))
-      m[(k+5):(k+9),4] <- rnorm(5, mean = rnorm(n = 1,23,7/10), sd =abs(rnorm(1,0.5,4)))
-    }
-    
-    
-    if(m[k,3] == 0)
-    {
-      m[k:(k+4),4] <- rnorm(5, mean = rnorm(n = 1,25,7/10), sd =abs(rnorm(1,0.5,4)))
-      m[(k+5):(k+9),4] <- rnorm(5, mean = rnorm(n = 1,25,7/10), sd =abs(rnorm(1,0.5,4)))
-    }
-    
-    
-    for(i in 5:40)
-    {
-      m[k:(k+9),i] <-  rnorm(10, mean = rnorm(n = 1,3*sqrt(i)*sqrt(k),5*i/10), sd =abs(rnorm(1,0.5,4*sqrt(i))))
-      
-    }
-  }
-  
-  if(treated == 1)
-  {
-    for(k in seq(1,100,10))
-    {
-      for(i in 41:50)
-      {
-        m[k:(k+9),i] <-  rnorm(10, mean = rnorm(n = 1,i*0.5,10), sd =abs(rnorm(1,0.5,4)))
-        
-      }
-    }
-  }
-  if(treated == 0)
-  {
-    for(k in seq(1,100,10))
-    {
-      for(i in 41:50)
-      {
-        m[k:(k+9),i] <-  rnorm(10, mean = rnorm(n = 1,i*1.2,10), sd =abs(rnorm(1,0.5,4)))
-      }
-    }
-  }
-  
-  
-  m <- data.frame(m)
-  
-  colnames(m)[1:4] <- c("year", "firm_id", "tg", "outcome") 
-  return(m)
-}
-
-
-
-
-
-nndd_dgp <- function(treated.n = 1, control.n = 3)
-{
-  fd <- nndd_data2( )
-  
-  if(treated.n > 1)
-  {
-    for(i in 2:treated.n)
-    {
-      fd <- rbind(fd, nndd_data2())
-    }
-  }
-  for(i in 1:control.n)
-  {
-    fd <- rbind(fd, nndd_data2(treated = 0))
-  }
-  
-  fid <- rep(1:((treated.n+control.n)*10),10)
-  fid <- fid[order(fid)]
-  fd[,2] <- fid
-  
-  return(fd)
-  
-}
+# nndd_data2 <- function(treated = 1)
+# {
+#   m <- matrix(NA, nrow = 100, ncol = 50)
+#   
+#   m[,1] <- rep(x = seq(1997,2006),10 )
+#   
+#   m[,3] <- treated
+#   
+#   for(k in seq(1,100,10))
+#   {
+#     if(m[k,3] == 1)
+#     {
+#       m[k:(k+4),4] <- rnorm(5, mean = rnorm(n = 1,20,7/10), sd =abs(rnorm(1,0.5,4)))
+#       m[(k+5):(k+9),4] <- rnorm(5, mean = rnorm(n = 1,23,7/10), sd =abs(rnorm(1,0.5,4)))
+#     }
+#     
+#     
+#     if(m[k,3] == 0)
+#     {
+#       m[k:(k+4),4] <- rnorm(5, mean = rnorm(n = 1,25,7/10), sd =abs(rnorm(1,0.5,4)))
+#       m[(k+5):(k+9),4] <- rnorm(5, mean = rnorm(n = 1,25,7/10), sd =abs(rnorm(1,0.5,4)))
+#     }
+#     
+#     
+#     for(i in 5:40)
+#     {
+#       m[k:(k+9),i] <-  rnorm(10, mean = rnorm(n = 1,3*sqrt(i)*sqrt(k),5*i/10), sd =abs(rnorm(1,0.5,4*sqrt(i))))
+#       
+#     }
+#   }
+#   
+#   if(treated == 1)
+#   {
+#     for(k in seq(1,100,10))
+#     {
+#       for(i in 41:50)
+#       {
+#         m[k:(k+9),i] <-  rnorm(10, mean = rnorm(n = 1,i*0.5,10), sd =abs(rnorm(1,0.5,4)))
+#         
+#       }
+#     }
+#   }
+#   if(treated == 0)
+#   {
+#     for(k in seq(1,100,10))
+#     {
+#       for(i in 41:50)
+#       {
+#         m[k:(k+9),i] <-  rnorm(10, mean = rnorm(n = 1,i*1.2,10), sd =abs(rnorm(1,0.5,4)))
+#       }
+#     }
+#   }
+#   
+#   
+#   m <- data.frame(m)
+#   
+#   colnames(m)[1:4] <- c("year", "firm_id", "tg", "outcome") 
+#   return(m)
+# }
+# 
+# 
+# 
+# 
+# 
+# nndd_dgp <- function(treated.n = 1, control.n = 3)
+# {
+#   fd <- nndd_data2( )
+#   
+#   if(treated.n > 1)
+#   {
+#     for(i in 2:treated.n)
+#     {
+#       fd <- rbind(fd, nndd_data2())
+#     }
+#   }
+#   for(i in 1:control.n)
+#   {
+#     fd <- rbind(fd, nndd_data2(treated = 0))
+#   }
+#   
+#   fid <- rep(1:((treated.n+control.n)*10),10)
+#   fid <- fid[order(fid)]
+#   fd[,2] <- fid
+#   
+#   return(fd)
+#   
+# }
 
 
 
@@ -95,12 +95,14 @@ nndd_dgp <- function(treated.n = 1, control.n = 3)
 #later on the difference is to use length() or is.na... 
 
 
-#how should i request the data in the functions? now i always send the full element and do not use nonstandard evaluation (would be faster but maybe ... 
+#include in print clustering 
+#DOne: allow only to change the link not the full family 
 
+#link 
 nndd <- function(formula, data,
                      indexes = c("year", "firm_id", "tg", "outcome"),  t_time , nn_time,
                      time_ids = c("year", ""),
-                     family = binomial,
+                     link = "logit",
                      subset , na.action, clustervariables, 
                      model = TRUE, y = TRUE, x = FALSE,
                       ...)
@@ -211,12 +213,13 @@ nndd <- function(formula, data,
     
     
     gml_fomula_lags <-update(formula(formula,lhs = 1, rhs = 0), paste("","~. +",paste( names(mf_lags)[-c(1:2)], collapse = "+") ))
-    get_nn_pscore <- predict_fun_glm( pformula = gml_fomula_lags, family = family, data = mf_lags)
+    
+    get_nn_pscore <- predict_fun_glm( pformula = gml_fomula_lags, link = link, data = mf_lags)
     nn_pscore <- get_nn_pscore(mf_lags)
   }
   else {
     
-    get_nn_pscore <- predict_fun_glm( pformula = formula(formula,lhs = 1, rhs = 2), family = family, data = nn_fdata)
+    get_nn_pscore <- predict_fun_glm( pformula = formula(formula,lhs = 1, rhs = 2), link = link , data = nn_fdata)
     nn_pscore <- get_nn_pscore(nn_fdata)
   }
   nn_fdata <- data[ data[,indexes[1]] == as.numeric(nn_time[2]), ]
@@ -311,7 +314,7 @@ nndd <- function(formula, data,
   cl$nn_time <-  nn_time
   cl$t_time <- t_time
   cl$time_ids <- time_ids 
-  cl$family <- family
+  cl$link <- link
   reg$call <- cl
   reg$terms <- mt
   #reg$model <- mf
@@ -368,6 +371,10 @@ nndd <- function(formula, data,
   #a <- lm(formula(paste(indexes[4],"~",x, "+ tg*post")), data = mnn_fdata)
   
 }
+
+
+
+
 
 #debug(match_dd)
 
@@ -475,6 +482,8 @@ nndd_reshape_other <- function(call, data)
 plot.nndd<- function(x, data, which = c(1L:7L, 8L), ask = prod(par("mfcol")) < length(which) && dev.interactive(), ...)
 {
   
+  #stop("FixMe: Somthing is wrong if no data is added")
+  
 #   colnames(x$model)[which(colnames(x$model)== x$indexes[2])] <- "year"
 #   colnames(x$model)[which(colnames(x$model)== x$indexes[1])] <- "firm_id"
 #   colnames(x$model)[which(colnames(x$model)== paste(formula(x$call$formula, lhs = 2, rhs = 0)[[1]]))] <- "tg"
@@ -500,7 +509,7 @@ plot.nndd<- function(x, data, which = c(1L:7L, 8L), ask = prod(par("mfcol")) < l
   x$model <- x$model[order(x$model[,x$call$indexes[1]],x$model[,x$call$indexes[2]]),]
   start <- x$call$nn_time[[1]]
   end <- x$call$nn_time[[2]]
-  
+  my_ylim <- c(NA, NA)
   #data[which(data[,x$call$indexes[1]] == as.numeric(x$call$nn_time[2])), 
   #    c(x$call$indexes[2])]
   
@@ -538,6 +547,7 @@ plot.nndd<- function(x, data, which = c(1L:7L, 8L), ask = prod(par("mfcol")) < l
     my_ylim <- c(min(dref$y), max(dref$y))
     
    plot(dref, ylim = my_ylim, lty = 5, main = "Pre NN", col = "red")
+   
    lines(density(data[data[,tg_id] == 1 & (data[,time_id] >= start & data[,time_id] <= end), "pscore"], from = 0 ,to = 1), lty = 3, col = "blue")
    
   }
@@ -550,6 +560,7 @@ plot.nndd<- function(x, data, which = c(1L:7L, 8L), ask = prod(par("mfcol")) < l
     if(is.na(my_ylim[1]))
     {
       
+      
       plot(density(x$model$pscore[x$model[,tg_id] == 1 & (x$model[,time_id] >= start & x$model[time_id] <= end)], from = 0 ,to = 1), main = "Post NN", col = "blue")
       
      
@@ -557,7 +568,10 @@ plot.nndd<- function(x, data, which = c(1L:7L, 8L), ask = prod(par("mfcol")) < l
     else
     {
       
-      plot(density(x$model$pscore[x$model[,tg_id] == 1 & (x$model[,time_id] >= start & x$model[,time_id] <= end)],   from = 0 ,to = 1), ylim = my_ylim, main = "Post NN", col = "blue", lty = 3)
+      plot(density(x$model$pscore[x$model[,tg_id] == 1 & (x$model[,time_id] >= start & x$model[time_id] <= end)], from = 0 ,to = 1), main = "Post NN", col = "blue")
+      
+      
+      #plot(density(x$model$pscore[x$model[,tg_id] == 1 & (x$model[,time_id] >= start & x$model[,time_id] <= end)],   from = 0 ,to = 1), ylim = my_ylim, main = "Post NN", col = "blue", lty = 3)
       
     }
     lines(density(x$model$pscore[x$model[,tg_id] == 0 & (x$model[,time_id] >= start & x$model[,time_id] <= end)], from = 0 ,to = 1), col = "red", lty = 5)
@@ -612,10 +626,10 @@ plot.nndd<- function(x, data, which = c(1L:7L, 8L), ask = prod(par("mfcol")) < l
 
 
 
-predict_fun_glm <- function(pformula, family = "binomial", data)
+predict_fun_glm <- function(pformula, link = "logit", data)
 {
   
-  nn <- glm(pformula, family = family, data = data)
+  nn <- glm(pformula, family = binomial(link = link), data = data)
   return(function(data) predict.glm(nn,data, type = "response"))
   # nn$pscore_nn <-  function(data) predict.glm(nn,data, type = "response")
   #return(nn)
@@ -719,7 +733,7 @@ print.nndd <- function(x, digits = max(3, getOption("digits") - 3), ...)
   cat("NN was computed as follows\n\n")
   cat(paste("The time interval for Nn was:\n", "Start time:", x$nn_time[1], "\n" ,"End time:  ", x$nn_time[2], "\n"))
   
-  print(x$call$family)
+  print(binomial(link= x$call$link))
  
   cat(paste("Summary statistics of the pscore\n"))
   tab <- tapply2(x$model$nn_pscore, x$model[,tg_id], f = summary)
@@ -839,6 +853,23 @@ vcov.nndd <- function(object, ...){
   
 }
 
+vcov.lmc <- function(object, ...){
+  
+  if(length(object$clustervariables)!= 0)
+  {
+    cluster.vcov_nndd(object, object$clustervariables)
+  }
+  else 
+  {
+    
+    stats:::vcov.lm(object, ...)
+  }
+  
+  
+}
+
+
+
 
 
 cluster.vcov_nndd <- function(model, cluster)
@@ -848,11 +879,30 @@ cluster.vcov_nndd <- function(model, cluster)
   cl = formula(paste("~", paste(cluster, collapse = " + "), sep = " "))
   
   mf <- model.frame(cl, data = model$model)
+  require("multiwayvcov")
   return(cluster.vcov(model, mf))
   
 }
 
-
+summary.lmc <- function (object, correlation = FALSE, symbolic.cor = FALSE, 
+                          ...) 
+{
+  if(length(object$clustervariables) == 0)
+  {
+    summary.lm(object, ...)
+  }
+  else
+  {
+    
+    s1 <- summary.lm(object)
+    s1$call$clustervariables <- object$clustervariables 
+    s1$coefficients[,2:4] <- coeftest(object)[,2:4]
+    #s1$fstatistic[[1]] <- waldtest(object)[2,3]
+    return(s1)
+    
+  }
+  
+}
 
 summary.nndd <- function (object, correlation = FALSE, symbolic.cor = FALSE, 
           ...) 
@@ -863,13 +913,52 @@ summary.nndd <- function (object, correlation = FALSE, symbolic.cor = FALSE,
   }
   else
   {
-    warning("The function summary is not implemented for clustered standard errors. Therefore, coeftest was applied.")
-    return(coeftest(object, ...))
+    
+    s1 <- summary.lm(object)
+    s1$call$clustervariables <- object$clustervariables 
+    s1$coefficients[,2:4] <- coeftest(object)[,2:4]
+    #s1$fstatistic[[1]] <- waldtest(object)[2,3]
+    return(s1)
     
   }
   
 }
 
+
+waldtest.nndd <- function(object, ..., test = c("F", "Chisq"))
+{
+  
+  vcov <- vcov(object)
+  tg_id <-paste(formula(object$call$formula, lhs = 1, rhs = 0)[[2]])
+  object$call$formula <- as.Formula(update(formula(object$call$formula,lhs = 2, rhs = 1), paste("~. + post*", tg_id, sep = "")))
+  cl <- call("lm")
+  cl[c("formula", "data")] <- object$call[c("formula", "data")]
+  
+  object$call <- cl
+  IRCA <- object$model
+  class(object) <- "lm"
+    waldtest.default(object, vcov = vcov , test = "F" )
+}
+
+
+
+#nicht notwendig weil vcov.nnd waldtest.nnd und/oder summary.nndd machen den job irgendwie automatisch... 
+# getSummary.nndd <- function(obj, alpha = 0.05, ...) {
+#   ## get original summary
+#   s <- getSummary.lm(obj, alpha = alpha, ...)
+#   
+#   ## replace Wald tests of coefficients
+#   s$coef[,1:4] <- coeftest(obj)
+#   
+#   ## replace confidence intervals
+#   crit <- qt(alpha/2, obj$df.residual)
+#   s$coef[,5] <- s$coef[,1] + crit * s$coef[,2]
+#   s$coef[,6] <- s$coef[,1] - crit * s$coef[,2]
+#  
+#    s$sumstat["F"] <- waldtest(obj)[2,3]
+#    s$sumstat["p"] <- waldtest(obj)[2,4]
+#   return(s)
+# }
 
 
 

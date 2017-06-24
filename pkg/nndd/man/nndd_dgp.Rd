@@ -20,5 +20,5 @@ nndd_data2(treated = 1)
 \references{No references}
 
 \examples{
-summary(nndd_dgp(10,10))
+#summary(nndd_dgp(10,10))
 }

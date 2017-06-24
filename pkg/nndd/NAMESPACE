@@ -1,8 +1,7 @@
-import("stats", "Formula", "multiwayvcov")
+import("stats", "Formula", "multiwayvcov", "lmtest")
 
 
-export("nndd_dgp", 
-"nndd", 
+export("nndd", 
 "nndd_reshape",
 "nndd_reshape_other",
 "predict_fun_glm",

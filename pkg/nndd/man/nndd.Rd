@@ -6,10 +6,15 @@
 \title{Nearest Neighbour Matching (NN) followed by a Linear Model with Difference in Differences (DD)}
 \description{Constructs NN by estimating pscores with a GLM and estimates a linear model in a DD setting}
 \usage{
-nndd(formula, data, indexes = c("year", "firm_id", "tg", "outcome"),
-	nn_time = c("2001", "2001"), t_time = "2002", time_ids = c("year", ""), 
-	family = "binomial", subset, na.action, model = TRUE, 
-	y = TRUE, x = FALSE,  \dots)
+
+
+nndd(formula, data, indexes = c("year", "firm_id", "tg", "outcome"),  t_time , nn_time,
+                     time_ids = c("year", ""),
+                     link = "logit",
+                     subset , na.action, clustervariables, 
+                     model = TRUE, y = TRUE, x = FALSE,
+                      ...)
+
 
 nndd_reshape(object_nndd)
 
@@ -31,8 +36,9 @@ nndd_reshape_other(call, data)
 }
   \item{t_time}{a string containing the timing of the treatment.}
   \item{time_ids}{#Fixme: delete this}
-  \item{family}{family of the GLM. #Fixme: not implemented in nndd, but in predict.nndd
+  \item{link}{family for the GLM either binomial or logistic. 
 }
+\item{clustervariables}{List of variables on which the standard errors should be clustered.}
  \item{subset}{an optional vector specifying a subset of observations to be
     used for fitting.}
  \item{na.action}{a function which indicates what should happen when the data
@@ -76,14 +82,14 @@ Fixme
 Fixme:
 }
 \examples{
-require(Formula)
-set.seed(2015-5-23)
-data <- nndd_dgp(treated.n = 50, control.n = 50)
-formula <- Formula(tg | outcome ~ X6+X9+X10+X11 | X6+X9+X10+X11+X12+X13) 
-nndd <- nndd(formula, data = data, indexes = c("year", "firm_id", "tg", "outcome"), 
-		nn_time = c(1997,2001), t_time = "2002")
+
+data("IRCA", package = "nndd")
+library(Formula)
+formula <- Formula(treated | v_crime ~ officers_pc + income + p_crime | officers_pc + income + p_crime + crack_index + unemprate) 
+nndd <- nndd(formula = formula, data = IRCA, indexes = c("year", "county", "treated", "v_crime"), t_time = "1986" )
 names(nndd)
 print(nndd)
+plot(nndd, IRCA)
 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
