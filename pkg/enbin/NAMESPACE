@@ -1,0 +1,31 @@
+import("Formula")
+importFrom("sandwich", "bread", "estfun")
+importFrom("numDeriv", "grad", "hessian")
+importFrom("stats", ".getXlevels", "AIC", "as.formula",
+             "delete.response", "dnbinom", "formula", "glm.fit",
+             "logLik", "model.frame", "model.matrix", "model.response",
+             "na.pass", "optim", "pnorm", "poisson", "printCoefmat",
+             "qnorm", "quantile", "terms", "update")
+
+export(
+  "enbin",
+  "enbin_control",
+  "enbin_fit"
+)
+
+## methods for enbin
+S3method("bread", "enbin")
+S3method("coef", "enbin")
+S3method("estfun", "enbin")
+S3method("fitted", "enbin")
+S3method("logLik", "enbin")
+S3method("model.frame", "enbin")
+S3method("model.matrix", "enbin")
+S3method("predict", "enbin")
+S3method("print", "enbin")
+S3method("residuals", "enbin")
+S3method("summary", "enbin")
+S3method("print", "summary.enbin")
+S3method("terms", "enbin")
+S3method("update", "enbin")
+S3method("vcov", "enbin")

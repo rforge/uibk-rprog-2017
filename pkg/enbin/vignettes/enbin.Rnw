@@ -1,0 +1,168 @@
+\documentclass[nojss]{jss}
+\usepackage{booktabs,dcolumn,thumbpdf,lmodern,Sweave}
+
+\author{Julian Granna\\Universit\"at Innsbruck}
+\Plainauthor{Julian Granna}
+
+\title{Extended Negative Binomial 2 Regression}
+
+\Keywords{negative binomial, NB2, count data, \proglang{R}}
+\Plainkeywords{negative binomial, NB2, count data, R}
+
+\Abstract{
+  The \pkg{enbin} package (\url{https://R-Forge.R-project.org/projects/uibk-rprog-2017/})
+  fits negative binomial (NB2) regression models allowing for a non-constant $\theta$ using analytical gradient based maximum
+  likelihood estimation. An overview of the underlying model and its implementation in the package is provided, along
+  with some illustrations.
+}
+
+\Address{
+  Julian Granna\\
+  Department of Statistics\\
+  Faculty of Economics and Statistics\\
+  Universit\"at Innsbruck\\
+  Universit\"atsstr.~15\\
+  6020 Innsbruck, Austria\\
+  E-mail: \email{julian.granna@uibk.ac.at}
+}
+
+%% Sweave/vignette information and metadata
+%\VignetteIndexEntry{Extended Negative Binomial 2 Regression}
+%\VignetteEngine{Sweave}
+%\VignetteDepends{enbin, lmtest}
+%\VignetteKeywords{extended negative binomial, regression, R}
+%\VignettePackage{enbin}
+
+<<preliminaries, echo=FALSE, results=hide>>=
+options(width = 70, prompt = "R> ", continue = "+  ")
+library("enbin")
+library("MASS")
+library("Formula")
+library("numDeriv")
+@
+
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\section{Introduction}
+
+In accordance with \cite{enbin:Winkelmann:2013}, negative binomial models account for unobserved heterogeneity in the data. The problem of possible unobserved heteogeneity in the data can be shown formally as derived by \cite{Hogg:Craig:1978}:
+The Poisson parameter may be expressed as 
+\begin{equation}
+\tilde{\lambda}_i = exp(x_i'\beta + \epsilon_i),
+\end{equation}
+where $\epsilon_i$ gives the unobserved heterogeneity. $\tilde{\lambda}_i$ can now be rewritten as 
+\begin{equation}
+\tilde{\lambda}_i = exp(x_i'\beta) \hspace{0.1cm} exp(\epsilon_i) = exp(x_i'\beta)u_i = \lambda_iu_i.
+\end{equation}
+Now, the mean and variance can be derived as
+\begin{equation}
+\E(y_i|x_i) = \E_u(\tilde{\lambda}_i|x_i) = exp(x_i'\beta) \hspace{0.1cm} \E(u_i|x_i)=\lambda_i,
+\end{equation}
+\begin{equation}
+Var(y_i|x_i) = \E_u(\tilde{\lambda}_i|x_i) + Var(\tilde{\lambda}_i|x_i) = \lambda_i \sigma_u^2 \lambda_i^2.
+\end{equation}
+With $\sigma_u^2 > 0$, it follows that $Var(y_i|x_i)>\E(y_i|x_i)$. Negative binomial models can be applied to assess this issue. In this application, a negative binomial 2 model (NB2) is employed with the conditional expectation function
+\begin{equation}
+\E(y_i|x_i) = exp(x_i'\beta) = exp(\eta_{\mu, i})
+\end{equation}
+and scale function
+\begin{equation}
+Var(y_i|x_i) = \mu_i + \alpha \cdot \mu_i^2,
+\end{equation}
+where $\alpha$ could be taken as constant with $\alpha = \theta^{-1}$. This package also allows for a non-constant $\theta_i$ with
+\begin{equation}
+\theta_i = exp(z_i'\gamma) = \eta_{\theta, i}.
+\end{equation}
+This feature provides the major improvement towards other packages involving NB2 models. 
+
+\section{Implementation}
+
+The main model fitting function \code{enbin()}
+uses a formula-based interface and returns an (\proglang{S}3) object of class \code{enbin}:
+%
+\begin{verbatim}
+enbin(formula, data, subset, na.action,
+  model = TRUE, y = TRUE, x = FALSE,
+  control = enbin_control(...), ...)
+\end{verbatim}
+%
+
+The underlying workhorse function, which is usually not called, is \code{enbin_fit()}. It features a matrix interface and returns an unclassed list.
+
+Various \proglang{S}3 methods are provided, see Table~\ref{tab:methods}.
+
+\begin{table}[t!]
+\centering
+\begin{tabular}{lp{11.2cm}}
+\hline
+Method & Description \\ \hline
+\code{print()}       & Simple printed display with coefficients \\
+\code{summary()}     & Standard regression summary; returns \code{summary.enbin} object (with \code{print()} method) \\
+\code{coef()}	     & Extract coefficients \\
+\code{vcov()}	     & Associated covariance matrix \\
+\code{predict()}     & (Different types of) predictions for new data \\
+\code{fitted()}      & Fitted values for observed data \\
+\code{residuals()}   & Extract (different types of) residuals \\
+\code{terms()}       & Extract terms \\
+\code{model.matrix()}& Extract model matrix (or matrices) \\
+\code{nobs()}	     & Extract number of observations \\
+\code{logLik()}      & Extract fitted log-likelihood \\
+\code{bread()}       & Extract bread for \pkg{sandwich} covariance \\
+\code{estfun()}      & Extract estimating functions (= gradient contributions) for \pkg{sandwich} covariances \\
+\code{getSummary()}  & Extract summary statistics for \code{mtable()} \\ \hline
+\end{tabular}
+\caption{\label{tab:methods} \proglang{S}3 methods provided in \pkg{enbin}.}
+\end{table}
+
+These included methods allow for a broad variety of utilities to work automatically, e.g., \code{AIC()}, \code{BIC()},
+\code{coeftest()} (\pkg{lmtest}), \code{lrtest()} (\pkg{lmtest}), \code{waldtest()} (\pkg{lmtest}),
+\code{linearHypothesis()} (\pkg{car}), \code{mtable()} (\pkg{memisc}), etc.
+
+
+\section{Illustration and Replication}
+
+To show the usefulness of the package in practice, the \code{enbin()}-function is applied to the \code{RecreationDemand} dataset from the \pkg{AER}-package. At first, a negative binomial model is computed employing the \code{glm.nb()}-function from the \pkg{MASS}-package and its output is compared with the one from the \code{enbin}-package to assess its accuracy:
+
+<<MASS>>=
+library(MASS)
+data("RecreationDemand", package = "AER")
+m1 <- glm.nb(trips ~ ., data = RecreationDemand)
+summary(m1)
+@
+
+As the variable \code{income} is not significantly different from Zero, another model is fit, where the variable is left out. 
+
+<<2ndmodel>>=
+m2 <- glm.nb(trips ~ . - income, data = RecreationDemand)
+summary(m2)
+library(lmtest)
+lrtest(m2, m1)
+@
+
+The likelihood ratio test also does not reject the null hypothesis, so \code{income} is not considered subsequently. One could further investigate, which variables should possibly be excluded (such as \code{userfees}), but this is skipped here, as it is not of special interest here. $\theta = 0.7264$ indicates significant unobserved heterogeneity in the data. To compare the \code{summary}-output of \code{glm.nb()} from \pkg{MASS} with this package's output, the same model is fit utilizing the \code{enbin()}- function from \code{enbin}:
+
+<<comparison>>=
+library(enbin)
+m3 <- enbin(trips ~ . - income, data = RecreationDemand)
+summary(m3)
+@
+
+It is apparent that the estimated coefficients match the ones obtained by \code{glm.nb}. Further, the intercept in the model is also clearly significant and in a univariate scale model, the constant $\Theta$ can be computed by taking $exp(-0.320) = 0.726$, which is due to the log link in the scale model. \\
+
+Now, in order to point out the major impovement of this package, another model is fit, where the scale depends on covariates as well:
+
+<<varying>>=
+m4 <- enbin(trips ~ . - income | . - income, data = RecreationDemand)
+summary(m4)
+AIC(m3, m4)
+BIC(m3, m4)
+lrtest(m3, m4)
+@
+
+As can be seen in the output, letting the scale depend on covariates proves to be useful in terms of the regarded model selection criteria. Both AIC and BIC prefer the less restrictive variant of the model. The same is valid for the likelihood ratio test.
+
+\bibliography{enbin}
+
+\end{document}

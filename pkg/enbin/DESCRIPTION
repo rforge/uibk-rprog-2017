@@ -1,0 +1,14 @@
+Package: enbin
+Title: Extended Negative Binomial (NB2) Regression
+Version: 0.0-1
+Date: 2017-06-20
+Authors@R: person(given = "Julian", family = "Granna", role = c("aut", "cre"), email = "julian.granna@uibk.ac.at")
+Depends: R (>= 3.4.0)
+Imports: Formula, numDeriv, sandwich
+Suggests: MASS, AER, lmtest
+Description: Negative binomial (NB2) regression models are provided.
+  These are applied to count data with a negative binomial distributed reponse.
+  The two distribution parameters (location and scale, i.e. theta)
+  may depend on covariates. A log link is employed for both the location
+  and the scale equation.
+License: GPL-2 | GPL-3
