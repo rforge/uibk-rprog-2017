@@ -1,5 +1,9 @@
 import("stats", "Formula", "multiwayvcov", "lmtest")
 
+importFrom("grDevices", "dev.flush", "dev.hold", "dev.interactive",
+             "devAskNewPage")
+
+importFrom("graphics", "lines", "par", "plot", "plot.new")
 
 export("nndd", 
 "nndd_reshape",
