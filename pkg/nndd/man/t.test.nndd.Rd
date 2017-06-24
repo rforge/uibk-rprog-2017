@@ -21,7 +21,8 @@ predict_fun_glm(pformula, link = "logit", data)
 
 \method{print}{nndd}(x, digits = max(3, getOption("digits") - 3), \dots)
 
-\method{plot}{nndd}(x, data, which = c(1L:7L, 8L), ask = prod(par("mfcol")) < length(which) && dev.interactive(), ...)
+\method{plot}{nndd}(x, data, which = c(1L:7L, 8L), 
+					ask = prod(par("mfcol")) < length(which) && dev.interactive(), ...)
 
 \method{vcov}{nndd}(object, \dots)
 

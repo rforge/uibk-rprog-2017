@@ -85,7 +85,8 @@ Fixme:
 
 data("IRCA", package = "nndd")
 library(Formula)
-formula <- Formula(treated | v_crime ~ officers_pc + income + p_crime | officers_pc + income + p_crime + crack_index + unemprate) 
+formula <- Formula(treated | v_crime ~ officers_pc + income + p_crime 
+						   | officers_pc + income + p_crime + crack_index + unemprate) 
 nndd <- nndd(formula = formula, data = IRCA, indexes = c("year", "county", "treated", "v_crime"), t_time = "1986" )
 names(nndd)
 print(nndd)
