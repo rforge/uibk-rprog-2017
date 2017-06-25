@@ -1,6 +1,6 @@
 Package: enbin
 Title: Extended Negative Binomial (NB2) Regression
-Version: 0.0-1
+Version: 0.0-2
 Date: 2017-06-20
 Authors@R: person(given = "Julian", family = "Granna", role = c("aut", "cre"), email = "julian.granna@uibk.ac.at")
 Depends: R (>= 3.4.0)

@@ -77,6 +77,8 @@ where $\alpha$ could be taken as constant with $\alpha = \theta^{-1}$. This pack
 \end{equation}
 This feature provides the major improvement towards other packages involving NB2 models. 
 
+\newpage
+
 \section{Implementation}
 
 The main model fitting function \code{enbin()}
@@ -93,7 +95,7 @@ The underlying workhorse function, which is usually not called, is \code{enbin_f
 
 Various \proglang{S}3 methods are provided, see Table~\ref{tab:methods}.
 
-\begin{table}[t!]
+\begin{table}[h]
 \centering
 \begin{tabular}{lp{11.2cm}}
 \hline
@@ -120,6 +122,7 @@ These included methods allow for a broad variety of utilities to work automatica
 \code{coeftest()} (\pkg{lmtest}), \code{lrtest()} (\pkg{lmtest}), \code{waldtest()} (\pkg{lmtest}),
 \code{linearHypothesis()} (\pkg{car}), \code{mtable()} (\pkg{memisc}), etc.
 
+\newpage
 
 \section{Illustration and Replication}
 
@@ -141,7 +144,7 @@ library(lmtest)
 lrtest(m2, m1)
 @
 
-The likelihood ratio test also does not reject the null hypothesis, so \code{income} is not considered subsequently. One could further investigate, which variables should possibly be excluded (such as \code{userfees}), but this is skipped here, as it is not of special interest here. $\theta = 0.7264$ indicates significant unobserved heterogeneity in the data. To compare the \code{summary}-output of \code{glm.nb()} from \pkg{MASS} with this package's output, the same model is fit utilizing the \code{enbin()}- function from \code{enbin}:
+The likelihood ratio test also does not reject the null hypothesis, so \code{income} is not considered subsequently. One could further investigate, which variables should possibly be excluded (such as \code{userfees}), but this is neglected here, as it is not of special interest. $\theta = 0.7264$ indicates significant unobserved heterogeneity in the data. To compare the \code{summary}-output of \code{glm.nb()} from \pkg{MASS} with this package's output, the same model is fit utilizing the \code{enbin()}- function from \code{enbin}:
 
 <<comparison>>=
 library(enbin)
@@ -149,7 +152,7 @@ m3 <- enbin(trips ~ . - income, data = RecreationDemand)
 summary(m3)
 @
 
-It is apparent that the estimated coefficients match the ones obtained by \code{glm.nb}. Further, the intercept in the model is also clearly significant and in a univariate scale model, the constant $\Theta$ can be computed by taking $exp(-0.320) = 0.726$, which is due to the log link in the scale model. \\
+It is apparent that the estimated coefficients match the ones obtained by \code{glm.nb}. Further, the intercept in the model is also clearly significant and in the univariate scale model, the constant $\theta$ can be computed by taking $exp(-0.320) = 0.726$, which is due to the log link in the scale model. \\
 
 Now, in order to point out the major impovement of this package, another model is fit, where the scale depends on covariates as well:
 
@@ -157,11 +160,16 @@ Now, in order to point out the major impovement of this package, another model i
 m4 <- enbin(trips ~ . - income | . - income, data = RecreationDemand)
 summary(m4)
 AIC(m3, m4)
+@
+
+\newpage
+
+<<contd>>=
 BIC(m3, m4)
 lrtest(m3, m4)
 @
 
-As can be seen in the output, letting the scale depend on covariates proves to be useful in terms of the regarded model selection criteria. Both AIC and BIC prefer the less restrictive variant of the model. The same is valid for the likelihood ratio test.
+As can be seen in the output, letting the scale depend on covariates proves to be useful in terms of the regarded model selection criteria. Both AIC and BIC prefer the less restrictive variant of the model. The same holds for the likelihood ratio test.
 
 \bibliography{enbin}
 
