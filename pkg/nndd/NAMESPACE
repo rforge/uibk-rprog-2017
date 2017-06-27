@@ -17,6 +17,8 @@ S3method("print", "nndd")
 S3method("t.test", "nndd")
 S3method("vcov", "nndd")
 S3method("summary","nndd")
+S3method("vcov","lmc")
+S3method("summary","lmc")
 
 
 
