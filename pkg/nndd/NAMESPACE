@@ -19,7 +19,7 @@ S3method("vcov", "nndd")
 S3method("summary","nndd")
 S3method("vcov","lmc")
 S3method("summary","lmc")
-
+S3method("getSummary","lm")
 
 
 

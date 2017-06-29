@@ -12,7 +12,7 @@ nndd(formula, data, indexes = c("year", "firm_id", "tg", "outcome"),  t_time , n
                      time_ids = c("year", ""),
                      link = "logit",
                      subset , na.action, clustervariables, 
-                     model = TRUE, y = TRUE, x = FALSE,
+                     model = TRUE, y = TRUE, x = FALSE, displ_coefs, 
                       ...)
 
 
@@ -47,6 +47,7 @@ nndd_reshape_other(call, data)
     included as a component of the returned value.}
   \item{x, y}{#Fixme: do I need this?}
   \item{\dots}{arguments to be passed on to the estimation of the DD (\link{lm.fit})}
+\item{displ_coefs}{a list of coefficients being displayed of the DD if a summary function is applied}   
 \item{object_nndd}{an object of class \code{"nndd"}}
 \item{call}{a call of a \code{"nndd"} object}  
 

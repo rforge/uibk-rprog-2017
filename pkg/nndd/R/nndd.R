@@ -104,7 +104,7 @@ nndd <- function(formula, data,
                      time_ids = c("year", ""),
                      link = "logit",
                      subset , na.action, clustervariables, 
-                     model = TRUE, y = TRUE, x = FALSE,
+                     model = TRUE, y = TRUE, x = FALSE, displ_coefs,
                       ...)
 {
   
@@ -328,6 +328,10 @@ nndd <- function(formula, data,
     reg$clustervariables <- clustervariables
     
   }
+  if(!missing(displ_coefs))
+  {
+    reg$displ_coefs <- displ_coefs
+  }
 
   
   
@@ -356,6 +360,8 @@ nndd <- function(formula, data,
   mf_compl <- eval(mf_compl)
   
   reg$model <- mf_compl
+  
+  
   
   
   #add NdDd class info
@@ -884,7 +890,123 @@ cluster.vcov_nndd <- function(model, cluster)
   
 }
 
-summary.lmc <- function (object, correlation = FALSE, symbolic.cor = FALSE, 
+summary.lm <- function (object, correlation = FALSE, symbolic.cor = FALSE, use_displcoef = TRUE, ...) 
+{
+  z <- object
+p <- z$rank
+rdf <- z$df.residual
+if (p == 0) {
+  r <- z$residuals
+  n <- length(r)
+  w <- z$weights
+  if (is.null(w)) {
+    rss <- sum(r^2)
+  }
+  else {
+    rss <- sum(w * r^2)
+    r <- sqrt(w) * r
+  }
+  resvar <- rss/rdf
+  ans <- z[c("call", "terms", if (!is.null(z$weights)) "weights")]
+  class(ans) <- "summary.lm"
+  ans$aliased <- is.na(coef(object))
+  ans$residuals <- r
+  ans$df <- c(0L, n, length(ans$aliased))
+  ans$coefficients <- matrix(NA, 0L, 4L)
+  dimnames(ans$coefficients) <- list(NULL, c("Estimate", 
+                                             "Std. Error", "t value", "Pr(>|t|)"))
+  ans$sigma <- sqrt(resvar)
+  ans$r.squared <- ans$adj.r.squared <- 0
+  return(ans)
+}
+if (is.null(z$terms)) 
+  stop("invalid 'lm' object:  no 'terms' component")
+if (!inherits(object, "lm")) 
+  warning("calling summary.lm(<fake-lm-object>) ...")
+Qr <- stats:::qr.lm(object)
+n <- NROW(Qr$qr)
+if (is.na(z$df.residual) || n - p != z$df.residual) 
+  warning("residual degrees of freedom in object suggest this is not an \"lm\" fit")
+r <- z$residuals
+f <- z$fitted.values
+w <- z$weights
+if (is.null(w)) {
+  mss <- if (attr(z$terms, "intercept")) 
+    sum((f - mean(f))^2)
+  else sum(f^2)
+  rss <- sum(r^2)
+}
+else {
+  mss <- if (attr(z$terms, "intercept")) {
+    m <- sum(w * f/sum(w))
+    sum(w * (f - m)^2)
+  }
+  else sum(w * f^2)
+  rss <- sum(w * r^2)
+  r <- sqrt(w) * r
+}
+resvar <- rss/rdf
+if (is.finite(resvar) && resvar < (mean(f)^2 + var(f)) * 
+    1e-30) 
+  warning("essentially perfect fit: summary may be unreliable")
+p1 <- 1L:p
+R <- chol2inv(Qr$qr[p1, p1, drop = FALSE])
+se <- sqrt(diag(R) * resvar)
+est <- z$coefficients[Qr$pivot[p1]]
+tval <- est/se
+ans <- z[c("call", "terms", if (!is.null(z$weights)) "weights")]
+ans$residuals <- r
+ans$coefficients <- cbind(est, se, tval, 2 * pt(abs(tval), 
+                                                rdf, lower.tail = FALSE))
+dimnames(ans$coefficients) <- list(names(z$coefficients)[Qr$pivot[p1]], 
+                                   c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
+ans$aliased <- is.na(coef(object))
+ans$sigma <- sqrt(resvar)
+ans$df <- c(p, rdf, NCOL(Qr$qr))
+if (p != attr(z$terms, "intercept")) {
+  df.int <- if (attr(z$terms, "intercept")) 
+    1L
+  else 0L
+  ans$r.squared <- mss/(mss + rss)
+  ans$adj.r.squared <- 1 - (1 - ans$r.squared) * ((n - 
+                                                     df.int)/rdf)
+  ans$fstatistic <- c(value = (mss/(p - df.int))/resvar, 
+                      numdf = p - df.int, dendf = rdf)
+}
+else ans$r.squared <- ans$adj.r.squared <- 0
+ans$cov.unscaled <- R
+dimnames(ans$cov.unscaled) <- dimnames(ans$coefficients)[c(1, 
+                                                           1)]
+if (correlation) {
+  ans$correlation <- (R * resvar)/outer(se, se)
+  dimnames(ans$correlation) <- dimnames(ans$cov.unscaled)
+  ans$symbolic.cor <- symbolic.cor
+}
+if (!is.null(z$na.action)) 
+  ans$na.action <- z$na.action
+class(ans) <- "summary.lm"
+
+if(use_displcoef)
+{
+if(length(object$displ_coef) > 0)
+{
+  ans$coefficients <- as.matrix(ans$coefficients[which(rownames(ans$coefficients) %in% object$displ_coef),])
+  
+  if(ncol(ans$coefficients) == 1)
+  {
+    ans$coefficients <- t(ans$coefficients)
+  }
+    
+  rownames(ans$coefficients) <- object$displ_coef
+  #colnames(s1$coefficients) <- c( "est", "se", "stat", "p", "lwr", "upr")
+}
+}
+ans
+}
+  
+
+
+summary.lmc <- function (object, correlation = FALSE, symbolic.cor = FALSE, use_displcoef = TRUE,
                           ...) 
 {
   if(length(object$clustervariables) == 0)
@@ -894,33 +1016,62 @@ summary.lmc <- function (object, correlation = FALSE, symbolic.cor = FALSE,
   else
   {
     
-    s1 <- summary.lm(object)
+    s1 <- summary.lm(object, use_displcoef = FALSE)
     s1$call$clustervariables <- object$clustervariables 
     s1$coefficients[,2:4] <- coeftest(object)[,2:4]
     #s1$fstatistic[[1]] <- waldtest(object)[2,3]
     return(s1)
     
   }
+  if(use_displcoef)
+  {
+  if(length(object$displ_coef) > 0)
+  {
+    s1$coefficients <- as.matrix(s1$coefficients[which(rownames(s1$coefficients) %in% object$displ_coef),])
+    if(ncol(s1$coefficients) == 1)
+    {
+      s1$coefficients <- t(s1$coefficients)
+    }
+    rownames(s1$coefficients) <- object$displ_coef
+    #colnames(s1$coefficients) <- c( "est", "se", "stat", "p", "lwr", "upr")
+  }
+    
+  }
+  return(s1)
   
 }
 
-summary.nndd <- function (object, correlation = FALSE, symbolic.cor = FALSE, 
+summary.nndd <- function (object, correlation = FALSE, symbolic.cor = FALSE, use_displcoef = TRUE,  
           ...) 
 {
   if(length(object$clustervariables) == 0)
   {
-    summary.lm(object, ...)
+    s1 <- summary.lm(object, ...)
   }
   else
   {
     
-    s1 <- summary.lm(object)
+    s1 <- summary.lm(object, use_displcoef =  FALSE)
     s1$call$clustervariables <- object$clustervariables 
     s1$coefficients[,2:4] <- coeftest(object)[,2:4]
     #s1$fstatistic[[1]] <- waldtest(object)[2,3]
-    return(s1)
+   
     
   }
+  if(use_displcoef)
+  {
+    if(length(object$displ_coef) > 0)
+    {
+      s1$coefficients <- as.matrix(s1$coefficients[which(rownames(s1$coefficients) %in% object$displ_coef),])
+      if(ncol(s1$coefficients) == 1)
+      {
+        s1$coefficients <- t(s1$coefficients)
+      }
+      rownames(s1$coefficients) <- object$displ_coef
+      #colnames(s1$coefficients) <- c( "est", "se", "stat", "p", "lwr", "upr")
+    }
+  }
+    return(s1)
   
 }
 
@@ -939,6 +1090,60 @@ waldtest.nndd <- function(object, ..., test = c("F", "Chisq"))
   class(object) <- "lm"
     waldtest.default(object, vcov = vcov , test = "F" )
 }
+
+mtable_nndd <- function(..., only_dd = FALSE, indexes = c("treated", "post"))
+{
+  if(only_dd)
+  {
+    mtable(...)  
+    
+  print("Test")
+  }
+  else
+  {
+    mtable(...)  
+  }
+
+
+}
+
+
+#nicht notwendig summary mach schon alles 
+# getSummary.lm <- function(obj, alpha = 0.05, report , ...) 
+# {
+#   smry <- summary(obj)
+#   coef <- smry$coef
+#   numdf <- unname(smry$fstatistic[2])
+#   dendf <- unname(smry$fstatistic[3])
+#   lower <- coef[, 1] + coef[, 2] * qt(p = alpha/2, df = dendf)
+#   upper <- coef[, 1] + coef[, 2] * qt(p = 1 - alpha/2, df = dendf)
+#   coef <- cbind(coef, lower, upper)
+#   colnames(coef) <- c("est", "se", "stat", "p", "lwr", "upr")
+#   sigma <- smry$sigma
+#   r.squared <- smry$r.squared
+#   adj.r.squared <- smry$adj.r.squared
+#   F <- unname(smry$fstatistic[1])
+#   p <- pf(F, numdf, dendf, lower.tail = FALSE)
+#   N <- sum(smry$df[1:2])
+#   ll <- logLik(obj)
+#   deviance <- deviance(obj)
+#   AIC <- AIC(obj)
+#   BIC <- AIC(obj, k = log(N))
+#   sumstat <- c(sigma = sigma, r.squared = r.squared, adj.r.squared = adj.r.squared, 
+#                F = F, numdf = numdf, dendf = dendf, p = p, logLik = ll, 
+#                deviance = deviance, AIC = AIC, BIC = BIC, N = N)
+# #   if(length(obj$displ_coef) > 0)
+# #   {
+# #   coef <- as.matrix(coef[which(rownames(coef) %in% obj$displ_coef),])
+# #   rownames(coef) <- obj$displ_coef
+# #   colnames(coef) <- c( "est", "se", "stat", "p", "lwr", "upr")
+# #   }
+#   list(coef = coef, sumstat = sumstat, contrasts = obj$contrasts, 
+#        xlevels = obj$xlevels, call = obj$call)
+# }
+# 
+
+
 
 
 
