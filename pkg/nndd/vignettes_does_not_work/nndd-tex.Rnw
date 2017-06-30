@@ -149,11 +149,10 @@ nndd1c <- nndd(formula = formula, data = IRCA,
                displ_coefs = c("unemprate",  "povrate", "pop" , "crack_index", 
                                "officers_pc", "income" , "abortions", 
                                "post", "treated", "post:treated"))
-print(nndd1c)
 @
 
 Next we estimate  usual DD models without matching. We use all variables which were used in the nndd model as controls. We estimate again two models one normal linear regression and the other with clustered standard errors. Because there is no construction function for the class \code{lmc} we construct it by hand for this example. 
-
+We also use the class \code{lmc} for the non clustered version because the summary function of class \code{lm} is not adapted to omit display variables. 
 <<simple dd>>=
 lm1 <- lm(update(formula(formula, lhs = 2, rhs = 1), 
                  paste(paste(".", 
@@ -165,18 +164,17 @@ lm1 <- lm(update(formula(formula, lhs = 2, rhs = 1),
 lm1$displ_coefs <- c("unemprate",  "povrate", "pop" , "crack_index", 
                      "officers_pc", "income" , "abortions", 
                      "post", "treated", "post:treated")
-print(lm1)
-summary(lm1)
+class(lm1) <- c("lmc", "lm")
+
 lm1c <- lm1
 lm1c$clustervariables <- "StateFIPS"
 class(lm1c) <- c("lmc", "lm")
-print(lm1c)
 @
 
 Using a model table from \pkg{memisc} \citep{memisc} it can be easily seen, that we have different coefficients and significance across the models (see Table~\ref{tab:mtable}). Comparing the two models with clustered standard errors, we still see that usual DD would estimate a significant impact of IRCA on violence crime. However, nndd states a non significant impact. 
 
 
-<<compare>>=
+<<compare, eval=FALSE>>=
 mtable(lm1,nndd1, lm1c, nndd1c)
 @
 
@@ -185,7 +183,7 @@ mtable(lm1,nndd1, lm1c, nndd1c)
 <<mtable-latex, echo=FALSE, results=tex>>=
 toLatex(mtable(lm1,nndd1, lm1c, nndd1c))
 @
-\caption{\label{tab:mtable} Comparing resutsl off simple DD and nndd.}
+\caption{\label{tab:mtable} Comparing results of simple DD and nndd.}
 \end{table}
 
 
@@ -219,10 +217,10 @@ invisible(dev.off() )
 \begin{figure}[ht]
 \centering
      \includegraphics[width=0.6\textwidth]{myfile.pdf}
-      \caption{Pscore disitibution before NN and after NN}
+      \caption{Pscore distribution before NN and after NN}
        \label{pscore:dis}
 \end{figure}
-
+\end{center}
 
 In the left graph we can see that the pscore distribution of treated (blue) and control (red) was very different before NN. Especially many control units had a pscore close to zero. After matching the distributions of the pscore look alike. \\
 
