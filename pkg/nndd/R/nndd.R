@@ -1020,7 +1020,7 @@ summary.lmc <- function (object, correlation = FALSE, symbolic.cor = FALSE, use_
     s1$call$clustervariables <- object$clustervariables 
     s1$coefficients[,2:4] <- coeftest(object)[,2:4]
     #s1$fstatistic[[1]] <- waldtest(object)[2,3]
-    return(s1)
+    
     
   }
   if(use_displcoef)
@@ -1107,41 +1107,61 @@ mtable_nndd <- function(..., only_dd = FALSE, indexes = c("treated", "post"))
 
 }
 
-
-#nicht notwendig summary mach schon alles 
-# getSummary.lm <- function(obj, alpha = 0.05, report , ...) 
+# lmc <- function(formula, data, subset, weights, na.action, method = "qr", 
+# model = TRUE, x = FALSE, y = FALSE, qr = TRUE, singular.ok = TRUE, 
+# contrasts = NULL, offset, clustervariables, ...)
 # {
-#   smry <- summary(obj)
-#   coef <- smry$coef
-#   numdf <- unname(smry$fstatistic[2])
-#   dendf <- unname(smry$fstatistic[3])
-#   lower <- coef[, 1] + coef[, 2] * qt(p = alpha/2, df = dendf)
-#   upper <- coef[, 1] + coef[, 2] * qt(p = 1 - alpha/2, df = dendf)
-#   coef <- cbind(coef, lower, upper)
-#   colnames(coef) <- c("est", "se", "stat", "p", "lwr", "upr")
-#   sigma <- smry$sigma
-#   r.squared <- smry$r.squared
-#   adj.r.squared <- smry$adj.r.squared
-#   F <- unname(smry$fstatistic[1])
-#   p <- pf(F, numdf, dendf, lower.tail = FALSE)
-#   N <- sum(smry$df[1:2])
-#   ll <- logLik(obj)
-#   deviance <- deviance(obj)
-#   AIC <- AIC(obj)
-#   BIC <- AIC(obj, k = log(N))
-#   sumstat <- c(sigma = sigma, r.squared = r.squared, adj.r.squared = adj.r.squared, 
-#                F = F, numdf = numdf, dendf = dendf, p = p, logLik = ll, 
-#                deviance = deviance, AIC = AIC, BIC = BIC, N = N)
-# #   if(length(obj$displ_coef) > 0)
-# #   {
-# #   coef <- as.matrix(coef[which(rownames(coef) %in% obj$displ_coef),])
-# #   rownames(coef) <- obj$displ_coef
-# #   colnames(coef) <- c( "est", "se", "stat", "p", "lwr", "upr")
-# #   }
-#   list(coef = coef, sumstat = sumstat, contrasts = obj$contrasts, 
-#        xlevels = obj$xlevels, call = obj$call)
+#   
+#   lm(..., data = data)
+#    
+#    
+# #     cl <- cl[-which(names(cl) == "clustervariables" )]
+# #          if(!missing(formula)) cl$formula <- as.formula(formula)
+# #     cl[[1]] <- lm
+# #    eval(cl,.GlobalEnv)
+# #      
+# #   if(!missing(data)) cl$data <- as.name("data")
+# #   if(!missing(subset)) cl$subset <- as$call("subset")
+# #         
+#   #m <- lm(cl)
+#   
 # }
-# 
+
+
+
+getSummary.lm <- function(obj, alpha = 0.05, report , ...) 
+{
+  smry <- summary(obj)
+  coef <- smry$coef
+  numdf <- unname(smry$fstatistic[2])
+  dendf <- unname(smry$fstatistic[3])
+  lower <- coef[, 1] + coef[, 2] * qt(p = alpha/2, df = dendf)
+  upper <- coef[, 1] + coef[, 2] * qt(p = 1 - alpha/2, df = dendf)
+  coef <- cbind(coef, lower, upper)
+  colnames(coef) <- c("est", "se", "stat", "p", "lwr", "upr")
+  sigma <- smry$sigma
+  r.squared <- smry$r.squared
+  adj.r.squared <- smry$adj.r.squared
+  F <- unname(smry$fstatistic[1])
+  p <- pf(F, numdf, dendf, lower.tail = FALSE)
+  N <- sum(smry$df[1:2])
+  ll <- logLik(obj)
+  deviance <- deviance(obj)
+  AIC <- AIC(obj)
+  BIC <- AIC(obj, k = log(N))
+  sumstat <- c(sigma = sigma, r.squared = r.squared, adj.r.squared = adj.r.squared, 
+               F = F, numdf = numdf, dendf = dendf, p = p, logLik = ll, 
+               deviance = deviance, AIC = AIC, BIC = BIC, N = N)
+#   if(length(obj$displ_coef) > 0)
+#   {
+#   coef <- as.matrix(coef[which(rownames(coef) %in% obj$displ_coef),])
+#   rownames(coef) <- obj$displ_coef
+#   colnames(coef) <- c( "est", "se", "stat", "p", "lwr", "upr")
+#   }
+  list(coef = coef, sumstat = sumstat, contrasts = obj$contrasts, 
+       xlevels = obj$xlevels, call = obj$call)
+}
+
 
 
 
