@@ -1,0 +1,293 @@
+\documentclass[nojss]{jss}
+\usepackage{booktabs,dcolumn,thumbpdf,lmodern}
+
+
+\author{Judith Santer\\Universit\"at Innsbruck}
+\Plainauthor{Judith Santer}
+
+\title{Heteroscedastic Probit Regression}
+
+\Keywords{heteroscedastic probit, regression, \proglang{R}}
+\Plainkeywords{heteroscedastic probit, regression, R}
+
+\Abstract{
+  The \pkg{hetprobit} package (\url{https://R-Forge.R-project.org/projects/uibk-rprog-2017/})
+  fits probit regression models \ldots FIXME. In the following the methodology of heteroscedastic probit
+  models is presented, along with an illustration of voter turnout data from \cite{Nagler:1991} and   
+  a replication of the results of the \pkg{glmx} package.
+}
+
+\Address{
+  Judith Santer\\
+  Department of Statistics\\
+  Faculty of Economics and Statistics\\
+  Universit\"at Innsbruck\\
+  Universit\"atsstr.~15\\
+  6020 Innsbruck, Austria\\
+  E-mail: \email{Judith.Santer@uibk.ac.at}
+}
+
+<<preliminaries, echo=FALSE, results=hide>>=
+options(width = 70, scipen = 1, digits = 4, prompt = "R> ", continue = "+  ")
+library("hetprobit")
+library("glmx")
+library("lmtest")
+library("memisc")
+
+
+if(file.exists("VoterTurnout-models.rda")){
+  load("VoterTurnout-models.rda")
+} else {
+# -----------------------------------------------+
+#   Auxiliary Model Fitting File to speed up     |
+#   (repeated) pdf-compilation of vignette       |
+#------------------------------------------------+
+
+data("VoterTurnout", package = "hetprobit")
+library("hetprobit")
+
+## homoscedastic model replicated from Nagler(1991)
+mn <- glm(vote ~ age + I(age^2) + south + govelection + 
+  (education + I(education^2)) * closing, 
+  data = VoterTurnout, family = binomial(link = "probit"))
+
+## heteroscedastic probit model
+## with same regressors in mean and scale submodel
+m1 <- hetprobit(vote ~ age + I(age^2) + south + govelection + 
+  (education + I(education^2)) * closing |
+  age + I(age^2) + south + govelection + 
+  (education + I(education^2)) * closing, 
+  data = VoterTurnout)
+
+## reduced heteroscedastic model 
+## excluding interaction effects
+m2 <- update(m1, . ~ . - (education + I(education^2)):closing  |
+  . - (education + I(education^2)):closing)
+
+## reduced model for illustration purpose only
+m <- hetprobit(vote ~ age + south + govelection + education + closing |
+  age + south + govelection + education + closing, 
+  data = VoterTurnout)
+
+## benchmark model
+## estimated with hetglm() from package glmx
+m0 <- hetglm(vote ~ age + south + govelection + education + closing |
+  age + south + govelection + education + closing, 
+  data = VoterTurnout, method = "BFGS", hessian = TRUE)
+
+
+save(mn, m, m0, m1, m2, file = "VoterTurnout-models.rda")
+}
+
+d <- mn$data
+@
+
+
+
+\begin{document}
+%\VignetteIndexEntry{Heteroscedastic Probit Regression}
+
+
+\section{Introduction} FIXME
+In standard probit regression models the probability of a success, i.e. $P(Y_i = 1)$, is 
+modelled as 
+$$
+P(Y_i = 1) = \pi_{i} = \Phi(x_i^\top \beta)
+$$
+where $\Phi(\cdot)$ is the cdf of a standard normal distribution. \\
+The general assumption that the variance of the error term is constant and due to identifiability 
+set to one is relaxed in the heteroscedastic probit model. The variance can vary systematically and 
+is now modelled as a multiplicative function of regressor variables, i.e. 
+$$
+\sigma_i = \exp(z_i^\top \gamma). 
+$$
+The probability of success is now represented by 
+
+$$
+\pi_i = \Phi\left(\frac{x_i^\top \beta}{\exp(z_i^\top \gamma)}\right).
+$$
+Note that the scale model is only identified without intercept. 
+
+
+
+\section{Implementation}
+
+As usual in many other regression packages for \proglang{R} \citep{R}, the main model 
+fitting function \code{hetprobit()} uses a formula-based interface and returns an (\proglang{S}3) 
+object of class \code{hetprobit}:
+%
+\begin{verbatim}
+hetprobit(formula, data, subset, na.action,
+  model = TRUE, y = TRUE, x = FALSE,
+  control = hetprobit_control(...), ...)
+\end{verbatim}
+%
+Actually, the \code{formula} can be a two-part \code{Formula} \citep{Formula}, 
+specifying separate sets of regressors $x_i$ and $z_i$ for the location and scale submodels, 
+respectively.
+
+The underlying workhorse function is \code{hetprobit_fit()} which has a matrix interface 
+and returns an unclassed list.
+
+Additionally, numerous standard \proglang{S}3 methods are provided in the Table~\ref{tab:methods} 
+below. As usual fitted means of the observed response variable can be extracted by the 
+generic function \code{fitted}.
+
+\begin{table}[t!]
+\centering
+\begin{tabular}{lp{11.2cm}}
+\hline
+Method & Description \\ \hline
+\code{print()}       & Simple printed display with coefficients \\
+\code{summary()}     & Standard regression summary; returns \code{summary.hetprobit} object (with \code{print()} method) \\
+\code{coef()}	     & Extract coefficients \\
+\code{vcov()}	     & Associated covariance matrix \\
+\code{predict()}     & (Different types of) predictions for new data \\
+\code{residuals()}   & Extract (different types of) residuals \\
+\code{terms()}       & Extract terms \\
+\code{model.matrix()}& Extract model matrix (or matrices) \\
+\code{nobs()}	     & Extract number of observations \\
+\code{logLik()}      & Extract fitted log-likelihood \\
+\code{bread()}       & Extract bread for \pkg{sandwich} covariance \\
+\code{estfun()}      & Extract estimating functions (= gradient contributions) for \pkg{sandwich} covariances \\
+\code{getSummary()}  & Extract summary statistics for \code{mtable()} \\ \hline
+\end{tabular}
+\caption{\label{tab:methods} \proglang{S}3 methods provided in \pkg{hetprobit}.}
+\end{table}
+
+Due to these methods a number of useful utilities work automatically, e.g., \code{AIC()}, \code{BIC()},
+\code{coeftest()} (\pkg{lmtest}), \code{lrtest()} (\pkg{lmtest}), \code{waldtest()} (\pkg{lmtest}),
+\code{linearHypothesis()} (\pkg{car}), \code{mtable()} (\pkg{memisc}), etc.
+
+
+\section{Illustration}
+This section is devoted to present the functionality of the package using data on voter 
+turnout of the U.S. presidential elections in 1984. The data has first been analyzed by 
+\cite{Nagler:1991} to see whether registration laws and education have an influence on the
+propensity to vote. Beyond these two effects further controls were included (see 
+Table~\ref{tab:data}). In 1994 \citeauthor{Nagler:1994} fitted his skewed logit model 
+to the data and \cite{Altman+McDonald:2003} replicated this study with focus on numerical
+accuracy. The data and further materials needed for the replication are available in their 
+paper supplements. \footnote{In the original work of \cite{Nagler:1991} $98,860$ persons were
+interviewed, in the study of \cite{Altman+McDonald:2003} only 
+$\Sexpr{format(nobs(mn), big.mark = ",")}$ observations could be replicated. Thus, the model
+output of \code{mn} is slightly different to the published results of \cite{Nagler:1991}.}
+ 
+\begin{table}[h!]
+\centering
+\begin{tabular}{lp{7cm}r}
+\hline
+Variable   			& Description 				& Mean/ \% of 'yes'\\ \hline
+\code{vote}			& Did the respondent vote?		& \Sexpr{format(prop.table(table(d$vote))[2]*100, digits = 2)} \% \\
+\code{education}   	& Years of education of the respondent & \Sexpr{format(mean(d$education), digits = 2)}\\
+\code{age}	     		& Age of the respondent 	& \Sexpr{format(mean(d$age), digits = 3)}\\
+\code{south}	     	& Is the respondent from the south? & \Sexpr{format(prop.table(table(d$south))[2]*100, digits = 2)} \%\\
+\code{govelection}     	& Were gubernatorial elections held? & \Sexpr{format(prop.table(table(d$govelection))[2]*100, digits = 2)} \%\\
+\code{closing}   		& How many days before the election has the registration been closed? & \Sexpr{format(mean(d$closing), digits = 3)}\\ \hline
+\end{tabular}
+\caption{\label{tab:data} Variables in the \code{VoterTurnout} dataset.}
+\end{table}
+
+
+
+<<nagler1991-homoscedastic-probit, eval = FALSE>>=
+data("VoterTurnout", package = "hetprobit")
+library("hetprobit")
+mn <- glm(vote ~ age + I(age^2) + south + govelection + 
+  (education + I(education^2)) * closing, 
+  data = VoterTurnout, family = binomial(link = "probit"))
+summary(mn)
+@
+<<echo = FALSE>>=
+summary(mn)
+@
+
+
+In a next step the replicated homoscedastic model will be modified in such a way that all regressors (including interactions) in the mean model are also part of the scale submodel (full model \code{m1}). 
+Additionally, a reduced model without interaction effects will be fitted (model \code{m2}).
+
+<<heteroscedastic-probit-full, eval = FALSE>>=
+m1 <- hetprobit(vote ~ age + I(age^2) + south + govelection + 
+  (education + I(education^2)) * closing |
+  age + I(age^2) + south + govelection + 
+  (education + I(education^2)) * closing, 
+  data = VoterTurnout)
+summary(m1)
+@
+<<echo = FALSE>>=
+summary(m1)
+@
+<<heteroscedastic-probit-reduced, eval = FALSE>>=
+m2 <- update(m1, . ~ . - (education + I(education^2)):closing  |
+  . - (education + I(education^2)):closing)
+summary(m2)
+@
+<<echo = FALSE>>=
+summary(m2)
+@
+
+Comparing these three models by means of information criteria, the homoscedastic 
+probit model (\code{mn}) replicated at the beginning would be the least preferred one.
+The BIC that penalizes complex models more strongly than the AIC is in favor of the 
+reduced heteroscedastic model \code{m2}. 
+
+<<model-selection>>=
+AIC(mn, m1, m2)
+BIC(mn, m1, m2)
+@
+
+A likelihood ratio test on the nested models \code{m1} and \code{m2} would prefer 
+the full heteroscedastic model \code{m2 }over the reduced one.
+<<lr-test>>=
+library("lmtest")
+lrtest(mn, m1, m2)
+@
+
+\section{Replication}
+This package is a somewhat simpler reimplementation of the function \code{hetglm()} from 
+the package \pkg{glmx} \citep{glmx}.\footnote{FIXME Compared to \code{hetglm}, \code{hetprobit} 
+currently does not offer: analytical Hessian, flexible link functions for the mean and scale 
+submodel, functionality for homoscedastic models, among further features.} 
+For illustration purposes a sparser model is chosen. Therefore, the polynomials of \code{age} and \code{education} as well as the interaction between \code{education} and \code{closing} are removed from 
+the model equation.
+
+
+
+<<glmx, eval=FALSE>>=
+library("glmx")
+m0 <- hetglm(vote ~ age + south + govelection + education + 
+  I(education^2) + closing |
+  age + south + govelection + education + I(education^2) + closing, 
+  data = VoterTurnout, method = "BFGS", hessian = TRUE)
+@
+<<echo=FALSE>>=
+coeftest(m0)
+@
+In the \code{hetglm()}-call for the benchmark model \code{m0} two arguments needed to be switched from the defaults: The method has to be changed to \code{method = "BFGS"} (rather than \code{"nlminb"}) and the \code{hessian}-argument is set to \code{TRUE} in order to derive the hessian numerically. 
+
+<<hetprobit, eval=FALSE>>=
+m <- hetprobit(vote ~ age + south + govelection + education + closing |
+  age + south + govelection + education + closing, 
+  data = VoterTurnout)
+@
+
+Using a model table from \pkg{memisc} \citep{memisc} the replicated estimation results (model \code{m}) can be easily embedded in a \TeX-file (see Table~\ref{tab:mtable}).\footnote{The method \code{getSummary()} is not (yet) supported in the \pkg{glmx} package.}
+
+<<mtable, eval=FALSE>>=
+library("memisc")
+toLatex(mtable(m))
+@
+
+\begin{table}[h!]
+\centering
+<<mtable-latex, echo=FALSE, results=tex>>=
+toLatex(mtable(m))
+@
+\caption{\label{tab:mtable} Replication of \pkg{glmx} results using \pkg{hetprobit}.}
+\end{table}
+
+
+\newpage
+\bibliography{hetprobit}
+
+\end{document}
