@@ -1186,4 +1186,3 @@ getSummary.lm <- function(obj, alpha = 0.05, report , ...)
 # }
 
 
-
