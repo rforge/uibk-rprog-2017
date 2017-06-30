@@ -17,20 +17,22 @@ Census data from the U.S. Presidential Elections 1984
     \item{education}{Years of education of the respondent}
     \item{age}{Age of the respondent}
     \item{south}{factor. Is the respondent from the South?}
-    \item{govelection}{factor. Whether gubernatorial elections took place}
-    \item{closing}{Number of days before the election that the registration closes}
+    \item{govelection}{factor. Were gubernatorial elections held?}
+    \item{closing}{How many days before the election has the registration 
+      been closed?}
   }
 }
 
 \details{
   Nagler (1991) first analyzed the data using the standard probit model. 
   In 1994 he introduced the skewed logit model (a.k.a scobit-model) and 
-  Altman and McDonald (2003) replicated this study with focus on numerical accuracy.
+  Altman and McDonald (2003) replicated this study with focus on numerical 
+  accuracy.
 }
 
 \source{
   Supplementary material to Altman and McDonald (2003).  
-  \doi{10.1093/pan/mpg016}
+  \url{https://doi.org/10.1093/pan/mpg016}
 }
 
 \references{

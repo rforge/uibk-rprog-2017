@@ -135,7 +135,7 @@ hetprobit_control(maxit = 5000, start = NULL,
 
   Zeileis A., Koenker R. and Doebler P. (2015) \emph{glmx: Generalized Linear Models Extended.} 
     R package version 0.1-1. 
-      \url{http://cran.r-project.org/package=glmx}
+      \url{https://cran.r-project.org/package=glmx}
 }
 
 \seealso{
