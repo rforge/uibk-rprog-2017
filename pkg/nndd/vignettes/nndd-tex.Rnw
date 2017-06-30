@@ -1,5 +1,5 @@
 \documentclass[nojss]{jss}
-\usepackage{booktabs,dcolumn,thumbpdf,lmodern, graphicx}
+\usepackage{booktabs,dcolumn,thumbpdf,lmodern}
 
 \author{Michal Lapinski \\JKU Linz}
 \Plainauthor{Michal Lapinski}
