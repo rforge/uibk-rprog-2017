@@ -28,7 +28,7 @@ A data frame containing 31206 observations on 21 variables. In detail it is a ba
   \item{officers_pc}{Number of officers per capita.}
   \item{income}{The logarithm of the average income.}  
   \item{empl}{The logarithm of the employment.}
-  \item{sim_CumWeightedAllImmPerCap}{sim\_CumWeightedAllImmPerCap. Fixme: need to read paper}
+  \item{sim_CumWeightedAllImmPerCap}{sim\_CumWeightedAllImmPerCap. Fixme: need to read paper in more detail}
   \item{sim_diff}{sim\_diff. Fixme: need to read paper}
   \item{treated}{Treated states. Defined as stated which  immigrants_pc was larger then 0 after the reform.}
   \item{post}{Identifier for the post treatment period.}
@@ -50,8 +50,12 @@ Baker, S. R. (2015). \emph{Effects of Immigrant Legalization on Crime}, American
 \examples{
 data("IRCA", package = "nndd")
 library(Formula)
-formula <- Formula(treated | v_crime ~ officers_pc + income + p_crime | officers_pc + income + p_crime + crack_index + unemprate) 
-ma <- nndd(formula = formula, data = IRCA, indexes = c("year", "county", "treated", "v_crime"), nn_time = c("1985","1985" ), t_time = "1986" )
+formula <- Formula(treated | v_crime ~ officers_pc + income + p_crime | 
+					officers_pc + income + p_crime + crack_index + unemprate) 
+					
+ma <- nndd(formula = formula, data = IRCA, 
+			indexes = c("year", "county", "treated", "v_crime"), 
+			nn_time = c("1985","1985" ), t_time = "1986" )
 
 ma
 #plot(ma, IRCA)

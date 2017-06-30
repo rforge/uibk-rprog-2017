@@ -922,7 +922,7 @@ summary.lmc <- function (object, correlation = FALSE, symbolic.cor = FALSE, use_
 {
   if(length(object$clustervariables) == 0)
   {
-    summary.lm(object, ...)
+    s1 <- summary.lm(object, ...)
   }
   else
   {
