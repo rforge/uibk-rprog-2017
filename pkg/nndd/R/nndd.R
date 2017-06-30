@@ -1075,7 +1075,7 @@ getSummary.lm <- function(obj, alpha = 0.05, report , ...)
 
 
 
-
+ 
 
 
 #nicht notwendig weil vcov.nnd waldtest.nnd und/oder summary.nndd machen den job irgendwie automatisch... 
