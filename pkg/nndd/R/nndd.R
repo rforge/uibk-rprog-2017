@@ -1152,12 +1152,12 @@ getSummary.lm <- function(obj, alpha = 0.05, report , ...)
   sumstat <- c(sigma = sigma, r.squared = r.squared, adj.r.squared = adj.r.squared, 
                F = F, numdf = numdf, dendf = dendf, p = p, logLik = ll, 
                deviance = deviance, AIC = AIC, BIC = BIC, N = N)
-#   if(length(obj$displ_coef) > 0)
-#   {
-#   coef <- as.matrix(coef[which(rownames(coef) %in% obj$displ_coef),])
-#   rownames(coef) <- obj$displ_coef
-#   colnames(coef) <- c( "est", "se", "stat", "p", "lwr", "upr")
-#   }
+  if(length(obj$displ_coef) > 0)
+  {
+  coef <- as.matrix(coef[which(rownames(coef) %in% obj$displ_coef),])
+  rownames(coef) <- obj$displ_coef
+  colnames(coef) <- c( "est", "se", "stat", "p", "lwr", "upr")
+  }
   list(coef = coef, sumstat = sumstat, contrasts = obj$contrasts, 
        xlevels = obj$xlevels, call = obj$call)
 }
