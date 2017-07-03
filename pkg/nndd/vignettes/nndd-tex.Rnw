@@ -1,0 +1,208 @@
+\documentclass[nojss]{jss}
+\usepackage{booktabs,dcolumn,thumbpdf,lmodern}
+
+\author{Michal Lapinski \\JKU Linz}
+\Plainauthor{Michal Lapinski}
+
+\title{Nearest Neighbour Matching (NN) followed by a Linear Model with Difference in Differences (DD)}
+
+\Keywords{nearest neighbour, matching, regression, difference in differences \proglang{R}}
+\Plainkeywords{nearest neighbour, matching, regression, difference in differences, R}
+
+\Abstract{
+  The \pkg{nndd} package (\url{https://R-Forge.R-project.org/projects/uibk-rprog-2017/})
+  estimates the average treatment effect by applying nearest neighbours matching (NN) and difference in differences (DD). Nearest neighbours are matched by applying a GLM over an individual time span. In the following a liner model is estimated with a difference in differences setup. Each estimation (NN or DD) can depend on different covariates. Simple evaluation methods of the combined estimation are provided.
+  
+}
+
+\Address{
+  Michal Lapinski\\
+  Department of Economics\
+  JKU Linz\\
+  E-mail: \email{Michael.Lapinski@JKU.at}\\
+  URL: \url{www.JKU.at}
+}
+
+%% Sweave/vignette information and metadata
+%% need no \usepackage{Sweave}
+%\VignetteIndexEntry{Nearest Neighbour Matching (NN) followed by a Linear Model with Difference in Differences (DD)}
+%\VignetteEngine{Sweave}
+%\VignetteDepends{nndd, stats, lmtest, multiwayvcov, memisc}
+%\VignetteKeywords{nn, dd, regression, R}
+%\VignettePackage{nndd}
+
+<<preliminaries, echo=FALSE, results=hide>>=
+  options(width = 70, prompt = "R> ", continue = "+  ")
+library("Formula")
+library("lmtest")
+library("multiwayvcov")
+library("memisc")
+library("nndd")
+@
+  
+  
+  \begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\section{Introduction}
+The nndd package can be used for estmating causal effects if a selection into treatment is observed. The background of this method is that the treatment effect wants to be estimated by difference in differeces (DD).  DD leads only to unbiased and causal imcats if the treatment assignment is random and all other identifying assumptions hold (see \cite{AngristPischke:2008} for more details). Nevertheless, in many cases random assignment didn't occur, wasn't possible or reasonable. In natural-experiments (quasi-experiments) it is possible to observe exogenous assignments and estimate the treatment effect. However, often the assignment is not truly exogenous. In this case there are some possibility to overcome this selection. One is to control for observed characteristic in the analysis, another is to find an instrument (IV). A third one is to construct treatment and control groups such that they are as similar as possible in the observed characteristics (matching). All three methods are not the perfect solution and can be biased due to omitted variables, influencing the treatment assignment or invalid identifying assumptions. However, the research tends to the conclusion that matching can lead to smaller bias than just controlling for observed characteristics.\\ \citep{Rubin:1973, AngristPischke:2008, Caliendo:2008, ImbensRubin:2015, Huber:2015}
+
+Summing up \cite[][401]{ImbensRubin:2015} point out:
+\begin{center}
+\empth{"[...] in many observational studies there exists no systematically better approach for estimating the effect of a treatment on an individual unit than by finding a control unit identical on all observable aspects except on the treatment received and then comparing their outcomes."}
+\end{center}
+
+
+It is to mention that this package performs only 1:1 nearest neighbour matching with replacement and without truncation (NN) which is a very straight forward method, but other matching metods mostly outperform NN.\\
+
+\paragrapth{Syntax of Nearest Neighbour matching (NN) in Short\\}
+At first a generalized linear model (GLM) is estimated with the treatment status ($t$) as the dependent variable which is regressed on the independent variables ($Z$). Where $Z$ are observed variables being expected to influence the treatment status and not influencing the outcome variable of the treatment. In the next step the propensity score is predicted for the treatment and control groups. In the following to each treated observation $tg_i$ only one control observation $cg_j$ is selected. In the selection procedure the control observation $cg_j$ is matched to  $tg_i$ if it has the smallest absolute difference in the pscore among all control observation to the treated observation $tg_i$. 
+
+
+\section{Implementation}
+
+As usual in many other regression packages for \proglang{R} \citep{R}, the main model fitting function \code{nndd()}
+uses a formula-based interface and returns an (\proglang{S}3) object of class \code{nndd}:
+  %
+\begin{verbatim}
+nndd(formula, data, indexes = c("year", "firm_id", "tg", "outcome"),  
+     t_time, nn_time, time_ids = c("year", ""),
+     link = "logit",
+     subset , na.action, clustervariables, 
+     model = TRUE, y = TRUE, x = FALSE, displ_coefs, 
+     ...)
+\end{verbatim}
+%
+Actually, the \code{formula} can be a two part \code{Formula} \citep{Formula}, specifying separate sets of regressors $x_i$ and $z_i$. For instance the formula can take a form of \code{tg | outcome ~ x | z} where  \code{tg} is the response and \code{z} regressor variable of the GLM. The variable \code{outcome} is the response and \code{x} the control variable of the DD model.
+
+
+A number of standard \proglang{S}3 methods are provided, see Table~\ref{tab:methods}.
+
+\begin{table}[t!]
+\centering
+\begin{tabular}{lp{11.2cm}}
+\hline
+Method & Description \\ \hline
+\code{print()}       & Simple printed display with coefficients \\
+\code{summary()}     & A regression summary which can perform clustered standard errors; returns \code{summary.nndd} object (with \code{print()} method) \\
+\code{coef()}	     & Extract coefficients \\
+\code{vcov()}	     & Associated covariance matrix \\
+\code{predict()}     & Different types of predictions (pscore or outcome) for new data \\
+\cote{ttest())}		 & Performs a ttest for matched treated and controls\\
+\code{plot()}		 & Creates support plots for the NN and \code{lm.plot} methods for the DD estimation.
+\code{waldtest()} 	 &  Performs the wldtest
+\hline
+\end{tabular}
+\caption{\label{tab:methods} \proglang{S}3 methods provided in \pkg{nndd}.}
+\end{table}
+
+Due to these methods a number of useful utilities work automatically, e.g., \code{AIC()}, \code{BIC()},
+\code{coeftest()} (\pkg{lmtest}), \code{lrtest()} (\pkg{lmtest}), } (\pkg{lmtest})
+, \code{mtable()} (\pkg{memisc}), etc.
+
+In addition two \code{summary()} \proglang{S}3 methods are provided. One for the class \code{lm} and another for the class \code{"lmc"}. Where the class \code{lmc} is a child of (inherits) class \code{lm}, however implements an additional variable \code{clustervariables}. However, there is not construction function to create a class \code{lmc} object supported yet. 
+
+
+\section{Illustration}
+
+
+
+To illustrate the package's use in practice, a usual difference in difference methodology  is compared to the combined methodology of nndd. Therefore, data on the Evaluation of the Immigration Reform and Control Act (IRCA) is used.  The data is adapted data of \citep{Bcker:2015}. 
+
+The author used the original data to examine the effects of the Immigration Reform and Control Act on crime. The IRCA was implemented in 1986 and forbid to hire or recruit undocumented immigrants. However the IRCA also implemented a near-universal legalization of immigrants in the United States.\\
+The theory behind a positive impact of the IRCA on crime is that an increased labour market opportunity due to IRCA increases legal work and decreases crime. The labour market opportunity is expected to increase because legal (documented) immigrants have a higher salary and lower chance to be fired. In the following crime decreases due to the increased employment. 
+
+The data consists of 31.206 observations on 21 variables. In detail it is a balanced data panel of 1.486 US counties over 21 years (the time span is 1980 till 2000). In this illustration we use some of the available variables. The chose variables are chosen with some care, however other variables might be also relevant and could improve the results. For a description of the variables and more detailed information of the data see the help page of the \code{IRCA} data.\\
+
+At first we create a \code{nndd} object. We use \empth{year} and \empth{county} as time and individual identifiers. \empth{treated} is defined as the treatment variable and \emph{v\_crime} (violent crimes)  as the outcome. The treatment timing is set as the year 1986. As no \code{nn_time} is supported, the matching occurs only on the observed values one period before treatment. Last but not least we define not to display the state fixed effect in summary statistics. 
+
+<<IRCA>>=
+library("nndd")
+data("IRCA", package = "nndd")
+
+IRCA$StateFIPS <- factor(IRCA$StateFIPS)
+
+formula <- Formula(treated | v_crime ~ unemprate + povrate + pop  
+                   + crack_index + officers_pc + income + abortions + StateFIPS 
+                   | unemprate + povrate + pop +  crack_index +officers_pc    ) 
+
+nndd1 <- nndd(formula = formula, data = IRCA, 
+              indexes = c("year", "county", "treated", "v_crime"),  
+              t_time = "1986", 
+              displ_coefs = c("unemprate",  "povrate", "pop" , "crack_index", 
+                              "officers_pc", "income" , "abortions", "post", 
+                              "treated", "post:treated") )
+
+
+print(nndd1)
+summary(nndd1)
+
+@
+
+In the model nndd1c we assume that the obsarvations are corralated within states.  
+
+<<cluster>>=
+nndd1c <- nndd(formula = formula, data = IRCA, 
+               indexes = c("year", "county", "treated", "v_crime"),  
+               t_time = "1986" , 
+               clustervariables = "StateFIPS",
+               displ_coefs = c("unemprate",  "povrate", "pop" , "crack_index", 
+                               "officers_pc", "income" , "abortions", 
+                               "post", "treated", "post:treated"))
+@
+
+Next we estimate  usual DD models without matching. We use all variables which were used in the nndd model as controls. We estimate again two models one normal linear regression and the other with clustered standard errors. Because there is no construction function for the class \code{lmc} we construct it by hand for this example. 
+We also use the class \code{lmc} for the non clustered version because the summary function of class \code{lm} is not adapted to omit display variables. 
+<<simple dd>>=
+lm1 <- lm(update(formula(formula, lhs = 2, rhs = 1), 
+                 paste(paste(".", 
+                             paste(formula(formula, lhs = 0, rhs = (2)), 
+                                   collapse = " . + ")), 
+                   "+post*treated")), 
+          data = IRCA)
+
+lm1$displ_coefs <- c("unemprate",  "povrate", "pop" , "crack_index", 
+                     "officers_pc", "income" , "abortions", 
+                     "post", "treated", "post:treated")
+class(lm1) <- c("lmc", "lm")
+
+lm1c <- lm1
+lm1c$clustervariables <- "StateFIPS"
+class(lm1c) <- c("lmc", "lm")
+@
+
+Using a model table from \pkg{memisc} \citep{memisc} it can be easily seen, that we have different coefficients and significance across the models (see Table~\ref{tab:mtable}). Comparing the two models with clustered standard errors, we still see that usual DD would estimate a significant impact of IRCA on violence crime. However, nndd states a non significant impact. 
+
+
+<<compare, eval=FALSE>>=
+mtable(lm1,nndd1, lm1c, nndd1c)
+@
+
+\begin{table}[t!]
+\centering
+<<mtable-latex, echo=FALSE, results=tex>>=
+toLatex(mtable(lm1,nndd1, lm1c, nndd1c))
+@
+\caption{\label{tab:mtable} Comparing results of simple DD and nndd.}
+\end{table}
+
+
+The difference of the sample specification is driving these results. In the nndd model we regress only on a very similar control and treatment group. We can see the similarity of the two groups in the distribution graphs of the pscores (see figure \ref{pscore:dis}). Of course this only holds if pscore truly capture the selection process. 
+
+<<plot, , eval=FALSE>>=
+#dev.new()
+par(mfrow = c(1,2))
+plot(nndd1c,data = IRCA ,which = c(1,2))
+@
+
+
+
+
+In the left graph we can see that the pscore distribution of treated (blue) and control (red) was very different before NN. Especially many control units had a pscore close to zero. After matching the distributions of the pscore look alike. \\
+
+This brief illustration shows some features of the nndd package. There as more functions such as \code{t.test} which evaluates the match quality of NN. 
+
+
+\bibliography{nndd}
+
+\end{document}
