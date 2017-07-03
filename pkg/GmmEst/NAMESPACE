@@ -1,4 +1,7 @@
-import("stats","numDeriv")
+import("stats", "sandwich", "numDeriv")
+importFrom("sandwich", "bread", "estfun")
+importFrom("numDeriv", "genD")
+importFrom("MASS", "ginv")
 
 export(
   "GmmEst",
@@ -10,3 +13,7 @@ S3method("coef", "GmmEst")
 S3method("nobs", "GmmEst")
 S3method("vcov", "GmmEst")
 S3method("print", "GmmEst")
+S3method("summary", "GmmEst")
+S3method("print", "summary.GmmEst")
+S3method("estfun", "GmmEst")
+S3method("bread", "GmmEst")

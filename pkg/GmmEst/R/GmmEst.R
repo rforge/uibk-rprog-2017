@@ -1,6 +1,8 @@
 GmmEst = function(func, theta0, data, 
-                  est_type=c("2step","1step","iter"), initial_W=NULL, 
-                  optim_method=c("BFGS","Nelder-Mead", "CG", "L-BFGS-B", "SANN"),
+                  est_type=c("2step","1step","iter"), 
+                  func_jac=NULL, initial_W=NULL,
+                  crit=10e-7, itermax=100, 
+                  optim_method=c("BFGS","Nelder-Mead", "L-BFGS-B"),
                   control = GmmEst_control(...), ...)
 {
   
@@ -20,18 +22,9 @@ GmmEst = function(func, theta0, data,
   optim_method = match.arg(optim_method)
 
   # =================================================
-  # User input processing
-  # ===================
-
-  # * Control function
-  maxit_gmm_iter = control$maxit_gmm_iter
-  tol_gmm_iter = control$tol_gmm_iter
-  control$tol_gmm_iter <- control$maxit_gmm_iter <- NULL
-
-  # =================================================
   # Internal functions
   # ===================
-  
+
   # * Calculate gt
   .calc_gt = function(param)
   {
@@ -54,12 +47,6 @@ GmmEst = function(func, theta0, data,
     return(q)
   }
 
-  # * Optimization
-  .min_q = function(theta0=NULL, W=NULL){
-    opt = optim(par = theta0, fn = .calc_q, W=W, method=optim_method, control=control,...)
-    return(opt)
-  }
-  
   # * Calculate S matrix
   .calc_s = function(param){
     gt = .calc_gt(param)
@@ -67,18 +54,59 @@ GmmEst = function(func, theta0, data,
     s = (t(gt) %*% gt) / NObs
   }
 
-  # Jacobian of gt_mean
+  # * Jacobian of gt_mean
   .calc_d = function(param)
   {
-    d = numDeriv::jacobian(.calc_gt_mean, param)
+    if (is.null(func_jac)){
+    temp = numDeriv::genD(.calc_gt_mean, param)
+    d = temp$D[1:KMoms,1:KParams]
+    }else{
+    d = func_jac(param, data)}
     return(d)
+   }
+
+   # * Derivate of objective function 
+   .calc_q_grad = function(param,W=NULL)
+   {
+    gt_mean = .calc_gt_mean(param)
+    d = .calc_d(param)
+    q_grad = t(d) %*% W %*% gt_mean
+    return(q_grad)
+   }
+
+   # * Optimization
+  .min_q = function(theta0=NULL, W=NULL){
+    if (is.null(func_jac))
+    {
+      opt = optim(par = theta0, fn = .calc_q, W=W, method=optim_method, control=control, ...)
+    }else{
+      opt = optim(par = theta0, fn = .calc_q, gr = .calc_q_grad, W=W, method=optim_method, control=control, ...)
+    }
+    return(opt)
+  }
+  
+  # * Variance covariance matrix of the parameters
+  .calc_vcov = function(param, S, W)
+  {
+   d = .calc_d(param)
+   Sinv = solve(S)
+   if (est_type %in% c("2step","iter")){
+      vcov = solve(t(d) %*% Sinv %*% d) / (NObs - KParams)
+    }else{
+      vcov = (solve(t(d)%*%W%*%d) %*% (t(d)%*%W%*%S%*%W%*%d) %*% solve(t(d)%*%W%*%d)) / (NObs - KParams)
+    }   
+   return(vcov)
   }
 
-  .calc_vcov = function(param, S)
-  {
+  .calc_vcov_gt = function(param,S){
     d = .calc_d(param)
     Sinv = solve(S)
-    vcov = solve(t(d) %*% Sinv %*% d) / (NObs - KParams)
+    if (est_type %in% c("2step","iter")){
+      vcov = (S - d%*%solve(t(d)%*%Sinv%*%d)%*%t(d)) / NObs
+    }else{
+      Iden = diag(KMoms)
+      vcov = ((Iden - d%*%solve(t(d)%*%d)%*%t(d))%*%S%*%t(Iden - d%*%solve(t(d)%*%d)%*%t(d))) / NObs
+    }
     return(vcov)
   }
 
@@ -86,6 +114,8 @@ GmmEst = function(func, theta0, data,
   # =================================================
   # Calculations
   # ===================
+  niter = 0
+
   if (is.null(initial_W)){
     W = diag(KMoms)
   }
@@ -104,10 +134,9 @@ GmmEst = function(func, theta0, data,
   # Iterative
   if (est_type=="iter"){
     test_val = 100
-    niter = 0
     theta0s = opt$par
     
-    while(test_val>tol_gmm_iter & niter<maxit_gmm_iter){
+    while(test_val>crit & niter<itermax){
       theta_old = opt$par
       S = .calc_s(theta_old)
       Sinv = solve(S)
@@ -118,22 +147,47 @@ GmmEst = function(func, theta0, data,
     }
   }
   
-  vcov = .calc_vcov(opt$par, S)
+  # Calculate variance covariance matrix of the parameters
+  vcov = .calc_vcov(opt$par, S, W)
+  vcov_gt = .calc_vcov_gt(opt$par, S)
+  gt_mean = .calc_gt_mean(opt$par)
 
+  # JStat and p-value of the overidentification test
+  if (est_type %in% c("2step","iter"))
+  {
+      jstat = opt$value * NObs
+    }else{
+      jstat = t(gt_mean)%*%MASS::ginv(vcov_gt)%*%gt_mean
+    }
 
+  if ((KMoms - KParams)>0){
+    jstat_pval = 1-pchisq(jstat, df = KMoms - KParams)
+  }else{
+    jstat_pval = NA
+  }
   # =================================================
-  # Save important output values in list object
+  # Save output values in list object
   # ===================
   names(opt)[1:2] <- c("coefficients", "jstat")
-  opt$jstat = opt$jstat*NObs
+  opt$jstat = list(value=jstat, pval=jstat_pval)
   opt$nobs = NObs
   opt$vcov = vcov
   opt$kparams = KParams
   opt$kmoms = KMoms
-  opt$df = NObs - KParams
   opt$est_type = est_type
   opt$S = S
   opt$W = solve(S)
+  opt$dmat = .calc_d(opt$coefficients)
+  opt$gt = .calc_gt(opt$coefficients)
+  opt$gt_mean = gt_mean
+  opt$df.residual = NObs - KParams
+  opt$niter = niter
+  opt$vcov_gt = vcov_gt
+
+  if ((KMoms-KParams)>0) opt$identification = 'over-identified'
+  if ((KMoms-KParams)==0) opt$identification = 'just-identified'
+  if ((KMoms-KParams)<0) opt$identification = 'under-identified'
+
   class(opt) = "GmmEst"
   return(opt)
 }
@@ -143,9 +197,9 @@ GmmEst = function(func, theta0, data,
 # Control function
 # ===================
 
-GmmEst_control <- function(maxit = 5000, tol_gmm_iter=1e-12, maxit_gmm_iter=100, ...)
+GmmEst_control <- function(maxit = 5000, ...)
 {
-  ctrl = c(list(maxit = maxit, tol_gmm_iter=tol_gmm_iter, maxit_gmm_iter=maxit_gmm_iter), list(...))
+  ctrl = c(list(maxit = maxit), list(...))
   if(!is.null(ctrl$fnscale)) warning("fnscale must not be modified")
   ctrl$fnscale = 1
   if(is.null(ctrl$reltol)) ctrl$reltol = .Machine$double.eps^(1)
@@ -156,37 +210,76 @@ GmmEst_control <- function(maxit = 5000, tol_gmm_iter=1e-12, maxit_gmm_iter=100,
 
 # =================================================
 # S3 Methods
-coef.GmmEst = function(object, ...) {
+coef.GmmEst = function(object, ...){
   cf = object$coefficients
   return(cf)
 }
 
-nobs.GmmEst = function(object, ...) {
+nobs.GmmEst = function(object, ...){
   nobs = object$nobs
   return(nobs)
 }
 
-vcov.GmmEst = function(object, ...) {
+vcov.GmmEst = function(object, ...){
   vcov = object$vcov
   return(vcov)
 }
 
-print.GmmEst <- function(x, digits = max(3, getOption("digits") - 3), ...)
+print.GmmEst = function(x, digits = max(3, getOption("digits") - 3), ...)
 {
   cat(sprintf("%s GMM estimation \n\n", switch(x$est_type,"2step" = "two-step",
                                                           "1step" = "one-step",
                                                           "iter" = "iterated")))
   cat("Coefficients:\n")
   print.default(format(x$coefficients, digits = digits), print.gap = 2, quote = FALSE)
-
-  if(x$kmoms>x$kparams){
-    cat(sprintf("\nJ statistic: %s on %s Df (p=%s)\n", format(x$jstat, digits = digits), x$kmoms - x$kparams, format(1-pchisq(x$jstat, df = x$kmoms - x$kparams), digits=digits)))
-    }else{
-    cat(sprintf("\nJ statistic: %s on %s Df (model not over-identified)\n", format(x$jstat, digits = digits), x$kmoms - x$kparams)) 
-    }
+  cat("\nModel is", x$identification)
+  cat(sprintf("\nJ statistic: %s on %s Df (p=%s)\n", 
+    format(x$jstat$value, digits = digits), 
+    x$kmoms - x$kparams, format(x$jstat$pval, digits=digits)))
   
   invisible(x)
 }
+
+summary.GmmEst = function(object,...){
+  k <- length(object$coefficients)
+  cf <- object$coefficients
+  se <- sqrt(diag(object$vcov))
+  cf <- cbind(cf, se, cf/se, 2 * pnorm(-abs(cf/se)))
+  colnames(cf) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
+  object$coefficients <- cf
+  class(object) <- "summary.GmmEst"
+  object
+}
+
+print.summary.GmmEst <- function(x, digits = max(3, getOption("digits") - 3), ...)
+{  
+  if(x$convergence > 0L) {
+    cat("model did not converge\n")
+  } else {
+    cat("model did converge\n")
+  }
+
+    cat(paste("\nCoefficients:\n", sep = ""))
+    printCoefmat(x$coefficients, digits = digits, signif.legend = FALSE)
+
+    if(getOption("show.signif.stars"))
+      cat("---\nSignif. codes: ", "0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1", "\n")
+
+    cat("\nModel is", x$identification)
+    cat("\nJ-statistic:", format(x$jstat$value, digits = digits), ', p-value:', format(x$jstat$pval, digits = 3))
+  invisible(x) 
+}
+
+estfun.GmmEst = function(x,...){
+  res = x$gt %*% x$W %*% x$dmat
+  return(res)
+}
+
+bread.GmmEst = function(x,...){
+  res = solve(t(x$dmat)%*%x$W%*%x$dmat)
+  return(res)
+}
+
 
 # =================================================
 # Other methods
@@ -196,7 +289,6 @@ print.GmmEst <- function(x, digits = max(3, getOption("digits") - 3), ...)
 ########## TO_DO ##################
 # =================================
 # * Better example needed.
-# * Separate fitting function from obj function
+# * Bootstrapping
 # * NA handling
-# * Add formulas for linear models
-# * vcov for 1-step
+# * Vignette
