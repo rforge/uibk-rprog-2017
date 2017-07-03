@@ -1,6 +1,6 @@
 Package: GmmEst
 Title: Model Estimation by GMM
-Version: 0.0-1
+Version: 0.0-2
 Date: 2017-07-02
 Authors@R: person(c("Markus", "G."), "Schmidt", role = c("aut", "cre"), email = "markus.g.schmidt@uibk.ac.at")
 Description: GMM estimation framework is provided. One-step, two-step and iterative GMM estimation of a user-specified model is implemented.  
