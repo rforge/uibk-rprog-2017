@@ -75,7 +75,7 @@ nndd(formula, data, indexes = c("year", "firm_id", "tg", "outcome"),
      ...)
 \end{verbatim}
 %
-Actually, the \code{formula} can be a two part \code{Formula} \citep{Formula}, specifying separate sets of regressors $x_i$ and $z_i$. For instance the formula can take a form of \code{tg | outcome ~ x | z} where  \code{tg} is the response and \code{z} regressor variable of the GLM. The variable \code{outcome} is the response and \code{x} the control variable of the DD model.
+Actually, the \code{formula} has to be be a two part \code{Formula} \citep{Formula}, specifying separate sets of regressors $x_i$ and $z_i$. For instance the formula can take a form of \code{tg | outcome ~ x | z} where  \code{tg} is the response and \code{z} regressor variable of the GLM. The variable \code{outcome} is the response and \code{x} the control variable of the DD model. The \code{data} argument specifies a data frame containing the variables occurring in the \code{formula} such as time and group identifiers. The data has to be a panel. The argument \code{indexes} is a of the name of the time, group, treatment identifier, and the outcome variable. Last but not least \code{t\_time} has to be specified. \code{t\_time} defines the time of the treatment. The other arguments can be looked up in the help page of \code{nndd}.  
 
 
 A number of standard \proglang{S}3 methods are provided, see Table~\ref{tab:methods}.
