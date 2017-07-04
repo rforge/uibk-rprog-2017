@@ -6,6 +6,6 @@ Authors@R: person(c("Markus", "G."), "Schmidt", role = c("aut", "cre"), email = 
 Description: GMM estimation framework is provided. One-step, two-step and iterative GMM estimation of a user-specified model is implemented.  
 Depends: R (>= 3.0.0)
 Imports: stats, numDeriv, sandwich, MASS
-Suggests: gmm, lmtest, car
+Suggests: gmm, lmtest, car, knitr
 VignetteBuilder: knitr
 License: GPL-2 | GPL-3
