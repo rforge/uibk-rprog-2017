@@ -196,8 +196,6 @@ plot(nndd1c,data = IRCA ,which = c(1,2))
 @
 
 
-
-
 \begin{center}
 \begin{figure}[ht]
 \centering
