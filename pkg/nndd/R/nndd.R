@@ -853,7 +853,7 @@ vcov.nndd <- function(object, ...){
   else 
   {
     
-    stats:::vcov.lm(object, ...)
+    stats::vcov.lm(object, ...)
   }
   
   
@@ -868,7 +868,7 @@ vcov.lmc <- function(object, ...){
   else 
   {
     
-    stats:::vcov.lm(object, ...)
+    stats::vcov.lm(object, ...)
   }
   
   
@@ -894,7 +894,7 @@ summary.lm <- function (object, correlation = FALSE, symbolic.cor = FALSE, use_d
                          ...) 
 {
   
-    s1 <- stats:::summary.lm(object, ...)
+    s1 <- stats::summary.lm(object, ...)
   
 
   if(use_displcoef)
