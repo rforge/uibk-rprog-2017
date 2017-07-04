@@ -881,11 +881,11 @@ vcov.lmc <- function(object, ...){
 cluster.vcov_nndd <- function(model, cluster)
 {
   
-  require(multiwayvcov)
+  requireNamespace("multiwayvcov")
   cl = formula(paste("~", paste(cluster, collapse = " + "), sep = " "))
   
   mf <- model.frame(cl, data = model$model)
-  require("multiwayvcov")
+  
   return(cluster.vcov(model, mf))
   
 }
@@ -1069,8 +1069,14 @@ getSummary.lm <- function(obj, alpha = 0.05, report , ...)
   rownames(coef) <- obj$displ_coefs
   colnames(coef) <- c( "est", "se", "stat", "p", "lwr", "upr")
   }
+  
+  #rownames(coef) <- gsub("_", "." , rownames(coef))
+    
+    
   list(coef = coef, sumstat = sumstat, contrasts = obj$contrasts, 
        xlevels = obj$xlevels, call = obj$call)
+  
+  
 }
 
 
