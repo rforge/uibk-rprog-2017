@@ -1,5 +1,5 @@
 Package: GmmEst
-Title: Model Estimation by GMM
+Title: Model Estimation by Generalized Method of Moments (GMM)
 Version: 0.0-2
 Date: 2017-07-02
 Authors@R: person(c("Markus", "G."), "Schmidt", role = c("aut", "cre"), email = "markus.g.schmidt@uibk.ac.at")
@@ -7,4 +7,5 @@ Description: GMM estimation framework is provided. One-step, two-step and iterat
 Depends: R (>= 3.0.0)
 Imports: stats, numDeriv, sandwich, MASS
 Suggests: gmm, lmtest, car
+VignetteBuilder: knitr
 License: GPL-2 | GPL-3
