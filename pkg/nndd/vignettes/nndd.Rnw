@@ -196,23 +196,6 @@ plot(nndd1c,data = IRCA ,which = c(1,2))
 @
 
 
-<<graphlatex, echo=FALSE>>=
-# dev.off_my <- function(which = dev.cur()) 
-# {
-# if (which == 1) 
-#   stop("cannot shut down device 1 (the null device)")
-# .External(grDevices:::C_devoff, as.integer(which))
-# invisible(dev.cur())
-# }
-
-pdf("myfile.pdf", height=6, width=6)
-par(mfrow = c(2,1))
-plot(nndd1c,data = IRCA ,which = c(1,2))
-invisible(dev.off() )
-
-#cat(paste('\\', "includegraphics[width=0.98" , '\\',"textwidth]{", getwd(),'/', "myfile.pdf", "}", sep =""))
-@
-
 
 
 \begin{center}
