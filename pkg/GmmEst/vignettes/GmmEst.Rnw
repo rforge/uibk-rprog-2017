@@ -1,0 +1,214 @@
+\documentclass[nojss]{jss}
+\usepackage{booktabs,dcolumn,thumbpdf,lmodern}
+
+\author{Markus G. Schmidt\\Universit\"at Innsbruck}
+\Plainauthor{Markus G. Schmidt}
+
+\title{Generalized Methods of Moments Estimation}
+
+\Keywords{GMM, regression, \proglang{R}}
+\Plainkeywords{GMM, regression, R}
+
+\Abstract{
+  The \pkg{GmmEst} package (\url{https://R-Forge.R-project.org/projects/uibk-rprog-2017/})
+  estimates the parameter vector of user defined models using the generlized methods of moments
+  estimation framework. A brief overview of the package is provided, along
+  with some illustrations.
+}
+
+\Address{
+  Markus G. Schmidt\\
+  Department of Banking and Finance\\
+  School of Management\\
+  Universit\"at Innsbruck\\
+  Universit\"atsstr.~15\\
+  6020 Innsbruck, Austria\\
+  E-mail: \email{markus.g.schmidt@uibk.ac.at}
+}
+
+%% Sweave/vignette information and metadata
+%% need no \usepackage{Sweave}
+%\VignetteIndexEntry{Generalized Methods of Moments Estimation}
+%\VignetteEngine{knitr}
+%\VignetteDepends{GmmEst, numDeriv, sandwich, MASS}
+%\VignetteKeywords{GMM, regression, R}
+%\VignettePackage{GmmEst}
+
+<<preliminaries, echo=FALSE, results='hide', message=F, warning=F>>=
+options(width = 70, prompt = "R> ", continue = "+  ")
+library("GmmEst")
+library("lmtest")
+library("sandwich")
+@
+
+\begin{document}
+%\SweaveOpts{concordance=TRUE}
+
+\section{Introduction}
+The Generalized Method of Momentds (GMM) framework is one of the main tools to analyze economic and financial data, introduced by \cite{Hansen} in the econometrics literature. In contrast to Maximum Likelihood estimation, GMM works without the need to specify the likelihood function. The main idea of the estimation framework is the usage of population moment conditions that are deduced from econometric models. The population moment condition is defined by
+\begin{equation}
+E\big[f(x_t,\theta_0)] = 0
+\end{equation}
+where $\theta_0$ is a vector of unknown parameters which are to be estimated, $x_t$ a vector of random variables and $f()$ a vector of functions. 
+
+The GMM estimator uses the sample counterpart of the population moment condition and chooses the estimated $\theta$ in such a way that the different moment conditions are as close to zero as possible. This is achieved by minimizing $Q_T(\theta)$
+\begin{equation}
+Q_T(\theta) = T^{-1} \sum_{t=1}^T f(x_t,\theta) \;W_T\; T^{-1} \sum_{t=1}^T f(x_t,\theta)
+\end{equation}
+where $W_T$ is a positive semi-definite matrix which may depend on the data but converges in probability to a positive definite matrix of constants. 
+
+See \cite{Greene} for a short introduction into GMM estimation and \cite{Hall} for a comprehensive treatment of GMM estimation. \cite{Cochrane} discussess the application of GMM with a finance focus. Besides them, the seminal article by \cite{Hansen} should not be missing in the list of references.   
+
+\section{Implementation}
+In difference to many other packages for \proglang{R} \citep{R}, the main model fitting function \code{GmmEst()} does not use a formula-based interface, but instead requires a user defined function of the sample moment conditions.\footnote{A formula-based interface will be implemented for linear models in the near future.}. The function returns an (\proglang{S}3) object of class \code{GmmEst}:   
+
+\begin{verbatim}
+GmmEst(func, theta0, data,
+    est_type=c("2step","1step","iter"), 
+    func_jac=NULL, initial_W=NULL, 
+    crit=10e-7, itermax=100, 
+    optim_method=c("BFGS","Nelder-Mead","L-BFGS-B"),
+    control = GmmEst_control(\dots), \dots)
+\end{verbatim}    
+
+A number of standard \proglang{S}3 methods are provided, see Table~\ref{tab:methods}.
+
+\begin{table}[b!]
+\centering
+\begin{tabular}{lp{11.2cm}}
+\hline
+Method & Description \\ \hline
+\code{print()}       & Simple printed display with coefficients \\
+\code{summary()}     & Standard summary; returns \code{summary.GmmEst} object (with \code{print()} method) \\
+\code{coef()}	     & Extract coefficients \\
+\code{vcov()}	     & Associated covariance matrix \\
+\code{nobs()}	     & Extract number of observations \\
+\code{bread()}       & Extract bread for \pkg{sandwich} covariance \\
+\code{estfun()}      & Extract estimating functions (= gradient contributions) for \pkg{sandwich} covariances \\
+\end{tabular}
+\caption{\label{tab:methods} \proglang{S}3 methods provided in \pkg{GmmEst}.}
+\end{table}
+
+The user supplied function of the sample moment conditions \code{func} should have the form \code{func(param,data)} and should return a number of observations times number of moments matrix - corresponding to the sample counterpart of $f(x_t,\theta)$. See the next section for two examples.
+
+\section{Illustration}
+\subsection{An easy example: GMM can do OLS}
+Suppose we want to estimate a simple linear model.
+\begin{equation}
+y_i = \alpha + \beta \cdot x_i + \varepsilon_i
+\end{equation}
+
+The typical OLS assumptions are that $E\big[\varepsilon_i\big]=0$ and $E\big[\varepsilon_i x_i\big]=0$. We can use that assumption to form the population moment conditions:
+\begin{eqnarray}
+0 =& E\big[y_i - \alpha_0 - \beta \cdot x_i\big]\\
+0 =& E\big[(y_i - \alpha_0 - \beta \cdot x_i) \cdot x_i \big]
+\end{eqnarray}
+
+as well as the the sample counterparts:
+\begin{eqnarray}
+0 =& E_N\big[y_i - a - b \cdot x_i\big]\\
+0 =& E_N\big[(y_i - a - b\cdot x_i)\cdot x_i\big]
+\end{eqnarray}
+where $E_N$ is the short form for $N^{-1}\sum_{i=1}^N()$ and $\theta_0=(\alpha, \beta)$ and $\theta=(a,b)$. Defined in such a way, we have 2 unknown parameters and 2 moment conditions such that the model is just identified.
+
+Let's use the standard \code{mtcars} dataset to estimate a simple linear regression of miles per gallons on horse power by the efficient two-step feasible GMM estimator made popular by \cite{Hansen}. I start by loading the data and by defining the sample moment condition function $f(x_i,\theta)$.
+<<ex1_01>>=
+data = mtcars
+mom_cond = function(theta, data){
+  a = theta[1]
+  b = theta[2]
+  y = data$mpg
+  x = data$hp
+  
+  u = y - a - b*x
+  return(cbind(u,u*x))
+}
+@
+While not necessary to estimate the model, especially in that case, the so called d-matrix, which is the gradient/jacobian of the sample moment conditions w.r.t. the parameters ($E_N\big[\frac{\partial f(x_i,\theta_0)}{\partial \theta_0}\big]$) is genereally important. If not supplied by the user, it will be numerically approximated. If supplied, it is used in the minimization as well. Although the jacobian in that case does not depend on the parameter itself, the function is defined with the same arguments as the moment condition function.
+<<ex1_02>>=
+mom_cond_grad = function(theta, data){
+  x = data$hp
+  
+  d1 = -1
+  d2 = -mean(x)
+  d3 = -mean(x)
+  d4 = -mean(x^2)
+  
+  d = matrix(c(d1,d2,d3,d4),nrow=2,ncol=2)
+  return(d)
+}
+@
+
+Using the $a=20$ and $b=0$ as starting values, we can simply estimate the model by
+<<ex1_03>>=
+theta0 = c(20,0)
+mdl_gmm = GmmEst(mom_cond, theta0, mtcars, est_type = "2step", 
+                 optim_method = 'BFGS', func_jac = mom_cond_grad)
+summary(mdl_gmm)
+@
+
+and compare it to a an OLS regression:
+<<ex1_04>>=
+mdl_lm = lm(mpg~hp,data)
+coeftest(mdl_lm, df = Inf, vcov = vcovHC, type = "HC1")
+@
+
+The estimated coefficients are identical as well as the standard errors, which are by default robust standard errors w.r.t. heteroskedasticity in \code{GmmEst}.
+
+\subsection{The standard example: Estimation of the risk-aversion parameter in the Consumption based Asset Pricing Model}
+Assuming power utility for an representative investor, the consumption based asset pricing model predicts that
+\begin{equation}
+E_t\big[\beta \frac{C_{t+1}}{C_t}^{-\gamma}R^e_{t+1}\big] = 0
+\end{equation}
+where $C$ is consumption in period $t$ and $t+1$, $\gamma$ is the risk-aversion parameter, $\beta$ is the time-preference parameter and $R^e_{t+1}$ is an excess return of an (any) asset. Furthermore, $E_t$ denote the expectation conditional on time $t$ information. In finance, one is often interested in estimating this Euler equation as it is important w.r.t. the equity premium puzzle. 
+
+The package \code{GmmEst} contains a dataset that can be used to estimate the model.\footnote{See the descrition of the dataset for further information about the variables.} In the dataset with 63 yearly observations from 1952 to 2014, the gross consumption growth in the US is included as well as the (excess net) returns of some widely known asset portfolios ($rmrf,smb,hml$) and the (net) risk free rate ($rf$). Using the market portfolio $rmrf$ and the high-minus-low portfolio $hml$, we can estimate $\gamma$, fixing $\beta=1$ and hence estimating the model assuming no time-preference by the representative investor. In the following, I load the data and define the moment conditions as well as the gradient of the moment conditions and estimate the parameter using a one-step GMM estimator.
+
+<<ex2_01>>=
+data("data_consumption",package = "GmmEst")
+mom_cond = function(params, data){
+  gamma = params[1]
+  
+  beta = 1
+  dc = data$dc
+  rmrf = data$rmrf
+  hml = data$hml
+  rf = data$rf
+  
+  gt1 = beta*dc^(-gamma)*rmrf
+  gt2 = beta*dc^(-gamma)*hml
+  gt = cbind(gt1, gt2)
+  return(gt)
+}
+
+mom_cond_grad = function(params,data){
+  gamma = params[1]
+  
+  beta = 1
+  dc = data$dc
+  rmrf = data$rmrf
+  hml = data$hml
+  
+  d1 = -dc^(-gamma)*log(dc)*rmrf*beta
+  d2 = -dc^(-gamma)*log(dc)*hml*beta
+  d = c(mean(d1),mean(d2))
+  return(d)
+}
+
+mod1 = GmmEst(mom_cond, 100, data, est_type = "1step", 
+             optim_method = 'BFGS', func_jac = mom_cond_grad)
+summary(mod1)
+@
+The estimated value of 80.96 is huge and the heart of the equity premium puzzle as it needs a huge value of $\gamma$ to make sense of the high equity premium. Nevertheless, it is not statically significant if we put the same weight initial weight on the both portfolios. The J-test of overidentification does not reject the model and tells us that the pricing errors are not jointly significant different from zero.  
+
+If we apply the efficient two-step GMM procedure, more weight is given to the moments that are better measured, i.e. the $hml$ portfolio is less volatile than $rmrf$ to get a more efficient estimate of $\gamma$ in a statistical sense.  
+<<>>=
+mod2 = GmmEst(mom_cond, 100, data, est_type = "2step", 
+             optim_method = 'BFGS', func_jac = mom_cond_grad)
+summary(mod2)
+@
+While the estimate is now a higher with 88.34, the standard error nearly cut in half. The J-test changed only slightly and still doesn't reject the model.\footnote{HAC standard errors will be implemented in the near future.}
+
+
+\bibliography{GmmEst}
+\end{document}
