@@ -853,7 +853,7 @@ vcov.nndd <- function(object, ...){
   else 
   {
     
-    stats::vcov.lm(object, ...)
+    vcov.lm2(object, ...)
   }
   
   
@@ -868,13 +868,17 @@ vcov.lmc <- function(object, ...){
   else 
   {
     
-    stats::vcov.lm(object, ...)
+    vcov.lm2(object, ...)
   }
   
   
 }
 
-
+vcov.lm2 <- function (object, ...) 
+{
+  so <- summary.lm(object, use_displcoef = FALSE)
+  so$sigma^2 * so$cov.unscaled
+}
 
 
 
