@@ -53,7 +53,7 @@ Summing up \cite[][401]{ImbensRubin:2015} point out:
 \begin{center}
 \emph{"[...] in many observational studies there exists no systematically better approach for estimating the effect of a treatment on an individual unit than by finding a control unit identical on all observable aspects except on the treatment received and then comparing their outcomes."}
 \end{center}
-\bibliography{nndd}
+
 
 
 It is to mention that this package performs only 1:1 nearest neighbour matching with replacement and without truncation (NN) which is a very straight forward method, but other matching metods mostly outperform NN (see \cite{Huber:2015}).\\
