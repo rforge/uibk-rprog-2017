@@ -1,4 +1,4 @@
-\name{S3 Methods in nndd}
+\name{S3 Methods of nndd}
 \alias{t.test.nndd}
 \alias{nndd_ttest}
 \alias{predict.nndd}
@@ -7,9 +7,9 @@
 \alias{plot.nndd}
 \alias{vcov.nndd}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{ttest}
+\title{S3 Methods of nndd}
 \description{
-Performs a ttest on a \code{"nndd"} object. The ttest is applied on only on the time span on which the NN are specified.}
+Methods for testing, predicting, printing, plotting for a \code{nndd} object.}
 \usage{
 \method{t.test}{nndd}(x, \dots)
 
@@ -52,15 +52,23 @@ predict_fun_glm(pformula, link = "logit", data)
 
 \item{data}{a data frame containing the variables occurring in the
     formulas such as time and group identifiers. The data has to be a panel.}
-\item{\dots}{space for objects to be passed on}
 
 \item{which}{if a subset of the plots is required, specify a subset of the numbers 1:8.}
 
 \item{ask}{logical; if TRUE, the user is asked before each plot, see \link{par}(ask=.).}
+\item{\dots}{space for objects to be passed on}
 
 }
-\details{...}
-\value{...}
+\details{
+The ttest is applied only on the time span on which the NN of the \code{nndd} object are specified.
+\code{plot.nndd} Creates eight plots in one window. The first tow plots are the distribution of the treated and control pscores pre and post the NN selection. If data is not specified the pre NN plot is omitted. In the following the outcome variable of the DD estimation is plotted over time. For a description of the last four plots see \code{\link{plot.lm}}.}
+
+
+\value{\item{predict_fun_glm}{A list containing pscores.}
+ \item{predict.nndd}{A data.frame containing the specified predictions.}
+ \item{print.nndd}{Returns the imputed object.}
+ \item{plot.nndd}{#Fixme: Ns are not well chosen at the Density plots (the N is of the control) Name of the plot is returned.}
+ }
 \references{...}
 \examples{
 data("IRCA", package = "nndd")
@@ -75,4 +83,4 @@ ma <- nndd(formula = formula, data = IRCA,
 ma
 t.test(ma)
 }
-\keyword{ttest}
+\keyword{S3 Methods}

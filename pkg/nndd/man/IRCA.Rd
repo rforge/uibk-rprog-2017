@@ -4,8 +4,8 @@
 \title{Data on the Evaluation of the Immigration Reform and Control Act (IRCA)}
 
 \description{
-The data is adapted data of Baker(2015). The author used the original data to examine the effects of the Immigration Reform and Control Act on crime. The IRCA was implemented in 1986 and forbid to hire or recruit undocumented immigrants. However the IRCA also implemented a near-universal legalization of immigrants in the United States.\\
-The theory behind a positive impact of the IRCA on crime is that an increased labor market opportunity due to IRCA increases legal work and decreases crime. The labor market opportunity is expected to increase because legal (documented) immigrants have a higher salary and lower change to be fired. 
+The data is adapted data of Baker(2015). The author used the original data to examine the effects of the Immigration Reform and Control Act on crime. The IRCA was implemented in 1986 and forbid to hire or recruit undocumented immigrants. However the IRCA also implemented a near-universal legalization of immigrants in the United States.
+The theory behind a positive impact of the IRCA on crime is that an increased labour market opportunity due to IRCA increases legal work and decreases crime. The labour market opportunity is expected to increase because legal (documented) immigrants have a higher salary and lower change to be fired. 
 }
 
 \usage{data("IRCA")}
@@ -16,10 +16,10 @@ A data frame containing 31206 observations on 21 variables. In detail it is a ba
   \item{county}{Observation county.}
   \item{year}{Observation year.}
   \item{pop}{Log population.}
-  \item{immigrants_pc}{CumWeightedAllImmPerCap. Fixme: need to read paper in more detail}
+  \item{immigrants_pc}{CumWeightedAllImmPerCap.}
   \item{unemprate}{Unemployment rate.}
   \item{povrate}{Poverty rate.}
-  \item{immigrant_all}{AllTimeWeightedImm. Fixme: need to read paper in more detail}
+  \item{immigrant_all}{AllTimeWeightedImm.}
   \item{crack_index}{Crack Index}
   \item{abortions}{Number of abortions lag 13 per capita.}
   \item{crimes}{The logarithm of the total amount of all crimes per capita.}
@@ -28,8 +28,8 @@ A data frame containing 31206 observations on 21 variables. In detail it is a ba
   \item{officers_pc}{Number of officers per capita.}
   \item{income}{The logarithm of the average income.}  
   \item{empl}{The logarithm of the employment.}
-  \item{sim_CumWeightedAllImmPerCap}{sim\_CumWeightedAllImmPerCap. Fixme: need to read paper in more detail}
-  \item{sim_diff}{sim\_diff. Fixme: need to read paper}
+  \item{sim_CumWeightedAllImmPerCap}{sim_CumWeightedAllImmPerCap. }
+  \item{sim_diff}{sim_diff.}
   \item{treated}{Treated states. Defined as stated which  immigrants_pc was larger then 0 after the reform.}
   \item{post}{Identifier for the post treatment period.}
   \item{StateFIPS}{StateFIPS}
@@ -38,8 +38,7 @@ A data frame containing 31206 observations on 21 variables. In detail it is a ba
 }
 
 \source{
-Adapted supplementary material of Baker(2015), originally provided
-by ?? need to check in paper.
+Adapted supplementary material of Baker(2015).
 }
 
 \references{
