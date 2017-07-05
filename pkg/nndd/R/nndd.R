@@ -1006,21 +1006,7 @@ waldtest.nndd <- function(object, ..., test = c("F", "Chisq"))
     waldtest.default(object, vcov = vcov , test = "F" )
 }
 
-mtable_nndd <- function(..., only_dd = FALSE, indexes = c("treated", "post"))
-{
-  if(only_dd)
-  {
-    mtable(...)  
-    
-  print("Test")
-  }
-  else
-  {
-    mtable(...)  
-  }
 
-
-}
 
 # lmc <- function(formula, data, subset, weights, na.action, method = "qr", 
 # model = TRUE, x = FALSE, y = FALSE, qr = TRUE, singular.ok = TRUE, 

@@ -6,6 +6,7 @@
 \alias{print.nndd}
 \alias{plot.nndd}
 \alias{vcov.nndd}
+\alias{getSummary.lm}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{S3 Methods of nndd}
 \description{
@@ -60,8 +61,11 @@ predict_fun_glm(pformula, link = "logit", data)
 
 }
 \details{
-The ttest is applied only on the time span on which the NN of the \code{nndd} object are specified.
-\code{plot.nndd} Creates eight plots in one window. The first tow plots are the distribution of the treated and control pscores pre and post the NN selection. If data is not specified the pre NN plot is omitted. In the following the outcome variable of the DD estimation is plotted over time. For a description of the last four plots see \code{\link{plot.lm}}.}
+\code{t.test} is applied only on the time span on which the NN of the \code{nndd} object are specified.
+\code{plot.nndd} Creates eight plots in one window. The first tow plots are the distribution of the treated and control pscores pre and post the NN selection. If data is not specified the pre NN plot is omitted. In the following the outcome variable of the DD estimation is plotted over time. For a description of the last four plots see \code{\link{plot.lm}}.
+
+\code{\link[memisc]{getSummary}} (from the \pkg{memisc} package, enabling \code{\link[memisc]{mtable}}).
+  }
 
 
 \value{\item{predict_fun_glm}{A list containing pscores.}

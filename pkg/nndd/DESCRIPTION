@@ -4,6 +4,7 @@ Version: 0.0-2
 Date: 2017-06-13
 Authors@R: person("Michal", "Lapinski", role = c("aut", "cre"), email = "Michael.Lapinski@JKU.at") 
 Depends: R (>= 3.0.0)
-Imports: stats, Formula, multiwayvcov, lmtest, memisc
+Imports: stats, Formula, multiwayvcov, lmtest
+Suggests: memisc
 Description: The treatment effect is estimated by applying nearest neighbours matching (NN) and difference in differences (DD). Nearest neighbours are matched by applying a GLM over an individual time span. In the following a liner model is estimated with a difference in differences setup. Each estimation (NN or DD) can depend on different covariates. Simple evaluation methods of the combined estimation are provided.
 License: GPL-2 | GPL-3

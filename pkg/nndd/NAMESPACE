@@ -1,4 +1,4 @@
-import("stats", "Formula", "multiwayvcov", "lmtest", "memisc")
+import("stats", "Formula", "multiwayvcov", "lmtest")
 
 importFrom("grDevices", "dev.flush", "dev.hold", "dev.interactive",
              "devAskNewPage")
@@ -9,7 +9,8 @@ export("nndd",
 "nndd_reshape",
 "nndd_reshape_other",
 "predict_fun_glm",
-"nndd_ttest")
+"nndd_ttest",
+"getSummary.lm")
 
 S3method("plot", "nndd")
 S3method("predict", "nndd")
@@ -19,7 +20,7 @@ S3method("vcov", "nndd")
 S3method("summary","nndd")
 S3method("vcov","lmc")
 S3method("summary","lmc")
-S3method("getSummary","lm")
+
 
 
 
