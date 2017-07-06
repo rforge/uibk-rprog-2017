@@ -75,7 +75,7 @@ nndd(formula, data, indexes = c("year", "firm_id", "tg", "outcome"),
      ...)
 \end{verbatim}
 %
-Actually, the \code{formula} has to be be a two part \code{Formula} \citep{Formula}, specifying separate sets of otcomes ($tg_i$, $outcome_i$) as well as regressors $x_i$ and $z_i$. For instance the formula can take a form of \code{tg | outcome ~ x | z} where  \code{tg} is the response and \code{z} regressor variable of the GLM. The variable \code{outcome} is the response and \code{x} the control variable of the DD model. The \code{data} argument specifies a data frame which contains the variables occurring in the \code{formula} such as time and group identifiers. In addition the data has to be a panel. The argument \code{indexes} is a list of the time, group and treatment identifier, as well as the outcome variable. Last but not least \code{t\_time} has to be specified, which defines the time of the treatment. The other arguments can be looked up in the help page of \code{nndd}.  
+Actually, the \code{formula} has to be be a two part \code{Formula} \citep{Formula}, specifying separate sets of otcomes ($tg_i$, $outcome_i$) as well as regressors $x_i$ and $z_i$. For instance the formula can take a form of \code{tg | outcome ~ x | z} where  \code{tg} is the response and \code{z} regressor variable of the GLM. The variable \code{outcome} is the response and \code{x} the control variable of the DD model. The \code{data} argument specifies a data frame which contains the variables occurring in the \code{formula} such as time and group identifiers. In addition the data has to be a panel. The argument \code{indexes} is a list of the group and time identifier. Last but not least \code{t\_time} has to be specified, which defines the time of the treatment. The other arguments can be looked up in the help page of \code{nndd}.  
 
 
 A number of standard \proglang{S}3 methods are provided, see Table~\ref{tab:methods}.
@@ -125,7 +125,7 @@ formula <- Formula(treated | v_crime ~ unemprate + povrate + pop
                    | unemprate + povrate + pop +  crack_index +officers_pc    ) 
 
 nndd1 <- nndd(formula = formula, data = IRCA, 
-              indexes = c("year", "county", "treated", "v_crime"),  
+              index = c("county", "year"),  
               t_time = "1986", 
               displ_coefs = c("unemprate",  "povrate", "pop" , "crack_index", 
                               "officers_pc", "income" , "abortions", "post", 
@@ -142,7 +142,7 @@ In the model nndd1c we assume that the obsarvations are corralated within states
 
 <<cluster>>=
 nndd1c <- nndd(formula = formula, data = IRCA, 
-               indexes = c("year", "county", "treated", "v_crime"),  
+               index = c("county", "year"),  
                t_time = "1986" , 
                clustervariables = "StateFIPS",
                displ_coefs = c("unemprate",  "povrate", "pop" , "crack_index", 

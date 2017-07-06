@@ -8,7 +8,7 @@
 \usage{
 
 
-nndd(formula, data, indexes = c("year", "firm_id", "tg", "outcome"),  t_time , nn_time,
+nndd(formula, data, index = c("firm_id", "year"),  t_time , nn_time,
                      time_ids = c("year", ""),
                      link = "logit",
                      subset , na.action, clustervariables, 
@@ -30,7 +30,7 @@ nndd_reshape_other(call, data)
 
   \item{data}{a data frame containing the variables occurring in the
     formulas such as time and group identifiers. The data has to be a panel.}
-  \item{indexes}{a list containing the name of the time, group, treatment identifier, and the outcome variable #Fixme: count be omitted in future, however some changes necessary.}
+  \item{index}{a list containing the name of the group, time identifier.}
 
   \item{nn_time}{a list containing the start timing and end timing for the NN estimation. The GLM is estimated at the end timing. However, it contains all regressor variables lagged in the given interval (start , end). In the case of omitting \code{nn_time}, the GLM is estimated at the given \code{t_time}. 
 }
@@ -80,7 +80,7 @@ formula <- Formula(treated | v_crime ~ officers_pc + income + p_crime
 						   + unemprate) 
 						   
 nndd <- nndd(formula = formula, data = IRCA, 
-			indexes = c("year", "county", "treated", "v_crime"), 
+			index = c("county", "year"), 
 			t_time = "1986" )
 names(nndd)
 print(nndd)

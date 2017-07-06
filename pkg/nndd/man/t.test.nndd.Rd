@@ -14,7 +14,7 @@ Methods for testing, predicting, printing, plotting for a \code{nndd} object.}
 \usage{
 \method{t.test}{nndd}(x, \dots)
 
-nndd_ttest(ttest_data, indexes = c("year", "firm_id", "tg"), nn_time, \dots)
+nndd_ttest(ttest_data, index = c("firm_id", "year", "tg"), nn_time, \dots)
 
 \method{predict}{nndd}(object, prediction = c("nn", "dd"), newdata, \dots)
 
@@ -35,7 +35,7 @@ predict_fun_glm(pformula, link = "logit", data)
   
   \item{ttest_data}{a data.frame containing the data on which the ttest should be performed on.}
 
-\item{indexes}{a list containing the name of the time, group, treatment identifier, and the outcome variable #Fixme: last two not really necessary}
+\item{index}{a list containing the name of the group, time and treatment identifier}
  
 \item{nn_time}{a list containing the start timing and end timing for the NN estimation. The GLM is estimated at the end timing. However, it contains all regressor variables lagged in the given interval (start , end). 
 }
@@ -81,7 +81,7 @@ formula <- Formula(treated | v_crime ~ officers_pc + income  |
                      officers_pc + income  + crack_index + unemprate) 
 
 ma <- nndd(formula = formula, data = IRCA, 
-           indexes = c("year", "county", "treated", "v_crime"), 
+           index = c("county", "year"), 
            nn_time = c("1985","1985" ), t_time = "1986" )
 
 ma
