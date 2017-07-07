@@ -105,14 +105,13 @@ Method & Description \\ \hline
 \code{bread()}       & Extract bread for \pkg{sandwich} covariance \\
 \code{estfun()}      & Extract estimating functions (= gradient contributions) for \pkg{sandwich} covariances \\
 \code{getSummary()}  & Extract summary statistics for \code{mtable()} \\
-\code{Boot()}	     & Bootstrap regression coefficients using \pkg{car} and \pkg{boot} \\ \hline
 \end{tabular}
 \caption{\label{tab:methods} \proglang{S}3 methods provided in \pkg{htobit}.}
 \end{table}
 
 Due to these methods a number of useful utilities work automatically, e.g., \code{AIC()}, \code{BIC()},
 \code{coeftest()} (\pkg{lmtest}), \code{lrtest()} (\pkg{lmtest}), \code{waldtest()} (\pkg{lmtest}),
-\code{linearHypothesis()} (\pkg{car}), \code{mtable()} (\pkg{memisc}), etc.
+\code{linearHypothesis()} (\pkg{car}), \code{mtable()} (\pkg{memisc}), \code{Boot()} (\pkg{car}), etc.
 
 
 \section{Illustration}

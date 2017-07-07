@@ -6,7 +6,6 @@ export(
   "htobit",
   "htobit_control",
   "htobit_fit",
-  "Boot.htobit",
   "getSummary.htobit"
 )
 

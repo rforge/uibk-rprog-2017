@@ -13,7 +13,6 @@
 \alias{bread.htobit}
 \alias{estfun.htobit}
 \alias{getSummary.htobit}
-\alias{Boot.htobit}
 
 \title{Heteroscedastic Tobit Regression}
 

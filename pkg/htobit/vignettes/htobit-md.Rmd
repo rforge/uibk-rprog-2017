@@ -81,11 +81,10 @@ A number of standard S3 methods are provided:
 | `bread()`       | Extract bread for `sandwich` covariance                                              |
 | `estfun()`      | Extract estimating functions (= gradient contributions) for `sandwich` covariances   |
 | `getSummary()`  | Extract summary statistics for `mtable()`                                            |
-| `Boot()`        | Bootstrap regression coefficients using `car` and `boot`                             |
 
 Due to these methods a number of useful utilities work automatically, e.g., `AIC()`, `BIC()`,
 `coeftest()` (`lmtest`), `lrtest()` (`lmtest`), `waldtest()` (`lmtest`),
-`linearHypothesis()` (`car`), `mtable()` (`memisc`), etc.
+`linearHypothesis()` (`car`), `mtable()` (`memisc`), `Boot()` (`car`), etc.
 
 ------
 
