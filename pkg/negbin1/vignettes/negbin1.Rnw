@@ -1,4 +1,5 @@
 \documentclass[nojss]{jss}
+\usepackage{booktabs,dcolumn,thumbpdf,lmodern}
 \usepackage{thumbpdf}
 \usepackage{amsmath,amssymb,bm}
 \usepackage{multicol}
@@ -24,7 +25,8 @@
 \Plainkeywords{negative binomial, NB1, count data, R}
 
 \Abstract{ 	
-An implementation of negative binomial 1 regression models is provided. The negative binomial distribution is an often used alternative to the Poisson model, especially when doubts arise regarding the independence of the underlying process and the inclusion of all relevant regressors.
+An implementation of negative binomial 1 regression models is provided in the \pkg{negbin1} package (\url{https://R-Forge.R-project.org/projects/uibk-rprog-2017/}). The negative binomial distribution is an often used alternative to the Poisson model, especially when doubts arise regarding the independence of the underlying process and the inclusion of all relevant regressors. 
+The aim of this paper is to give a short overview of the package \code{negbin1}, along with an empirical example.
 }
 
 \Address{
@@ -54,19 +56,20 @@ library("MASS")
 library("lmtest")
 library("Formula")
 library("numDeriv")
+library("memisc")
 options(prompt = "R> ", continue = "+   ")
 @ 
 
 
 <<dgp,echo=FALSE,results=hide>>=
 ### data-generating process
-dgp <- function(n = 1000, coef = c(2, 3, 0, 0.7)) {
+dgp <- function(n = 1000, coef = c(0.2, 0.3, 0, 2)) {
   d <- data.frame(
     x1 = runif(n, -1, 1),
     x2 = runif(n, -1, 1)
     )
   d$mu <- exp(coef[1] + coef[2] * d$x1 + coef[3] * d$x2)
-  d$y <- rnbinom(n, mu = d$mu, size = exp(d$mu /coef[4]))
+  d$y <- rnbinom(n, mu = d$mu, size = d$mu / coef[4])
   return(d)
 }
 
@@ -87,28 +90,80 @@ The negative binomial 1 model (NB1) is obtained by letting $\alpha$ vary across 
 \end{equation}  
 which produces a conditional variance that is a linear function of the mean \citep{nb1:Winkelmann:2013}:
 \begin{equation}
-  \Var(y|x) = (1 + \sigma^2)\expo(x^\top\beta)
+  \Var(y|x) = (1 + \sigma^2) \cdot \expo(x^\top\beta)
 \end{equation}
 For more details, see also \cite{nb1:Cameron+Trivedi:2013}.
 
 \section{Implementation} \label{sec:impl}
-The workhorse function of \pkg{negbin1} is the function \code{negbin1_fit}, which is normally not called directly,
+The workhorse function of \pkg{negbin1} is the function \code{negbin1_fit}, which is normally not called directly in may other regression packages in \proglang{R} \citep{R},
 but when the model response and model matrix have already been calculated.
-Starting values in the optimization are by default taken from Poisson regression.
+Starting values for optimization in \code{negbin1_fit} are by default taken from Poisson regression.
+The main model fitting function is \code{negbin1()} returns an (\code{S3}) object of class \code{negbin1}:
+%
+\begin{verbatim}
+negbin1 <- function(formula, data, subset, na.action,
+                    model = TRUE, y = TRUE, x = TRUE,
+                    control = negbin1_control(...), ...)
+\end{verbatim}
+%
+A number of standard \proglang{S}3 methods are provided, see Table~\ref{tab:methods}.
+Especially the predict method deserves greater attention:
+%
+\begin{verbatim}
+predict.negbin1 <- function(object, newdata = NULL,
+                            type = c("response", "location",
+                            "probability", "quantile"),
+                            na.action = na.pass, at = 0.5, ...)
+\end{verbatim}
+%
 
-Below, the computation time of \code{negbin1} is compared to NB1 implementations from other packages, as \code{vglm} from
-\pkg{VGAM} and \code{gamlss} from package \pkg{gamlss}. The simulated dataset comprises 1,000 observations.
+Due to these methods a number of useful utilities work automatically, e.g., \code{AIC()}, \code{BIC()},
+\code{coeftest()} (\pkg{lmtest}), \code{lrtest()} (\pkg{lmtest}), \code{waldtest()} (\pkg{lmtest}),
+\code{linearHypothesis()} (\pkg{car}), \code{mtable()} (\pkg{memisc}), etc.
 
-<<models,echo=TRUE>>=
-system.time(m11 <- negbin1(y ~ x1 + x2, data = d))
-system.time(m12 <- negbin1(y ~ x1 + x2, data = d, grad = TRUE))
-system.time(m2 <- vglm(y ~ x1 + x2, negbinomial(parallel = TRUE, zero = NULL),
-                       data = d, trace = FALSE)) 
-system.time(m3 <- gamlss(y ~ x1 + x2, family = NBI, data = d, trace = FALSE))
+\begin{table}[t!]
+\centering
+\begin{tabular}{lp{11.2cm}}
+\hline
+Method & Description \\ \hline
+\code{print()}       & Simple printed display with coefficients \\
+\code{summary()}     & Standard regression summary; returns \code{summary.negbin1} object (with \code{print()} method) \\
+\code{coef()}	     & Extract coefficients \\
+\code{vcov()}	     & Associated covariance matrix \\
+\code{predict()}     & (Different types of) predictions for new data \\
+\code{fitted()}      & Fitted values for observed data \\
+\code{residuals()}   & Extract (different types of) residuals \\
+\code{terms()}       & Extract terms \\
+\code{model.matrix()}& Extract model matrix (or matrices) \\
+\code{nobs()}	     & Extract number of observations \\
+\code{logLik()}      & Extract fitted log-likelihood \\
+\code{bread()}       & Extract bread for \pkg{sandwich} covariance \\
+\code{estfun()}      & Extract estimating functions (= gradient contributions) for \pkg{sandwich} covariances \\
+\code{getSummary()}  & Extract summary statistics for \code{mtable()} \\ \hline
+\end{tabular}
+\caption{\label{tab:methods} \proglang{S}3 methods provided in \pkg{negbin1}.}
+\end{table}
+
+\subsection*{Computation time}
+Below, an example for the computation time of function \code{negbin1()} is compared to NB1 implementations from other packages, as \code{vglm} from
+\pkg{VGAM} \citep{nb1:Yee:2010,nb1:Yee:2015} and \code{gamlss} from package \pkg{gamlss} \citep{nb1:Rigby+Stasinopoulos}. The simulated dataset comprises 1,000 observations.
+
+<<models,echo=FALSE>>=
+st <- rbind(system.time(negbin1(y ~ x1 + x2, data = d, grad = FALSE)),
+system.time(negbin1(y ~ x1 + x2, data = d, grad = TRUE)),
+system.time(vglm(y ~ x1 + x2, negbinomial(parallel = TRUE, zero = NULL),
+                       data = d, trace = FALSE)),
+system.time(gamlss(y ~ x1 + x2, family = NBI, data = d, trace = FALSE))
+)
+st <- st[, -c(4,5)]
+rownames(st) <- c("negbin1(grad = FALSE)", "negbin1(grad = TRUE)", "vglm", "gamlss")
+st
 @ 
 
+The computation time of \code{negbin1()} does quite well compared with \code{vglm()} and \code{gamlss()}. \code{gamlss()} is even faster than \code{negbin1()}, but \code{vglm()} is slower.
+
 \section{Example} \label{sec:ex}
-Data on the number of publications produced by Ph.D. biochemists, 
+Data on the number of publications produced by Ph.D. biochemists 
 taken from \cite{nb1:Long:1990} are employed to test the \code{negbin1} function \citep[see also][]{nb1:Long:1997}.
 The data are loaded from the \pkg{negbin1} package.
 
@@ -135,7 +190,7 @@ a negative binomial 1 regression offers some remedy in such a situation.
 
 <<nb1,echo=TRUE>>=
 nb1 <- negbin1(articles ~ gender + married + kids + prestige + mentor,
-   data = publications)
+   data = publications, grad = TRUE)
 summary(nb1)
 @ 
 
@@ -145,6 +200,31 @@ While both sets of parameter estimates would lead to the same conclusions, the s
 cbind("Poisson" = sqrt(diag(vcov(poi))), "NB1" = sqrt(diag(vcov(nb1)))[-7])
 @ 
 
+<<nb2,echo=FALSE,results=hide>>=
+nb2 <- vglm(articles ~ gender + married + kids + prestige + mentor, negbinomial(parallel = TRUE, zero = NULL),
+            data = publications, trace = TRUE)    
+summary(nb2)
+@ 
+
+<<nb3,echo=FALSE,results=hide>>=
+nb3 <- gamlss(articles ~ gender + married + kids + prestige + mentor,
+              family = NBII(sigma.link = "identity"), data = publications)
+summary(nb3)
+@ 
+
+<<mtable, eval=FALSE>>=
+library("memisc")
+mtable("Poisson" = poi, "NB1(negbin1)" = nb1, 
+       summary.stats=c("Deviance", "AIC", "BIC", "N"))
+@
+
+\begin{table}[!t]
+\centering
+<<mtable-latex, echo=FALSE, results=tex>>=
+toLatex(mtable("Poisson" = poi, "NB1" = nb1, summary.stats=c("Log-likelihood", "AIC", "BIC", "N")))
+@
+\caption{\label{tab:mtable} Comparing Poisson results with NB1 from \pkg{negbin1}.}
+\end{table}
 
 \bibliography{negbin1}
 
