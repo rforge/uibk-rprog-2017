@@ -36,7 +36,9 @@ importFrom("stats",
   "pnorm", 
   "printCoefmat",
   "quantile", 
-  "update"
+  "update",
+  "AIC",
+  "vcov"
 )
 importFrom("Formula",
   "as.Formula"
@@ -66,6 +68,7 @@ S3method("predict", "difit")
 S3method("estfun", "difit")
 S3method("bread", "difit")
 S3method("vcov", "difit")
+S3method("plot", "difit")
 S3method("summary", "difit")
 S3method("print", "difit")
 S3method("print", "summary.difit")
