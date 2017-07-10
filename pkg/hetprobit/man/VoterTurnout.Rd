@@ -61,6 +61,7 @@ m0 <- glm(vote ~ age + I(age^2) + south + govelection +
                 family = binomial(link = "probit"))
 summary(m0)
 
+\dontrun{
 ## heteroscedastic probit model 
 ## main effects in the mean model and one regressor in the scale model 
 m1 <- hetprobit(vote ~ education + age + south + govelection + closing | 
@@ -68,5 +69,5 @@ m1 <- hetprobit(vote ~ education + age + south + govelection + closing |
 
 summary(m1)
 }
-
+}
 \keyword{datasets}

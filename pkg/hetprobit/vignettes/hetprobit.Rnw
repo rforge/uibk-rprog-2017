@@ -116,7 +116,7 @@ For a detailed discussion of heteroscedastic probit models see e.g. \cite{Harvey
 Sections~\ref{sec:implementation} and \ref{sec:illustration} show the implementation 
 of such models in \proglang{R} \citep{R} and the practical use of it using the example 
 of voter turnout data from \cite{Nagler:1991}. Finally, a replication of the results of 
-the \pkg{glmx} package is presented.
+the \pkg{glmx} \citep{glmx} package is presented.
 
 \newpage
 \section{Implementation}\label{sec:implementation}
@@ -156,6 +156,7 @@ Method & Description \\ \hline
 \code{residuals()}& Extract (different types of) residuals \\
 \code{terms()}    & Extract terms \\
 \code{model.matrix()}& Extract model matrix (or matrices) \\
+\code{update()}    & Update and re-fit a model \\
 \code{nobs()}	   & Extract number of observations \\
 \code{logLik()}      & Extract fitted log-likelihood \\
 \code{bread()}       & Extract bread for \pkg{sandwich} covariance \\
@@ -260,7 +261,7 @@ lrtest(mn, m1, m2)
 \newpage
 \section{Replication}\label{sec:replication}
 This package is a somewhat simpler reimplementation of the function \code{hetglm()} from 
-the package \pkg{glmx} \citep{glmx}. In case of an implementation not limited to the 
+the package \pkg{glmx}. In case of an implementation not limited to the 
 probit link for the mean and log link for the scale equation \pkg{glmx} offers more flexibility. 
 In particular \code{hetglm} offers analytical Hessian, flexible link functions for the mean and scale 
 submodel, functionality for homoscedastic models, among further features. \\

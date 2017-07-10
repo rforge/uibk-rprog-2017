@@ -178,7 +178,7 @@ cbind("hetglm" = coef(m0), "hetprobit" = coef(m1))
 ## comparison of log-likelihoods
 cbind(logLik(m0), logLik(m1))
 
-
+\dontrun{
 ## data on voter turnout in U.S. presidential elections 1984
 data("VoterTurnout", package = "hetprobit")
 
@@ -189,5 +189,5 @@ m <- hetprobit(vote ~ education + age + south + govelection + closing |
 
 summary(m)
 }
-
+}
 \keyword{regression}
