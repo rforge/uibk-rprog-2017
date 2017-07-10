@@ -73,7 +73,7 @@ negbin1_fit <- function(x, y, control)
     ## negative log-likelihood
     nll <- function(par) {
         beta <- par[1L:m]
-        alpha <- par[m+1L]
+        alpha <- exp(par[m+1L])
         mu <- exp(x %*% beta)
         ll <- dnbinom(y, size = mu / alpha, mu = mu, log = TRUE)
         -sum(ll)
@@ -83,16 +83,15 @@ negbin1_fit <- function(x, y, control)
     ngr <- function(par, sum = TRUE) {
         ## parameters
         beta <- par[1L:m]
-        alpha <- par[m+1L]
+        alpha <- exp(par[m+1L])
         mu <- exp(x %*% beta)
-
         rval <- matrix(0, nrow = nrow(x), ncol = ncol(x) + 1L)
         rval <- cbind(
         as.vector(( (y / mu - (y + mu / alpha) / (mu + mu / alpha)) + (1 / alpha) *
                    (digamma(y + mu / alpha) - digamma(mu / alpha) + log(mu / alpha) + 1 - log(mu + mu / alpha) -
                     (y + mu / alpha) / (mu + mu / alpha) ) ) * mu) * x[, , drop = FALSE],
         (- mu / alpha^2) * ( digamma(y + mu / alpha) - digamma(mu / alpha) + log(mu / alpha) + 1 - log(mu + mu / alpha) -
-                             (y + mu / alpha) / (mu + mu / alpha))
+                             (y + mu / alpha) / (mu + mu / alpha)) * alpha
         )      
                     
         ## sum (if desired) and change sign
@@ -130,9 +129,9 @@ negbin1_fit <- function(x, y, control)
         opt$hessian <- numDeriv::hessian(nll, opt$par)
         }
     if(!is.null(opt$hessian)) {
-        rownames(opt$hessian) <- colnames(opt$hessian) <- c(colnames(x), "alpha")
+        rownames(opt$hessian) <- colnames(opt$hessian) <- c(colnames(x), "log(alpha)")
         opt$vcov <- solve(opt$hessian)
-        opt$hessian <- NULL
+        #opt$hessian <- NULL
     }
     
     ## collect information
@@ -166,7 +165,7 @@ logLik.negbin1 <- function(object, ...) {
 
 coef.negbin1 <- function(object, ...) {
     cf <- object$coefficients
-    names(cf$alpha) <- "alpha"
+    names(cf$alpha) <- "log(alpha)"
     structure(c(cf$location, cf$alpha),
                .Names = c(names(cf$location), names(cf$alpha)))
 }
@@ -188,14 +187,15 @@ print.negbin1 <- function(x, digits = max(3, getOption("digits") - 3), ...)
       } else {
         cat("No coefficients\n\n")  
       }
-        if(length(x$coefficients$alpha)){
-        cat("Alpha:")
-        print.default(format(x$coefficients$alpha, digits = digits), print.gap = 2, quote = FALSE)
-        cat("\n")
-        } else {
-          cat("No coefficient alpha\n\n")  
-        }
-        cat(paste("Log-likelihood: ", format(x$loglik, digits = digits), "\n", sep = ""))
+
+      if(length(x$coefficients$alpha)){
+      cat("log(alpha):")
+      print.default(format(x$coefficients$alpha, digits = digits), print.gap = 2, quote = FALSE)
+      cat("\n")
+       } else {
+         cat("No coefficient alpha\n\n")  
+       }
+      cat(paste("Log-likelihood: ", format(x$loglik, digits = digits), "\n", sep = ""))
       if(length(x$df)) {
           cat(paste("Df: ", format(x$df, digits = digits), "\n", sep = ""))
       }
@@ -315,13 +315,8 @@ print.summary.negbin1 <- function(x, digits = max(3, getOption("digits") - 3), .
 
     if(NROW(x$coefficients$location)) {
       cat(paste("\nCoefficients:\n", sep = ""))
-      printCoefmat(x$coefficients$location, digits = digits, signif.legend = FALSE)
+      printCoefmat(rbind(x$coefficients$location, x$coefficients$alpha), digits = digits, signif.legend = FALSE)
     } else cat("\nNo coefficients\n")
-
-    if(NROW(x$coefficients$alpha)) {
-      cat(paste("\nCoefficient alpha:\n", sep = ""))
-      printCoefmat(x$coefficients$alpha, digits = digits, signif.legend = FALSE)
-    } else cat("\nNo coefficient alpha\n")
 
     if(getOption("show.signif.stars") & any(do.call("rbind", x$coefficients)[, 4L] < 0.1, na.rm = TRUE))
       cat("---\nSignif. codes: ", "0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1", "\n")
@@ -362,17 +357,17 @@ update.negbin1 <- function (object, formula., ..., evaluate = TRUE)
 getSummary.negbin1 <- function(obj, Alpha = 0.05, ...) {
   ## extract coefficient summary
   s <- summary(obj)
-  cf <- s$coefficients
+  cf <- rbind(s$coefficients$location, s$coefficients$alpha)
   ## augment with confidence intervals
   cval <- qnorm(1 - Alpha/2)
-  for(i in seq_along(cf)) cf[[i]] <- cbind(cf[[i]],
-    cf[[i]][, 1] - cval * cf[[i]][, 2],
-    cf[[i]][, 1] + cval * cf[[i]][, 2])
+  lower <- sapply(1:nrow(cf), function(i) cf[i, 1L] - cval * cf[i, 2L])
+  upper <- sapply(1:nrow(cf), function(i) cf[i, 1L] + cval * cf[i, 2L])
+  cf <- cbind(cf, upper, lower)
   ## collect in array
-  nam <- unique(unlist(lapply(cf, rownames)))
-  acf <- array(dim = c(length(nam), 6, length(cf)),
-    dimnames = list(nam, c("est", "se", "stat", "p", "lwr", "upr"), names(cf)))
-  for(i in seq_along(cf)) acf[rownames(cf[[i]]), , i] <- cf[[i]]
+  nam <- rownames(cf)
+  acf <- array(dim = c(length(nam), 6, 1),
+    dimnames = list(nam, c("est", "se", "stat", "p", "lwr", "upr"), "location"))
+  for(i in 1:nrow(cf)) acf[i, , "location"] <- cf[i,]
   
   ## return everything
   return(list(
@@ -388,3 +383,5 @@ getSummary.negbin1 <- function(obj, Alpha = 0.05, ...) {
     call = obj$call
   ))
 }
+
+
