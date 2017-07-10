@@ -72,7 +72,7 @@ difit <- function(y, family = NO(), weights = NULL,
     vcov <- NULL
   } else {
     if(hessian == "numeric") {
-      hess <- -opt$hessian
+      hess <- -obj$hessian
     }
     if(hessian == "analytic") {
       hess <- family$hdist(y, eta, weights = weights)
@@ -314,6 +314,59 @@ Boot.difit <- function(object, f = coef, labels = names(f(object)), R = 999, met
   if(d != R) cat( paste("\n","Number of bootstraps was", d, "out of", R, "attempted", "\n"))
   
   return(b)
+}
+
+
+## FIX ME:
+plot.difit <- function(x,
+                         main = "", xlab = "", ylab = "Density",
+                         fill = "lightgray", col = "darkred", lwd = 1.5,
+                         ...)
+{
+  ## FIX ME: barplot instead of hist for discrete distributions
+  # if(isTRUE(all.equal(x$y, round(x$y)))) {
+    
+    ## barplot instead of hist:
+    #ytab <- table(x$y)
+    #values <- as.numeric(names(ytab))
+    #absfreq <- as.numeric(ytab)
+    #relfreq <- absfreq / sum(absfreq)
+    #relytab <- ytab / sum(absfreq)
+    #bars <- barplot(relytab, xlim = c(min(values), max(values)), ylim = c(-0.1, 1.1),
+    #                xlab = xlab , ylab = ylab)
+    #abline(h = 0)
+    #lines(values*1.2 + 0.7, x$ddist(values), type = "b", lwd = 2, pch = 19, col = 2)
+    
+    # using hist:
+    histogram <- c(
+      list(x = x$y, main = main, xlab = xlab, ylab = ylab, col = fill),
+      list(...)
+    )
+    histogram$freq <- FALSE
+    histogram$probability <- TRUE
+    histogram$breaks <- seq(from = min(x$y), to = max(x$y) + 1) - 0.5
+    yrange <- seq(from = min(x$y), to = max(x$y))
+    densline <- x$familylist$ddist(yrange, eta = x$eta, log = FALSE)
+    histogram$ylim <- c(0, max(max(densline, do.call("hist", histogram)$density)))
+    # histogram$breaks <- seq(from = min(x$y), to = 2*max(x$y) + 1)/2 - 0.25
+    histogram <- do.call("hist", histogram)
+    lines(yrange, densline, col = col, lwd = lwd)
+    
+  #} else {
+    
+  #  histogram <- c(
+  #    list(x = x$y, main = main, xlab = xlab, ylab = ylab, col = fill),
+  #    list(...)
+  #  )
+  #  histogram$freq <- FALSE
+  #  histogram$probability <- TRUE
+  #  
+  #  histogram <- do.call("hist", histogram)
+  #  yrange <- seq(from = histogram$breaks[1L],
+  #                to = histogram$breaks[length(histogram$breaks)],
+  #                length.out = 100L)
+  #  lines(yrange, x$familylist$ddist(yrange, eta = x$eta, log = FALSE), col = col, lwd = lwd)
+  #}
 }
 
 
