@@ -134,11 +134,11 @@ are statistically significant.
 Therefore, the following models are considered:
 
 <<alternative>>=
-f2 <- fgamma(wage ~ educ + exper + tenure + nonwhite + female + married + numdep |
+f2 <- fgamma(wage ~ educ + exper + tenure + ethnicity + sex + marriage + numdep |
                educ + exper + tenure, data = Wages)
-f3 <- fgamma(wage ~ educ + exper + tenure  + female + married  |
+f3 <- fgamma(wage ~ educ + exper + tenure  + sex + marriage  |
                tenure, data = Wages)
-f4 <- fgamma(wage ~ educ + exper + tenure  + female + married  | 1
+f4 <- fgamma(wage ~ educ + exper + tenure  + sex + marriage  | 1
                , data = Wages)
 BIC(f1, f2, f3, f4)
 @
@@ -156,7 +156,7 @@ To assess the reliability of the \code{fgamma()} implementation, it is benchmark
 
 <<gamlss>>=
 library("gamlss")
-g1 <- gamlss(wage ~ educ + exper + tenure  + female + married, 
+g1 <- gamlss(wage ~ educ + exper + tenure  + sex + marriage, 
              sigma.formula = ~ tenure, data = Wages, family = GA)
 summary(g1)
 @

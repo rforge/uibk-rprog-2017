@@ -17,10 +17,10 @@
     \item{educ}{Years of education.}
     \item{exper}{Years potential experience.}
     \item{tenure}{Years with current employer.}
-    \item{nonwhite}{Factor indicating \emph{nonwhite} and \emph{white}.}
-    \item{female}{Factor indicating \emph{female} and \emph{male}.}
-    \item{married}{Factor indicating \emph{marrie} and \emph{nonmarried}.}
+    \item{marriage}{Factor indicating \emph{married} and \emph{nonmarried}.}
     \item{numdep}{Number of dependents.}
+    \item{ethnicity}{Factor indicating \emph{nonwhite} and \emph{white}.}
+    \item{sex}{Factor indicating \emph{female} and \emph{male}.}
   }
 }
 
