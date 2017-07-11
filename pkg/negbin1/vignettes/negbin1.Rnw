@@ -215,13 +215,14 @@ summary(nb3)
 <<mtable, eval=FALSE>>=
 library("memisc")
 mtable("Poisson" = poi, "NB1(negbin1)" = nb1, 
-       summary.stats=c("Deviance", "AIC", "BIC", "N"))
+       summary.stats = c("Log-likelihood", "AIC", "BIC", "N"))
 @
 
 \begin{table}[!t]
 \centering
 <<mtable-latex, echo=FALSE, results=tex>>=
-toLatex(mtable("Poisson" = poi, "NB1" = nb1, summary.stats=c("Log-likelihood", "AIC", "BIC", "N")))
+options(factor.style = "($f):  ($l)")
+toLatex(mtable("Poisson" = poi, "NB1" = nb1, summary.stats = c("Log-likelihood", "AIC", "BIC", "N")))
 @
 \caption{\label{tab:mtable} Comparing Poisson results with NB1 from \pkg{negbin1}.}
 \end{table}
