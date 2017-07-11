@@ -345,7 +345,8 @@ plot.difit <- function(x,
     histogram$freq <- FALSE
     histogram$probability <- TRUE
     histogram$breaks <- seq(from = min(x$y), to = max(x$y) + 1) - 0.5
-    yrange <- seq(from = min(x$y), to = max(x$y))
+    ydiff <- abs(max(x$y) - min(x$y))
+    yrange <- seq(from = min(x$y) - ydiff/10 , to = max(x$y) + round(ydiff/10, 1))
     densline <- x$familylist$ddist(yrange, eta = x$eta, log = FALSE)
     histogram$ylim <- c(0, max(max(densline, do.call("hist", histogram)$density)))
     # histogram$breaks <- seq(from = min(x$y), to = 2*max(x$y) + 1)/2 - 0.25
