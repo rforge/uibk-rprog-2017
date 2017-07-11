@@ -4,7 +4,10 @@ Version: 0.0-1
 Date: 2017-05-30
 Author: Lisa Schlosser
 Maintainer: Lisa Schlosser <Lisa.Schlosser@uibk.ac.at>
-Description: Build a tree fitting a distributional model in each node
+Description: Build a tree fitting a distributional model in each node.
+  As a framework the MOB algorithm is used to build the tree and a distribution is specified by handing over a gamlss.family object.
+  In each node of the tree a distributional model is fit via maximum likelihood and the resulting scores are used to find splits. 
+  For each terminal node a set of distribution parameters is provided.
 Depends: R (>= 3.1.0), partykit (>= 1.2-0), gamlss.dist
-Imports: graphics, stats, disttree, sandwich, car, Formula, boot, utils
+Imports: graphics, stats, disttree, sandwich, Formula, utils
 License: GPL-2 | GPL-3

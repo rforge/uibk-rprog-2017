@@ -27,6 +27,15 @@
 }
 
 
+%% Sweave/vignette information and metadata
+%% need no \usepackage{Sweave}
+%\VignetteIndexEntry{Distributional Trees}
+%\VignetteEngine{Sweave}
+%\VignetteDepends{ditree, partykit, gamlss.dist}
+%\VignetteKeywords{distributional, parametric modeling, tree algorithms}
+%\VignettePackage{ditree}
+
+
 <<preliminaries, echo=FALSE, results=hide>>=
 options(width = 70, prompt = "R> ", continue = "+  ")
 library("ditree")

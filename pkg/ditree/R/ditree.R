@@ -290,84 +290,25 @@ update.difit <- function (object, subset = NULL, start = NULL, ..., evaluate = T
 }
 
 
-## FIX ME
-Boot.difit <- function(object, f = coef, labels = names(f(object)), R = 999, method = "case") 
-{
-  if(!(requireNamespace("boot"))) stop("The 'boot' package is missing")
-  f0 <- f(object)
-  if(is.null(labels) || length(labels) != length(f0)) labels <- paste("V", seq(length(f0)), sep = "")
-  method <- match.arg(method, c("case", "residual"))
-  opt<-options(show.error.messages = FALSE)
-  if(method == "case") {
-    boot.f <- function(data, indices, .fn) {
-      mod <- try(update(object, subset = indices, start = coef(object)))
-      out <- if(class(mod) == "try-error") f0 + NA else .fn(mod)
-      out
-    }
-  } else {
-    stop("currently not implemented")
-  }
-  b <- boot::boot(object, boot.f, R, .fn = f)
-  colnames(b$t) <- labels
-  options(opt)
-  d <- dim(na.omit(b$t))[1]
-  if(d != R) cat( paste("\n","Number of bootstraps was", d, "out of", R, "attempted", "\n"))
-  
-  return(b)
-}
-
-
-## FIX ME:
 plot.difit <- function(x,
                          main = "", xlab = "", ylab = "Density",
                          fill = "lightgray", col = "darkred", lwd = 1.5,
                          ...)
 {
-  ## FIX ME: barplot instead of hist for discrete distributions
-  # if(isTRUE(all.equal(x$y, round(x$y)))) {
-    
-    ## barplot instead of hist:
-    #ytab <- table(x$y)
-    #values <- as.numeric(names(ytab))
-    #absfreq <- as.numeric(ytab)
-    #relfreq <- absfreq / sum(absfreq)
-    #relytab <- ytab / sum(absfreq)
-    #bars <- barplot(relytab, xlim = c(min(values), max(values)), ylim = c(-0.1, 1.1),
-    #                xlab = xlab , ylab = ylab)
-    #abline(h = 0)
-    #lines(values*1.2 + 0.7, x$ddist(values), type = "b", lwd = 2, pch = 19, col = 2)
-    
-    # using hist:
-    histogram <- c(
-      list(x = x$y, main = main, xlab = xlab, ylab = ylab, col = fill),
-      list(...)
-    )
-    histogram$freq <- FALSE
-    histogram$probability <- TRUE
-    histogram$breaks <- seq(from = min(x$y), to = max(x$y) + 1) - 0.5
-    ydiff <- abs(max(x$y) - min(x$y))
-    yrange <- seq(from = min(x$y) - ydiff/10 , to = max(x$y) + round(ydiff/10, 1))
-    densline <- x$familylist$ddist(yrange, eta = x$eta, log = FALSE)
-    histogram$ylim <- c(0, max(max(densline, do.call("hist", histogram)$density)))
-    # histogram$breaks <- seq(from = min(x$y), to = 2*max(x$y) + 1)/2 - 0.25
-    histogram <- do.call("hist", histogram)
-    lines(yrange, densline, col = col, lwd = lwd)
-    
-  #} else {
-    
-  #  histogram <- c(
-  #    list(x = x$y, main = main, xlab = xlab, ylab = ylab, col = fill),
-  #    list(...)
-  #  )
-  #  histogram$freq <- FALSE
-  #  histogram$probability <- TRUE
-  #  
-  #  histogram <- do.call("hist", histogram)
-  #  yrange <- seq(from = histogram$breaks[1L],
-  #                to = histogram$breaks[length(histogram$breaks)],
-  #                length.out = 100L)
-  #  lines(yrange, x$familylist$ddist(yrange, eta = x$eta, log = FALSE), col = col, lwd = lwd)
-  #}
+  histogram <- c(
+    list(x = x$y, main = main, xlab = xlab, ylab = ylab, col = fill),
+    list(...)
+  )
+  histogram$freq <- FALSE
+  histogram$probability <- TRUE
+  histogram$breaks <- seq(from = min(x$y), to = max(x$y) + 1) - 0.5
+  ydiff <- abs(max(x$y) - min(x$y))
+  yrange <- seq(from = min(x$y) - ydiff/10 , to = max(x$y) + round(ydiff/10, 1))
+  densline <- x$familylist$ddist(yrange, eta = x$eta, log = FALSE)
+  histogram$ylim <- c(0, max(max(densline, do.call("hist", histogram)$density)))
+  # histogram$breaks <- seq(from = min(x$y), to = 2*max(x$y) + 1)/2 - 0.25
+  histogram <- do.call("hist", histogram)
+  lines(yrange, densline, col = col, lwd = lwd)
 }
 
 
@@ -398,6 +339,8 @@ getSummary.difit <- function(obj, alpha = 0.05, ...) {
     call = obj$call
   ))
 }
+
+
 
 
 
@@ -573,12 +516,12 @@ print.ditree <- function(x, title = NULL, objfun = "negative log-likelihood", ..
 
 if(FALSE){
   ####### test difit vs distfit
-  #library("disttree")
+  library("disttree")
   set.seed(7)
   y <- rnorm(400, 10, 3)
   
   d1 <- difit(y, family = NO())
-  #d2 <- distfit(y, family = NO())
+  d2 <- distfit(y, family = NO())
   
   class(d1)
   class(d2)
@@ -588,7 +531,7 @@ if(FALSE){
   BIC(d1, d2)
   
   dt1 <- ditree(dist~speed, data = cars)
-  #dt2 <- disttree(dist~speed, data = cars)
+  dt2 <- disttree(dist~speed, data = cars)
   coef(dt1)
   coef(dt2)
 }  

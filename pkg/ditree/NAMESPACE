@@ -12,12 +12,7 @@ importFrom("sandwich",
   "bread", 
   "estfun"
 )
-importFrom("car", 
-  "Boot"
-)
-importFrom("boot", 
-  "boot"
-)
+
 importFrom("utils", 
   "getAnywhere")
 importFrom("stats",
