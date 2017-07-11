@@ -29,7 +29,7 @@
 }
 
 \references{
-  Wooldridge, J.M.  (2000). \emph{Introductory Econometrics: A Modern Approach}, South-Western College Publishing.
+  Wooldridge, J.M. (2010). \emph{Introductory Econometrics: A Modern Approach}. 4th edition. South-Western College Pub.
 }
 
 \examples{
