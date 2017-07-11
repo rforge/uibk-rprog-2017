@@ -75,10 +75,9 @@ fitting takes place.
 }
 
 \references{
-  Messner JW, Mayr GJ, Zeileis A (2016). Heteroscedastic Censored and
-    Truncated Regression with crch.
-    \emph{The R Journal}, \bold{3}(1), 173--181.
-    \url{https://journal.R-project.org/archive/2016-1/messner-mayr-zeileis.pdf}.
+  Rigby RA, Stasinopoulos DM (2005).  Generalized additive models for location,
+  scale and shape,(with discussion).
+    \emph{Appl. Statist.}, \bold{54}(3), 507--554.
 }
 
 \seealso{\code{\link[gamlss]{gamlss}}}

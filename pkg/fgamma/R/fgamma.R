@@ -160,7 +160,6 @@ fgamma_fit <- function(x, y, z = NULL, control)
   names(opt$coefficients$sigma) <- colnames(z)
   
   ## residuals and fitted values
-  ## (FIXME: need manifest location/scale - not latent)
   mu <- exp(drop(x %*% opt$coefficients$mu))
   sigma <- exp(drop(z %*% opt$coefficients$sigma))
   opt$residuals <- y - mu
