@@ -10,7 +10,7 @@
 \description{
   Trees based on maximum-likelihood estimation of parameters for
   distributions from the GAMLSS family (for generalized additive
-  models for location, scale, and shape).
+  models for location, scale and shape).
 }
 
 \usage{
@@ -62,7 +62,7 @@ di_ocontrol(maxit = 5000, grad = TRUE, hessian = TRUE, \ldots)
   (implemented in \code{\link[partykit]{mob}}) to parametric model fits
   based on the GAMLSS family of distribtuions.
   
-  \code{ditree} builds a tree using mob and difit for maximum likelihood estimation.
+  \code{ditree} builds a tree using \code{\link[partykit]{mob}} and \code{\link[ditree]{difit}} for maximum likelihood estimation.
 
   \code{difit} is the lower level function where the actual
 fitting takes place.
@@ -96,11 +96,11 @@ y <- rnorm(400, 10, 3)
 df <- difit(y, family = NO())
 coef(df)
 
-dt <- ditree(dist~speed, data = cars)
+plot(mcycle)
+dt <- ditree(accel~times, data = mcycle)
 coef(dt)
 plot(dt)
 plot(as.constparty(dt))
-
 }
 
 \keyword{tree, parametric modelling}
