@@ -1,5 +1,7 @@
 \documentclass[nojss]{jss}
 \usepackage{booktabs,dcolumn,thumbpdf,lmodern,float}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 
 \author{Daniel Gstrein\\Universit\"at Innsbruck}
 \Plainauthor{Daniel Gstrein}
