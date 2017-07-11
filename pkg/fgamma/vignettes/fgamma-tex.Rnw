@@ -1,0 +1,171 @@
+\documentclass[nojss]{jss}
+\usepackage{booktabs,dcolumn,thumbpdf,lmodern,float}
+
+\author{Daniel Gstrein\\Universit\"at Innsbruck}
+\Plainauthor{Daniel Gstrein}
+
+\title{Full Gamma Regression}
+
+\Keywords{full gamma, regression, \proglang{R}}
+\Plainkeywords{full gamma, regression, R}
+
+\Abstract{
+  The \pkg{fgamma} package (\url{https://R-Forge.R-project.org/projects/uibk-rprog-2017/})
+  fits full gamma regression models estimating the parameters $\mu$ and $\sigma$ using maximum
+  likelihood estimation. A brief overview of the package is provided, along
+  with some illustrations and a replication of results from the \pkg{gamlss} package.
+}
+
+\Address{
+  Daniel Gstrein\\
+  Department of Statistics\\
+  Faculty of Economics and Statistics\\
+  Universit\"at Innsbruck\\
+  Universit\"atsstr.~15\\
+  6020 Innsbruck, Austria\\
+  E-mail: \email{Daniel.Gstrein@uibk.ac.at}\\
+}
+
+%% Sweave/vignette information and metadata
+%% need no \usepackage{Sweave}
+%\VignetteIndexEntry{Full Gamma Regression}
+%\VignetteEngine{Sweave}
+%\VignetteDepends{fgamma, gamlss, lmtest}
+%\VignetteKeywords{full gamma, regression, R}
+%\VignettePackage{fgamma}
+
+<<preliminaries, echo=FALSE, results=hide>>=
+options(width = 70, prompt = "R> ", continue = "+  ")
+@
+
+
+\begin{document}
+\SweaveOpts{concordance=FALSE}
+
+\section{Introduction}
+
+The specific parameterization of the gamma distribution used in \pkg{fgamma} is
+
+\[
+f(y_i|\mu_i,\sigma_i) = \frac{y_i^{(1/{\sigma_i}^2 - 1)} \exp{[-y_i/({\sigma_i}^2 \mu_i)]}}{({\sigma_i}^2 \mu_i)^{(1/{\sigma_i}^2)}\Gamma(1/{\sigma_i}^2)}
+\]
+
+for $y_i > 0$, $\mu_i > 0$ and $\sigma_i > 0$.
+
+Here $E(Y) = \mu$ and $Var(Y) = \sigma^2 \mu^2$. This reparametrization is obtained by 
+setting $\sigma^2 = 1/\alpha$ and $\mu = \alpha \beta$. \\
+
+The mean $\mu_i$ and $\sigma_i$ are linkend to the linear predictors
+
+\begin{eqnarray*}
+\log(\mu_i) & = & x_i^\top \beta \\
+\log(\sigma_i) & = & z_i^\top \gamma
+\end{eqnarray*}
+
+where the regressor vectors $x$ and $z$ can be set up without restrictions,
+i.e., they can be identical, overlapping or completely different or just including an intercept, etc.
+
+See also \cite{gamlss} for a more detailed introduction to this model class as well as
+a better implementation in the package \pkg{gamlss}. The main purpose of \pkg{fgamma} is
+to illustrate how to create such a package \emph{from scratch}.
+
+\section{Implementation}
+
+As usual in many other regression packages for \proglang{R} \citep{R}, the main model fitting function \code{fgamma()}
+uses a formula-based interface and returns an (\proglang{S}3) object of class \code{fgamma}:
+%
+\begin{verbatim}
+fgamma(formula, data, subset, na.action,
+  model = TRUE, y = TRUE, x = FALSE,
+  control = fgamma_control(...), ...)
+\end{verbatim}
+%
+Actually, the \code{formula} can be a two-part \code{Formula} \citep{Formula}, specifying separate sets of regressors
+$x$ and $z$ for the mean and sigma submodels, respectively.
+
+The underlying workhorse function is \code{fgamma_fit()} which has a matrix interface and returns an unclassed list.
+
+A number of standard \proglang{S}3 methods are provided, see Table~\ref{tab:methods}.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lp{11.2cm}}
+\hline
+Method & Description \\ \hline
+\code{print()}       & Simple printed display with coefficients \\
+\code{summary()}     & Standard regression summary; returns \code{summary.fgamma} object (with \code{print()} method) \\
+\code{coef()}	     & Extract coefficients \\
+\code{vcov()}	     & Associated covariance matrix \\
+\code{predict()}     & (Different types of) predictions for new data \\
+\code{fitted()}      & Fitted values for observed data \\
+\code{residuals()}   & Extract (different types of) residuals \\
+\code{terms()}       & Extract terms \\
+\code{model.matrix()}& Extract model matrix (or matrices) \\
+\code{nobs()}	     & Extract number of observations \\
+\code{logLik()}      & Extract fitted log-likelihood \\
+\code{bread()}       & Extract bread for \pkg{sandwich} covariance \\
+\code{estfun()}      & Extract estimating functions (= gradient contributions) for \pkg{sandwich} covariances \\
+\code{getSummary()}  & Extract summary statistics for \code{mtable()} \\
+\code{Boot()}	     & Bootstrap regression coefficients using \pkg{car} and \pkg{boot} \\ \hline
+\end{tabular}
+\caption{\label{tab:methods} \proglang{S}3 methods provided in \pkg{fgamma}.}
+\end{table}
+
+Due to these methods a number of useful utilities work automatically, e.g., \code{AIC()}, \code{BIC()},
+\code{coeftest()} (\pkg{lmtest}), \code{lrtest()} (\pkg{lmtest}), \code{waldtest()} (\pkg{lmtest}),
+\code{linearHypothesis()} (\pkg{car}), \code{mtable()} (\pkg{memisc}), etc.
+
+\section{Illustration}
+
+To illustrate the package's use in practice, a comparison of several gamma regression models is applied to data on average hourly earnings of 526 people
+\citep[taken from][]{Wooldridge:2010}. A gamma regression model using all explanatory variables for both parameters can be set up by:
+
+<<wooldridge>>=
+data("Wages", package = "fgamma")
+library("fgamma")
+f1 <- fgamma(wage ~ . | ., data = Wages)
+summary(f1)
+@
+
+This model is now modified in the direction that the variables influencing the mean
+parameter are also employed in the sigma submodel. Clearly, not all explanatory variables
+are statistically significant. 
+
+Therefore, the following models are considered:
+
+<<alternative>>=
+f2 <- fgamma(wage ~ educ + exper + tenure + nonwhite + female + married + numdep |
+               educ + exper + tenure, data = Wages)
+f3 <- fgamma(wage ~ educ + exper + tenure  + female + married  |
+               tenure, data = Wages)
+f4 <- fgamma(wage ~ educ + exper + tenure  + female + married  | 1
+               , data = Wages)
+BIC(f1, f2, f3, f4)
+@
+
+The BIC would choose Model 3 but a likelihood ratio test would prefer the most parsimonious model:
+
+<<lrtest>>=
+library("lmtest")
+lrtest(f1, f2, f3, f4)
+@
+
+\section{Replication}
+
+To assess the reliability of the \code{fgamma()} implementation, it is benchmarked against the \code{gamlss()} function of \citep{gamlss}, using Model 3.
+
+<<gamlss>>=
+library("gamlss")
+g1 <- gamlss(wage ~ educ + exper + tenure  + female + married, 
+             sigma.formula = ~ tenure, data = Wages, family = GA)
+summary(g1)
+@
+
+It can be easily seen the results can be replicated using both packages:
+
+<<gamlss>>=
+summary(f3)
+@
+
+\bibliography{fgamma}
+\end{document}
