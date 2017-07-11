@@ -10,4 +10,5 @@ Description: Build a tree fitting a distributional model in each node.
   For each terminal node a set of distribution parameters is provided.
 Depends: R (>= 3.1.0), partykit (>= 1.2-0), gamlss.dist
 Imports: graphics, stats, disttree, sandwich, Formula, utils
+Suggests: boot, car, memisc
 License: GPL-2 | GPL-3
