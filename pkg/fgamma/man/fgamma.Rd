@@ -3,8 +3,16 @@
 \alias{fgamma_fit}
 \alias{fgamma_control}
 
+\alias{print.fgamma}
+\alias{summary.fgamma}
+\alias{print.summary.fgamma}
+\alias{update.fgamma}
+\alias{logLik.fgamma}
+\alias{model.frame.fgamma}
+
+\alias{bread.fgamma}
+\alias{estfun.fgamma}
 \alias{getSummary.fgamma}
-\alias{Boot.fgamma}
 
 \title{
 Full Gamma Regression 

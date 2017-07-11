@@ -414,30 +414,6 @@ update.fgamma <- function (object, formula., ..., evaluate = TRUE)
   else call
 }
 
-Boot.fgamma <- function(object, f = coef, labels = names(f(object)), R = 999, method = "case") {
-  if(!(requireNamespace("boot"))) stop("The 'boot' package is missing")
-  f0 <- f(object)
-  if(is.null(labels) || length(labels) != length(f0)) labels <- paste("V", seq(length(f0)), sep = "")
-  method <- match.arg(method, c("case", "residual"))
-  opt<-options(show.error.messages = FALSE)
-  if(method == "case") {
-    boot.f <- function(data, indices, .fn) {
-      mod <- try(update(object, subset = indices, hessian = FALSE, start = coef(object)))
-      out <- if(class(mod) == "try-error") f0 + NA else .fn(mod)
-      out
-    }
-  } else {
-    stop("currently not implemented")
-  }
-  b <- boot::boot(model.frame(object), boot.f, R, .fn = f)
-  colnames(b$t) <- labels
-  options(opt)
-  d <- dim(na.omit(b$t))[1]
-  if(d != R) cat( paste("\n","Number of bootstraps was", d, "out of", R, "attempted", "\n"))
-  
-  return(b)
-}
-
 getSummary.fgamma <- function(obj, alpha = 0.05, ...) {
   ## extract coefficient summary
   s <- summary(obj)

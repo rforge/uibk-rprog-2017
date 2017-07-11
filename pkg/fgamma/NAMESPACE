@@ -6,7 +6,6 @@ export(
   "fgamma",
   "fgamma_fit",
   "fgamma_control",
-  "Boot.fgamma",
   "getSummary.fgamma"
 )
 
