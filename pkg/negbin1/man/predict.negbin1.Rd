@@ -63,7 +63,7 @@ Springer, Second Edition.
 require("Formula") 
 
 ## data generating process
-dgp <- function(n = 1000, coef = c(2, 3, 0, 0.7)) {
+dgp <- function(n = 1000, coef = c(0.2, 0.3, 0, 2)) {
   d <- data.frame(
     x1 = runif(n, -1, 1),
     x2 = runif(n, -1, 1)
@@ -84,8 +84,8 @@ m1 <- negbin1(y ~ x1 + x2, data = d)
 newd <- data.frame(x1 = c(2, 0, 1, 4), x2 = c(1, 0, -1, 1))
 predict(m1, newd, type = "location")
 predict(m1, newd, type = "response")
-predict(m1, newd, type = "quantile")
-predict(m1, newd, type = "probability", at = 0)    
+predict(m1, newd, type = "quantile", at = 0.95)
+predict(m1, newd, type = "probability", at = 2)    
 
 }
 
