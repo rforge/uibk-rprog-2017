@@ -1,8 +1,17 @@
 \name{negbin1}
 \alias{negbin1}
-\alias{negbin1_control}
 \alias{negbin1_fit}
+\alias{negbin1_control}
 
+\alias{print.negbin1}
+\alias{summary.negbin1}
+\alias{print.summary.negbin1}
+\alias{update.negbin1}
+\alias{logLik.negbin1}
+\alias{model.frame.negbin1}
+
+\alias{bread.negbin1}
+\alias{estfun.negbin1}
 \alias{getSummary.negbin1}
 
 \title{
@@ -48,17 +57,54 @@ negbin1_control(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, \dots)
 A continous mixture of Poisson distribution with Gamma weights is called negative binomial distribution.
 To employ the NB1 distribution in a regression, the natural mean equation is employed:
 
-\eqn{log(\mu_{i}) = x_i^\top \beta}.
+\deqn{log(\mu_{i}) = x_i^\top \beta}.
 
 For the variance, the NB1 model assumes varying \eqn{\theta_i} such that \eqn{\alpha = \mu_i/\theta_i} and thus 
 
-\eqn{Var(y_i | x_i) = (1 + \alpha) \cdot \mu_i}.
+\deqn{Var(y_i | x_i) = (1 + \alpha) \cdot \mu_i}.
 
 The workhorse function is \code{negbin1_fit}, which is normally not called directly, but when the model response and model matrix have already been calculated. Starting values in the optimization are by default taken from a Poisson glm.
+
+\code{negbin1_fit} is the lower level function where the actual fitting takes place.
+
+A set of standard extractor functions for fitted model objects is available for
+objects of class \code{"negbin1"}, including methods to the generic functions
+\code{\link[base]{print}}, \code{\link[base]{summary}}, \code{\link[stats]{coef}}, 
+\code{\link[stats]{vcov}}, \code{\link[stats]{logLik}}, \code{\link[stats]{residuals}}, 
+\code{\link[stats]{predict}}, \code{\link[stats]{terms}},
+\code{\link[stats]{model.frame}}, \code{\link[stats]{model.matrix}}, \code{\link[stats]{update}},
+\code{\link[sandwich]{estfun}} and \code{\link[sandwich]{bread}} (from the \pkg{sandwich} package), and
+\code{\link[memisc]{getSummary}} (from the \pkg{memisc} package, enabling \code{\link[memisc]{mtable}}).
+  
+See \code{\link{predict.negbin1}} and \code{\link{coef.negbin1}} for more details
+on some methods with non-standard arguments.
 }
 
 \value{
-\code{negbin1} returns an object of \code{\link{class}} "\code{negbin1}".
+\code{negbin1} returns an object of class \code{"negbin"}, i.e., a list
+with components as follows.
+ \code{negbin1.fit} returns an unclassed list with components up to \code{df}.
+  \item{coefficients}{a vector containing the coefficients from the respective models,}
+  \item{counts}{count of function and gradient evaluations from \code{optim},}
+  \item{convergence}{convergence code from \code{optim},}
+  \item{message}{optional further information from \code{optim},}
+  \item{vcov}{covariance matrix of all parameters in the model,}
+  \item{residuals}{a vector of raw residuals (observed - fitted),}
+  \item{fitted.values}{a list with elements \code{"location"} and \code{"alpha"}
+    containing the latent fitted means and standard deviations,}
+  \item{method}{the method argument passed to the \code{optim} call,}
+  \item{nobs}{number of observations,}
+  \item{df}{number of estimated parameters,}
+  \item{call}{the original function call,}
+  \item{formula}{the original formula,}  
+  \item{terms}{a list with elements containing the terms objects for the respective models,}
+  \item{levels}{a list with elements containing the levels of the categorical regressors,}
+  \item{contrasts}{a list with elements containing the contrasts
+    corresponding to \code{levels} from the respective models,}
+  \item{model}{the full model frame (if \code{model = TRUE}),}
+  \item{y}{the numeric response vector (if \code{y = TRUE}),}
+  \item{x}{a list with elements containing the model matrices from the respective models
+    (if \code{x = TRUE}).}
 }
 
 \references{
@@ -79,16 +125,14 @@ Winkelmann R & Boes S (2009).
 Springer, Second Edition.
 }
 
-\seealso{
-\code{\link[MASS]{glm.nb}}, \code{\link[VGAM]{vglm}}
-}
+\seealso{\code{\link{predict.negbin1}}, \code{\link{coef.negbin1}}, \code{\link[gamlss]{gamlss}}, \code{\link[VGAM]{vglm}}}
 
 \examples{
 ## packages
-require("Formula") 
+require("Formula")
+require("gamlss")
 require("VGAM")
 require("lmtest")
-require("MASS")
 
 ## data generating process
 dgp <- function(n = 1000, coef = c(0.2, 0.3, 0, 2)) {
@@ -106,37 +150,39 @@ set.seed(2007-05-15)
 d <- dgp()
 
 ## model (with function negbin1)
-m1 <- negbin1(y ~ x1 + x2, data = d)
+nb1 <- negbin1(y ~ x1 + x2, data = d)
+summary(nb1)
     
 ## model (with vglm from VGAM package)
-m2 <- vglm(y ~ x1 + x2, negbinomial(parallel = TRUE, zero = NULL), data = d, trace = TRUE)    
-summary(m2)
+nb2 <- vglm(y ~ x1 + x2, negbinomial(parallel = TRUE, zero = NULL), data = d, trace = TRUE)    
+summary(nb2)
 
-## model (with glm.nb from MASS package)     
-m3 <- glm.nb(y ~ x1 + x2, data = d) 
+## model (with gamlss from gamlss)
+nb3 <- gamlss(y ~ x1 + x2, family = NBII(sigma.link = "identity"), data = d)
+summary(nb3)
 
 ## comparison of coefficient vectors
-cbind(m1$coefficients$location, coef(m2, matrix = TRUE)[1:3,1], coef(m3))   
+cbind("negbin1" = coef(nb1), "vglm" = coef(nb2)[c(1,3,4)], "gamlss" = coef(nb3))
 
 ## comparison of log likelihoods
-cbind(m1$loglik, logLik(m2))
+cbind("negbin1" = logLik(nb1), "vglm" = logLik(nb2), "gamlss" = logLik(nb3))
 
 ## model comparison
-m0 <- negbin1(y ~ x1, data = d)
-AIC(m0, m1)
-BIC(m0, m1)
-lrtest(m0, m1)
+nb0 <- negbin1(y ~ x1, data = d)
+AIC(nb0, nb1)
+BIC(nb0, nb1)
+lrtest(nb0, nb1)
 
 ## comparison of alpha
-alpham1 <- m1$coefficients$alpha
-co <- coef(m2, matrix = TRUE)
-alpham2 <- exp(co["(Intercept)", "loge(size)"] - co["(Intercept)", "loge(mu)"]) 
-    
-## benefit of formula/terms interface
-update(m1, subset = x2 > 0)
-head(model.frame(m1))
-head(model.matrix(m1))
+co <- coef(nb2, matrix = TRUE)
+diff <- 1/ (exp(co["(Intercept)", "loge(size)"] - co["(Intercept)", "loge(mu)"])) 
 
+cbind("negbin1" = nb1$coefficients$alpha, "vglm" = diff, "gamlss" = nb3$sigma.coefficients)
+
+## benefit of formula/terms interface
+update(nb1, subset = x2 > 0)
+head(model.frame(nb1))
+head(model.matrix(nb1))
 }
 
 \keyword{regression}
