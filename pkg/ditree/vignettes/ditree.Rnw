@@ -1,0 +1,235 @@
+\documentclass[nojss]{jss}
+\usepackage{booktabs,dcolumn,thumbpdf,lmodern}
+
+\author{Lisa Schlosser\\Universit\"at Innsbruck}
+\Plainauthor{Lisa Schlosser}
+
+\title{Distributional Trees}
+
+\Keywords{regression trees, parametric models, distributional, \proglang{R}}
+\Plainkeywords{regression trees, parametric models, distributional, R}
+
+\Abstract{
+  The \pkg{ditree} package (\url{https://R-Forge.R-project.org/projects/uibk-rprog-2017/})
+  applies  a tree algorithm which includes fitting a distributional model in each node using maximum
+  likelihood estimation. A brief overview of the package is provided, along
+  with some illustrations.
+}
+
+\Address{
+  Lisa Schlosser\\
+  Department of Statistics\\
+  Faculty of Economics and Statistics\\
+  Universit\"at Innsbruck\\
+  Universit\"atsstr.~15\\
+  6020 Innsbruck, Austria\\
+  E-mail: \email{Lisa.Schlosser@uibk.ac.at}
+}
+
+
+<<preliminaries, echo=FALSE, results=hide>>=
+options(width = 70, prompt = "R> ", continue = "+  ")
+library("ditree")
+@
+
+
+\begin{document}
+
+\section{Introduction}
+
+In regression analysis many tools have been developed to model the relationship between a response
+variable and one or more covariates. However, many of these tools only model the mean of the response variable, such as linear models (LM), genearlized linear models (GLM) and generalized additive models (GAM). Generalized additive models for location, scale and shape (GAMLSS) were the first to make it possible to model each parameter of a distribution separately and in that way to specify a complete distribution. However, parametric models such as the ones listed before can only capture additive effects. A way of capturing non-additive effects and interactions as well is to apply a tree algorithm.\\
+For that reason \code{ditree} now embeds the developement made in the field of parametric modelling
+ into the idea of algorithmic trees.\\
+See also \pkg{disttree} for a better implementation and an extension of this package including also forest models.
+
+
+\section{Implementation}
+The two main functions of this package are \code{difit} and \code{ditree}.\\
+The function \code{difit} fits a distributional model via maximum likelihood. A distribution family has to be specified, which can be done by handing over a \code{gamlss.family} object. No covariates are used here,
+so the distribution is fitted to the response variable only. \code{difit} returns an object of class 'difit' which is a list of information about the fitted model such as the fitted parameters, number of observations, the object returned by \code{optim}, the log-likelihood and other values.
+%
+\begin{verbatim}
+difit(y, family = NO(), weights = NULL, 
+      start = NULL, estfun = TRUE, bd = NULL, 
+      ocontrol = di_ocontrol(...), ...)
+\end{verbatim}
+
+\medskip
+
+The function \code{ditree} builds a distributional tree using the tree algorithm provided by the function \code{mob} from the \pkg{partykit} package as a framework. Within \code{mob} a distributional model is fit within each node of the tree by using \code{difit}. Here, the covariates are used as splitting variables. \code{ditree} returns an object of class 'ditree'.\\
+
+\begin{verbatim}
+ditree(formula, data, subset, na.action, family = NO(), 
+                  control = mob_control(...), weights = NULL, 
+                  ocontrol = di_ocontrol(...), ...) 
+\end{verbatim}
+
+\medskip
+
+A number of standard \proglang{S}3 methods are provided for returned objects of both functions, see Table~\ref{tab:methods_fit} for the 'difit' methods and Table~\ref{tab:methods_tree} for the 'ditree' methods.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{lp{11.2cm}}
+\hline
+Method & Description \\ \hline
+\code{nobs()}	     & Extract number of observations \\
+\code{coef()}	     & Extract coefficients \\
+\code{predict()}     & (Different types of) predictions for new data \\
+\code{vcov()}	     & Associated covariance matrix \\
+\code{estfun()}      & Extract estimating functions (= gradient contributions) for \pkg{sandwich} covariances \\
+\code{logLik()}      & Extract fitted log-likelihood \\
+\code{bread()}       & Extract bread for \pkg{sandwich} covariance \\
+\code{print()}       & Simple printed display with coefficients \\
+\code{summary()}     & Standard regression summary\\
+\code{getSummary()}  & Extract summary statistics for \code{mtable()} \\
+\code{residuals()}   & Extract (different types of) residuals \\
+\code{plot()}   & Plot fitted density function together with a histogram of the observed values \\
+%\code{Boot()}	     & Bootstrap regression coefficients using \pkg{car} and \pkg{boot} \\ \hline
+\end{tabular}
+\caption{\label{tab:methods_fit} \proglang{S}3 methods provided in \pkg{ditree} for obajects of class 'difit'.}
+\end{table}
+
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{lp{11.2cm}}
+\hline
+Method & Description \\ \hline
+\code{nobs()}	     & Extract number of observations \\
+\code{coef()}	     & Extract coefficients for all terminal nodes\\
+\code{predict()}     & (Different types of) predictions for new data \\
+\code{logLik()}      & Extract fitted log-likelihood \\
+\code{print()}       & Simple printed display with coefficients \\
+\end{tabular}
+\caption{\label{tab:methods_tree} \proglang{S}3 methods provided in \pkg{ditree} for objects of class 'ditree'.}
+\end{table}
+
+\section{Illustration}
+
+The data set used in this illustration is extracted from the data set 'PearsonLee' which is available in the package \pkg{HistData}.
+It contains the heights of children and their parents together with two variables indicating whether the height of the son or daughter and height of the mother or father was meassured.
+
+<<illustration_preliminaries, echo=FALSE, results=hide>>=
+library(ditree)
+## load data
+data("bodyheights", package = "ditree")
+@
+
+<<data_head, echo=TRUE>>=
+head(bodyheights)
+@
+
+
+First a distributional model is fit to the bodyheights of all daughters specifying a normal distribution.
+<<illustration_d, echo=TRUE>>=
+hd <- bodyheights[levels(bodyheights$chl) == "Daughter", "child"]
+model_hd <- difit(hd, family = NO())
+@
+
+The summary of the fitted parameters of the fitted model can now be printed.
+
+<<print_mhd, echo=TRUE>>=
+print(model_hd)
+@
+
+%The density function of the fitted model is then plotted together with a histogram of the observed values.
+%\begin{center}
+%\setkeys{Gin}{width=0.7\textwidth}
+%<<plot_mhd, echo=TRUE, fig=TRUE, fig.keep='last'>>=
+%plot(model_hd, col = 'darkred')
+%@
+%\end{center}
+%And also the summary of the fitted model can now be printed.
+%<<summary_mhd, echo=TRUE>>=
+%summary(model_hd)
+%@
+
+
+
+Now we set the bodyheight of the child as our dependent variable and the sex of the child as the independent varialbe.\\ The fitted tree model provides a clear separation of the data set as can be seen in the corresponding tree plot.\\
+<<tree_child-chl, echo=TRUE>>=
+tree_chl <- ditree(child~chl, data = bodyheights)
+@
+
+\begin{center}
+\setkeys{Gin}{width=0.6\textwidth}
+<<plot_tree_child-chl, echo=TRUE, fig = TRUE>>=
+plot(tree_chl)
+@
+\end{center}
+
+Next, we choose the bodyheight of the parent as the independent variable. In this situation one would usually consider whether the observed bodyheight is from the mother or the father. But applying for example a two sample t-test or looking at the separated histograms it can be seen that surprisingly this has no significant influence in the given data set. For that reason, the variable 'par' is not included in this model.
+<<tree_child-parent, echo=TRUE>>=
+tree_parent <- ditree(child~parent, data = bodyheights)
+@
+\begin{center}
+\setkeys{Gin}{width=0.95\textwidth}
+<<plot_tree_child-parent, echo=TRUE, fig = TRUE, width = 10>>=
+plot(tree_parent)
+@
+\end{center}
+
+Now, as a final model we include include 'parent' and 'chl' as independent variables and control the depth of the tree by setting the minimal number of observations in a node to 50.
+<<tree_all, echo=TRUE>>=
+tree_all <- ditree(child~parent + chl, data = bodyheights, control = mob_control(minsize = 80))
+@
+\begin{center}
+\setkeys{Gin}{width=0.95\textwidth}
+<<plot_tree_all, echo=TRUE, fig = TRUE, width = 10>>=
+plot(tree_all)
+@
+\end{center}
+This tree shows that there is a clear split between the bodyheigts of the Daughters and the Sons. After this first split also further splits are found in the the bodyheights of the parents.
+
+
+
+%\bibliography{ditree}
+\section{References}
+Hothorn T, Hornik K, Zeileis A (2006).
+ Unbiased Recursive Partitioning: A Conditional Inference Framework.
+ \textit{Journal of Computational and Graphical Statistics},
+ \textbf{15}(3), 651--674.
+ \doi{10.1198/106186006X133933}
+ 
+\medskip
+
+Zeileis A, Hothorn T, Hornik K (2008).
+ Model-Based Recursive Partitioning.
+  \textit{Journal of Computational and Graphical Statistics},
+  \textbf{17}(2), 492--514.
+  \doi{10.1198/106186008X319331}
+
+\medskip
+
+Hothorn T, Zeileis A (2015).
+ partykit: A Modular Toolkit for Recursive Partytioning in R.
+ \textit{Journal of Machine Learning Research},
+ \textbf{16}, 3905--3909.
+ \url{http://www.jmlr.org/papers/v16/hothorn15a.html}
+
+\medskip
+
+Stasinopoulos DM, Rigby RA (2007).
+  Generalized Additive Models for Location Scale and Shape (GAMLSS) in R.
+  \textit{Journal of Statistical Software}, 
+  \textbf{23}(7), 1--46.
+  \doi{10.18637/jss.v023.i07}
+  
+\medskip
+
+Seibold H, Zeileis A, Hothorn T (2017).
+  Individual Treatment Effect Prediction for Amyotrophic Lateral Sclerosis Patients.
+  \textit{Statistical Methods in Medical Research}, 
+  \textbf{12}(1), 45--63.
+  \doi{10.1177/0962280217693034}
+
+\medskip
+
+Hothorn T, Zeileis A (2017).
+  Transformation Forests.
+  \emph{arXiv 1701.02110}, arXiv.org E-Print Archive.
+  \url{http://arxiv.org/abs/1701.02110}
+
+\end{document}
