@@ -55,7 +55,7 @@ f(y_i|\mu_i,\sigma_i) = \frac{y_i^{(1/{\sigma_i}^2 - 1)} \exp{[-y_i/({\sigma_i}^
 for $y_i > 0$, $\mu_i > 0$ and $\sigma_i > 0$.
 
 Here $E(Y) = \mu$ and $Var(Y) = \sigma^2 \mu^2$. This reparametrization is obtained by 
-setting $\sigma^2 = 1/\alpha$ and $\mu = \alpha \beta$. \\
+setting $\sigma^2 = 1/a$ and $\mu = s / \sigma^2$ from the specification in \code{dgamma()}. \\
 
 The mean $\mu_i$ and $\sigma_i$ are linkend to the linear predictors
 
@@ -64,7 +64,7 @@ The mean $\mu_i$ and $\sigma_i$ are linkend to the linear predictors
 \log(\sigma_i) & = & z_i^\top \gamma
 \end{eqnarray*}
 
-where the regressor vectors $x$ and $z$ can be set up without restrictions,
+where the regressor vectors $x_i$ and $z_i$ can be set up without restrictions,
 i.e., they can be identical, overlapping or completely different or just including an intercept, etc.
 
 See also \cite{gamlss} for a more detailed introduction to this model class as well as
@@ -108,7 +108,7 @@ Method & Description \\ \hline
 \code{bread()}       & Extract bread for \pkg{sandwich} covariance \\
 \code{estfun()}      & Extract estimating functions (= gradient contributions) for \pkg{sandwich} covariances \\
 \code{getSummary()}  & Extract summary statistics for \code{mtable()} \\
-\code{Boot()}	     & Bootstrap regression coefficients using \pkg{car} and \pkg{boot} \\ \hline
+\hline
 \end{tabular}
 \caption{\label{tab:methods} \proglang{S}3 methods provided in \pkg{fgamma}.}
 \end{table}

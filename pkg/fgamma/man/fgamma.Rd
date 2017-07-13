@@ -64,7 +64,7 @@ fgamma_control(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
 }
 
 \details{
-\code{fgamma} fits gamma regression models modeling mu and sigman with maximum likelihood estimation.
+\code{fgamma} fits gamma regression models modeling mu and sigma with maximum likelihood estimation.
 
 \code{fgamma_fit} is the lower level function where the actual
 fitting takes place.
@@ -106,17 +106,17 @@ set.seed(2017-05-15)
 d <- dgp(500)
 
 ## model with fgamma
-m1 <- fgamma(y ~ x1 + x2 | x1 + x2, data = d)
+f1 <- fgamma(y ~ x1 + x2 | x1 + x2, data = d)
 
 ## model with gamlss
-m2 <- gamlss <- gamlss(y ~ x1 + x2, data = d, family = GA, sigma.formula = ~ x1 + x2)
+f2 <- gamlss <- gamlss(y ~ x1 + x2, data = d, family = GA, sigma.formula = ~ x1 + x2)
 
 ## compare estimates
 # mu estimates
-cbind(coef(m1, model = "mu"), coef(m2, what = "mu"))
+cbind(coef(f1, model = "mu"), coef(f2, what = "mu"))
 
 # sigma estimates
-cbind(coef(m1, model = "sigma"), coef(m2, what = "sigma"))
+cbind(coef(f1, model = "sigma"), coef(f2, what = "sigma"))
 }
 
 \keyword{regression}
