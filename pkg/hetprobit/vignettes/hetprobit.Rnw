@@ -112,7 +112,7 @@ $$
 Note that the scale model is only identified without intercept. 
 
 For a detailed discussion of heteroscedastic probit models see e.g. \cite{Harvey:1976}, 
-\cite{Alvarez+Brehm:1995}, \cite{Keele+Park:2006} and \cite{Freeman+Keele+etal:2015}.\\
+\cite{Alvarez+Brehm:1995}, \cite{Keele+Park:2006} and \cite*{Freeman+Keele+etal:2015}.\\
 Sections~\ref{sec:implementation} and \ref{sec:illustration} show the implementation 
 of such models in \proglang{R} \citep{R} and the practical use of it using the example 
 of voter turnout data from \cite{Nagler:1991}. Finally, a replication of the results of 
@@ -140,7 +140,7 @@ interface and returns an unclassed list.
 
 Additionally, numerous standard \proglang{S}3 methods are provided 
 (see Table~\ref{tab:methods}). As usual fitted means of the observed response variable 
-can be extracted by the generic function \code{fitted}.
+can be extracted by the generic function \code{fitted()}.
 
 \begin{table}[t!]
 \centering
@@ -252,7 +252,7 @@ BIC(mn, m1, m2)
 @
 
 A likelihood ratio test on the nested models \code{m1} and \code{m2} would prefer 
-the full heteroscedastic model \code{m2 }over the reduced one.
+the full heteroscedastic model \code{m1} over the reduced one.
 <<lr-test>>=
 library("lmtest")
 lrtest(mn, m1, m2)
@@ -279,7 +279,7 @@ m0 <- hetglm(vote ~ age + south + govelection + education +
   data = VoterTurnout, method = "BFGS", hessian = TRUE)
 @
 <<echo=FALSE>>=
-coeftest(m0)
+summary(m0)
 @
 In the \code{hetglm()} call for the benchmark model \code{m0} two arguments needed to be 
 switched from the defaults: The method has to be changed to \code{method = "BFGS"} 
