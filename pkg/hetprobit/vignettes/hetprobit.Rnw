@@ -132,7 +132,7 @@ hetprobit(formula, data, subset, na.action,
 \end{verbatim}
 %
 Actually, the \code{formula} can be a two-part \code{Formula} \citep{Formula}, 
-specifying separate sets of regressors $x_i$ and $z_i$ for the location and 
+specifying separate sets of regressors $x_i$ and $z_i$ for the mean and 
 scale submodels, respectively.
 
 The underlying workhorse function is \code{hetprobit_fit()} which has a matrix 
@@ -194,7 +194,7 @@ Variable   			& Description 				& Mean/ \% of 'yes'\\ \hline
 \code{vote}			& Did the respondent vote?		& \Sexpr{format(prop.table(table(d$vote))[2]*100, digits = 2)} \% \\
 \code{education}   	& Years of education of the respondent & \Sexpr{format(mean(d$education), digits = 2)}\\
 \code{age}	     		& Age of the respondent 	& \Sexpr{format(mean(d$age), digits = 3)}\\
-\code{south}	     	& Is the respondent from the south? & \Sexpr{format(prop.table(table(d$south))[2]*100, digits = 2)} \%\\
+\code{south}	     	& Is the respondent from the South? & \Sexpr{format(prop.table(table(d$south))[2]*100, digits = 2)} \%\\
 \code{govelection}     	& Were gubernatorial elections held? & \Sexpr{format(prop.table(table(d$govelection))[2]*100, digits = 2)} \%\\
 \code{closing}   		& How many days before the election has the registration been closed? & \Sexpr{format(mean(d$closing), digits = 3)}\\ \hline
 \end{tabular}
