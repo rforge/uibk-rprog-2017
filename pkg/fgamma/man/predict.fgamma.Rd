@@ -52,7 +52,7 @@ f1 <- fgamma(wage ~ educ + exper + tenure  + sex + marriage  |
 head(fitted(f1))
 head(predict(f1))
 
-## new data with fixed education, experience, tenure, sex, marriage (at median) and varying tenure (over observed range)
+## new data with fixed education, experience, tenure, sex, marriage (all at median) and varying tenure (over observed range)
 nd <- data.frame(educ = 12, exper = 13.5,sex = "Male", marriage = "Married", tenure = 0:44)
 
 ## prediction for mu and sigma (or both)
