@@ -63,7 +63,7 @@ options(prompt = "R> ", continue = "+   ")
 
 <<dgp,echo=FALSE,results=hide>>=
 ### data-generating process
-dgp <- function(n = 1000, coef = c(0.2, 1, 0.3, 0.4)) {
+dgp <- function(n = 10000, coef = c(0.2, 1, 0.3, 0.4)) {
   d <- data.frame(
     x1 = runif(n, -1, 1),
     x2 = runif(n, -1, 1)
@@ -144,24 +144,6 @@ Method & Description \\ \hline
 \caption{\label{tab:methods} \proglang{S}3 methods provided in \pkg{negbin1}.}
 \end{table}
 
-\subsection*{Computation time}
-Below, the computation time of function \code{negbin1()} is compared to NB1 implementations from other packages, as \code{vglm} from
-\pkg{VGAM} \citep{nb1:Yee:2010,nb1:Yee:2015} and \code{gamlss} from package \pkg{gamlss} \citep{nb1:Rigby+Stasinopoulos}. The simulated dataset comprises 1,000 observations.
-
-<<models,echo=FALSE>>=
-st <- rbind(system.time(negbin1(y ~ x1 + x2, data = d, grad = FALSE)),
-system.time(negbin1(y ~ x1 + x2, data = d, grad = TRUE)),
-system.time(vglm(y ~ x1 + x2, negbinomial(parallel = TRUE, zero = NULL),
-                       data = d, trace = FALSE)),
-system.time(gamlss(y ~ x1 + x2, family = NBI, data = d, trace = FALSE))
-)
-st <- st[, -c(4,5)]
-rownames(st) <- c("negbin1(grad = FALSE)", "negbin1(grad = TRUE)", "vglm", "gamlss")
-st
-@ 
-
-The computation time of \code{negbin1()} does quite well compared with \code{vglm()} and \code{gamlss()}. \code{gamlss()} is even faster than \code{negbin1()}, but \code{vglm()} is slower.
-
 \subsection*{Predictions}
 It is also possible to obtain predictions from an object of class \code{negbin}.
 For \code{type = "response"} (as well as for \code{type = "location"}), the conditional mean, the inverse link applied to the linear predictor, is calculated.
@@ -176,6 +158,25 @@ predict(mod, newdata, type = "response")
 predict(mod, newdata, type = "quantile", at = 0.95)
 predict(mod, newdata, type = "probability", at = 0)  
 @ 
+
+\subsection*{Computation time}
+Below, the computation time of function \code{negbin1()} is compared to NB1 implementations from other packages, as \code{vglm} from
+\pkg{VGAM} \citep{nb1:Yee:2010,nb1:Yee:2015} and \code{gamlss} from package \pkg{gamlss} \citep{nb1:Rigby+Stasinopoulos}. The simulated dataset comprises 10,000 observations.
+
+<<models,echo=FALSE>>=
+st <- rbind(system.time(negbin1(y ~ x1 + x2, data = d, grad = FALSE)),
+system.time(negbin1(y ~ x1 + x2, data = d, grad = TRUE)),
+system.time(vglm(y ~ x1 + x2, negbinomial(parallel = TRUE, zero = NULL),
+                       data = d, trace = FALSE)),
+system.time(gamlss(y ~ x1 + x2, family = NBI, data = d, trace = FALSE))
+)
+st <- st[, -c(4,5)]
+rownames(st) <- c("negbin1(grad = FALSE)", "negbin1(grad = TRUE)", "vglm", "gamlss")
+st
+@ 
+
+The computation time of \code{negbin1()} does quite well compared to \code{vglm()}, but only in case that \code{grad = TRUE}. \code{gamlss()} is even faster than \code{negbin1()} with \code{grad = TRUE}. 
+
 \section{Example} \label{sec:ex}
 Data on the number of publications produced by Ph.D. biochemists 
 taken from \cite{nb1:Long:1990} are employed to test the \code{negbin1} function \citep[see also][]{nb1:Long:1997}.
@@ -241,6 +242,7 @@ toLatex(mtable("Poisson" = poi, "NB1" = nb1, summary.stats = c("Log-likelihood",
 \caption{\label{tab:mtable} Comparing Poisson results with NB1 from \pkg{negbin1}.}
 \end{table}
 
+\newpage
 \bibliography{negbin1}
 
 \end{document}
