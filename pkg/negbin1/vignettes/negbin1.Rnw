@@ -63,7 +63,7 @@ options(prompt = "R> ", continue = "+   ")
 
 <<dgp,echo=FALSE,results=hide>>=
 ### data-generating process
-dgp <- function(n = 1000, coef = c(0.2, 0.3, 0, 2)) {
+dgp <- function(n = 1000, coef = c(0.2, 1, 0.3, 0.4)) {
   d <- data.frame(
     x1 = runif(n, -1, 1),
     x2 = runif(n, -1, 1)
@@ -145,7 +145,7 @@ Method & Description \\ \hline
 \end{table}
 
 \subsection*{Computation time}
-Below, an example for the computation time of function \code{negbin1()} is compared to NB1 implementations from other packages, as \code{vglm} from
+Below, the computation time of function \code{negbin1()} is compared to NB1 implementations from other packages, as \code{vglm} from
 \pkg{VGAM} \citep{nb1:Yee:2010,nb1:Yee:2015} and \code{gamlss} from package \pkg{gamlss} \citep{nb1:Rigby+Stasinopoulos}. The simulated dataset comprises 1,000 observations.
 
 <<models,echo=FALSE>>=
@@ -162,6 +162,20 @@ st
 
 The computation time of \code{negbin1()} does quite well compared with \code{vglm()} and \code{gamlss()}. \code{gamlss()} is even faster than \code{negbin1()}, but \code{vglm()} is slower.
 
+\subsection*{Predictions}
+It is also possible to obtain predictions from an object of class \code{negbin}.
+For \code{type = "response"} (as well as for \code{type = "location"}), the conditional mean, the inverse link applied to the linear predictor, is calculated.
+\code{type = "probability"} computes the expected probabilities for each count
+\code{at = 0, 1, 2, 3, ...}, whereas \code{type = "quantile"} gives the quantile
+function for probabilities \code{at}.
+
+<<predictions,echo=TRUE>>=
+mod <- negbin1(y ~ x1 + x2, data = d)
+newdata <- data.frame(x1 = c(0, 0.4, 0.1, 2), x2 = c(0.1, 0, -0.1, 0.1))
+predict(mod, newdata, type = "response")
+predict(mod, newdata, type = "quantile", at = 0.95)
+predict(mod, newdata, type = "probability", at = 0)  
+@ 
 \section{Example} \label{sec:ex}
 Data on the number of publications produced by Ph.D. biochemists 
 taken from \cite{nb1:Long:1990} are employed to test the \code{negbin1} function \citep[see also][]{nb1:Long:1997}.
