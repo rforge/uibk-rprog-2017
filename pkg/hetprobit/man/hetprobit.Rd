@@ -86,8 +86,7 @@ hetprobit_control(maxit = 5000, start = NULL,
   This is a somewhat simpler reimplementation of \code{\link[glmx]{hetglm}} from the 
   \pkg{glmx} package (Zeileis, Koenker, Doebler 2015).
   Compared to \code{hetglm}, \code{hetprobit} does not offer:
-  analytical Hessian, flexible link functions for the mean and scale submodel, 
-  functionality for homoscedastic models, among further features.
+  analytical Hessian, flexible link functions for the mean and scale submodel, among further features.
 
 
 }

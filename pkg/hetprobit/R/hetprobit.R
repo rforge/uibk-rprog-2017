@@ -91,9 +91,9 @@ hetprobit_fit <- function(x, y, z = NULL, control)
   ## negative log-likelihood (contributions)    
   nll <- function(par) {
     beta <- par[1:m]
-    gamma <- par[m + (1:p)]
+    gamma <- if(p > 0) par[m + (1:p)] else numeric(0)
     mu <- x %*% beta
-    scale <- exp(z %*% gamma)
+    scale <- if(p > 0) exp(z %*% gamma) else rep.int(1, n)
     ll <- y * pnorm(mu/scale, log.p = TRUE) + (1 - y) * pnorm(-mu/scale, log.p = TRUE)
     -sum(ll)
   }
@@ -101,9 +101,9 @@ hetprobit_fit <- function(x, y, z = NULL, control)
   ## negative gradient (contributions)
   ngr <- function(par, sum = TRUE) {
     beta <- par[1:m]
-    gamma <-par[m + (1:p)]
+    gamma <- if(p > 0) par[m + (1:p)] else numeric(0)
     mu <- x %*% beta
-    scale <- exp(z %*% gamma)
+    scale <- if(p > 0) exp(z %*% gamma) else rep.int(1, n)
     pi <- pnorm(mu/scale)
 
     rval <- matrix(0, nrow = nrow(x), ncol = ncol(x) + ncol(z)) 
@@ -112,8 +112,9 @@ hetprobit_fit <- function(x, y, z = NULL, control)
     rval[, 1:m] <- as.numeric(y * (dnorm(mu/scale)/pi)) * (x/as.numeric(scale)) - as.numeric((1 - y) * (dnorm(mu/scale)/(1 - pi))) * (x/as.numeric(scale)) 
 
     ## partial derivative of ll w.r.t gamma
-    rval[, m + (1:p)] <- as.numeric(y * (dnorm(mu/scale)/pi) * (-mu/scale)) * z - as.numeric((1 - y) * (dnorm(mu/scale)/(1 - pi)) * (-mu/scale)) * z
-  
+    if(p > 0) {
+      rval[, m + (1:p)] <- as.numeric(y * (dnorm(mu/scale)/pi) * (-mu/scale)) * z - as.numeric((1 - y) * (dnorm(mu/scale)/(1 - pi)) * (-mu/scale)) * z
+    }
     if(sum) 
       rval <- colSums(rval)
     return(-rval) 
@@ -150,7 +151,7 @@ hetprobit_fit <- function(x, y, z = NULL, control)
   }
   if(!is.null(opt$hessian)) {
     rownames(opt$hessian) <- colnames(opt$hessian) <- c(
-      colnames(x), paste("(scale)", colnames(z), sep = "_"))
+      colnames(x), if(p > 0) paste("(scale)", colnames(z), sep = "_") else NULL)
     opt$vcov <- solve(opt$hessian)
     opt$hessian <- NULL
   }
@@ -162,14 +163,14 @@ hetprobit_fit <- function(x, y, z = NULL, control)
   names(opt)[1:2] <- c("coefficients", "loglik")
   opt$coefficients <- list(
     mean = opt$coefficients[1:m], 
-    scale = opt$coefficients[m + 1:p]
+    scale = if(p > 0) opt$coefficients[m + (1:p)] else numeric(0)
   )
   names(opt$coefficients$mean) <- colnames(x)
   names(opt$coefficients$scale) <- colnames(z)
 
   ## fitted values and raw residuals
   mu <- drop(x %*% opt$coefficients$mean)
-  scale <- exp(drop(z %*% opt$coefficients$scale))
+  scale <- if(p > 0) exp(drop(z %*% opt$coefficients$scale)) else rep.int(1, n)
   pi <- pnorm(mu/scale)
   opt$fitted.values <- pi
   opt$residuals <- y - pi
@@ -199,14 +200,18 @@ coef.hetprobit <- function(object, model = c("full", "mean", "scale"), ...) {
     "scale" = cf$scale,
     "full" = {
       structure(c(cf$mean, cf$scale),
-        .Names = c(names(cf$mean), paste("(scale)", names(cf$scale), sep = "_")))
+        .Names = c(names(cf$mean), if(length(cf$scale > 0)) paste("(scale)", names(cf$scale), sep = "_") else NULL))
     }
   )
 }
 
 print.hetprobit <- function(x, digits = max(3, getOption("digits") - 3), ...) 
 {
+  if(!length(x$coefficients$scale)) {
+  cat("Homoscedastic probit model\n\n") 
+  } else {
   cat("Heteroscedastic probit model\n\n")
+  } 
   cat("Call:", deparse(x$call, width.cutoff = floor(getOption("width") * 0.85)), "", sep = "\n")
   if(x$convergence > 0) {
     cat("Model did not converge\n")
@@ -215,14 +220,14 @@ print.hetprobit <- function(x, digits = max(3, getOption("digits") - 3), ...)
       cat("Coefficients (binomial model with probit link):\n")
       print.default(format(x$coefficients$mean, digits = digits), print.gap = 2, quote = FALSE)
     } else {
-      cat("No coefficients (in mean model)\n\n")
+      cat("No coefficients in mean model.\n\n")
     }
     if(length(x$coefficients$scale)) {
       cat("\nLatent scale model coefficients (with log link):\n")
       print.default(format(x$coefficients$scale, digits = digits), print.gap = 2, quote = FALSE)
       cat("\n")
     } else {
-      cat("No coefficients (in scale model)\n\n")
+      cat("No coefficients in scale model.\n\n")
     }
     cat(paste("Log-likelihood: ", format(x$loglik, digits = digits), "\n", sep = ""))
     if(length(x$df)) {
@@ -244,9 +249,13 @@ model.frame.hetprobit <- function(formula, ...) {
 
 model.matrix.hetprobit <- function(object, model = c("mean", "scale"), ...) {
   model <- match.arg(model)
-  rval <- if(!is.null(object$x[[model]])) object$x[[model]]
-    else model.matrix(object$terms[[model]], model.frame(object), contrasts = object$contrasts[[model]])
-  return(rval)
+  rval <- if(!is.null(object$x[[model]])) {
+    object$x[[model]]
+    } else {
+      mm <- model.matrix(object$terms[[model]], model.frame(object), contrasts = object$contrasts[[model]])
+      if(model == "scale") mm[, -1, drop = FALSE] else mm 
+    }
+    return(rval)
 }
 
 predict.hetprobit <- function(object, newdata = NULL,
@@ -261,11 +270,11 @@ predict.hetprobit <- function(object, newdata = NULL,
   ## obtain model.frame/model.matrix
   if(is.null(newdata)) {
     X <- model.matrix(object, model = "mean")
-    Z <- model.matrix(object, model = "scale")[, -1, drop = FALSE]
+    Z <- model.matrix(object, model = "scale")
   } else {
     mf <- model.frame(delete.response(object$terms[["full"]]), newdata, na.action = na.action, xlev = object$levels[["full"]])
     if(type != "scale") X <- model.matrix(delete.response(object$terms$mean), mf, contrasts = object$contrasts$mean)
-    Z <- model.matrix(object$terms$scale, mf, contrasts = object$contrasts$scale)[, -1L, drop = FALSE]
+    Z <- model.matrix(object$terms$scale, mf, contrasts = object$contrasts$scale)[, -1, drop = FALSE]
   }
 
   ## predicted parameters
@@ -291,15 +300,16 @@ estfun.hetprobit <- function(x, ...)
     x$y <- model.response(mf)
     x$x <- list(
       "mean" = model.matrix(x$terms$mean, mf),
-      "scale" = model.matrix(x$terms$scale, mf)
+      "scale" = model.matrix(x$terms$scale, mf)[, -1, drop = FALSE]
     )
   }
-  mu <- x$x$mean %*% x$coefficients$mean
-  scale <- exp(x$x$scale %*% x$coefficients$scale)
-  pi <- pnorm(mu/scale)
 
   m <- ncol(x$x$mean)
   p <- ncol(x$x$scale)
+
+  mu <- x$x$mean %*% x$coefficients$mean
+  scale <- if(p > 0) exp(x$x$scale %*% x$coefficients$scale) else rep.int(1, x$nobs)
+  pi <- pnorm(mu/scale)
 
   rval <- matrix(0, nrow = x$nobs, ncol = x$df) 
  
@@ -307,11 +317,12 @@ estfun.hetprobit <- function(x, ...)
   rval[, 1:m] <- as.numeric(x$y * (dnorm(mu/scale)/pi)) * (x$x$mean/as.numeric(scale)) - as.numeric((1 - x$y) * (dnorm(mu/scale)/(1 - pi))) * (x$x$mean/as.numeric(scale)) 
 
   ## partial derivative of ll w.r.t gamma
-  rval[, m + (1:p)] <- as.numeric(x$y * (dnorm(mu/scale)/pi) * (-mu/scale)) * x$x$scale - as.numeric((1 - x$y) * (dnorm(mu/scale)/(1 - pi)) * (-mu/scale)) * x$x$scale
-
+  if(p > 0) {
+    rval[, m + (1:p)] <- as.numeric(x$y * (dnorm(mu/scale)/pi) * (-mu/scale)) * x$x$scale - as.numeric((1 - x$y) * (dnorm(mu/scale)/(1 - pi)) * (-mu/scale)) * x$x$scale
+  }
 
   ## nice column names
-  colnames(rval) <- c(colnames(x$x$mean), paste("(scale)", colnames(x$x$scale), sep = "_"))
+  colnames(rval) <- c(colnames(x$x$mean), if(p > 0) paste("(scale)", colnames(x$x$scale), sep = "_") else NULL)
   return(rval)
 }
 
@@ -372,6 +383,11 @@ summary.hetprobit <- function(object, ...)
 
 print.summary.hetprobit <- function(x, digits = max(3, getOption("digits") - 3), ...)
 {
+  if(!length(x$coefficients$scale)) {
+  cat("Homoscedastic probit model\n") 
+  } else {
+  cat("Heteroscedastic probit model\n")
+  } 
   cat("\nCall:", deparse(x$call, width.cutoff = floor(getOption("width") * 0.85)), "", sep = "\n")
   
   if(x$convergence > 0L) {
@@ -384,12 +400,12 @@ print.summary.hetprobit <- function(x, digits = max(3, getOption("digits") - 3),
     if(NROW(x$coefficients$mean)) {
       cat(paste("\nCoefficients (binomial model with probit link):\n", sep = ""))
       printCoefmat(x$coefficients$mean, digits = digits, signif.legend = FALSE)
-    } else cat("\nNo coefficients (in mean model)\n")
+    } else cat("\nNo coefficients in mean model.\n")
 
     if(NROW(x$coefficients$scale)) {
       cat(paste("\nLatent scale model coefficients (with log link):\n", sep = ""))
       printCoefmat(x$coefficients$scale, digits = digits, signif.legend = FALSE)
-    } else cat("\nNo coefficients (in scale model)\n")
+    } else cat("\nNo coefficients in scale model.\n")
 
     if(getOption("show.signif.stars") & any(do.call("rbind", x$coefficients)[, 4L] < 0.1, na.rm = TRUE))
       cat("---\nSignif. codes: ", "0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1", "\n")
@@ -434,6 +450,11 @@ getSummary.hetprobit <- function(obj, alpha = 0.05, ...) {
     dimnames = list(nam, c("est", "se", "stat", "p", "lwr", "upr"), names(cf)))
   for(i in seq_along(cf)) acf[rownames(cf[[i]]), , i] <- cf[[i]]
   
+  ## contrasts (omitting duplicates between mean and scale part) and factor levels
+  ctr <- c(obj$contrasts$mean, obj$contrasts$scale)
+  ctr <- ctr[!duplicated(names(ctr))]
+  xlev <- obj$levels$full
+  
   ## return everything
   return(list(
     coef = acf,
@@ -443,8 +464,8 @@ getSummary.hetprobit <- function(obj, alpha = 0.05, ...) {
       "AIC" = AIC(obj),
       "BIC" = AIC(obj, k = log(obj$nobs))
     ),
-    contrasts = obj$contrasts,
-    xlevels = obj$xlevels,
+    contrasts = ctr,
+    xlevels = xlev,
     call = obj$call
   ))
 }
