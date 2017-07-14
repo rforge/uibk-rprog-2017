@@ -368,7 +368,11 @@ getSummary.negbin1 <- function(obj, Alpha = 0.05, ...) {
   acf <- array(dim = c(length(nam), 6, 1),
     dimnames = list(nam, c("est", "se", "stat", "p", "lwr", "upr"), "location"))
   for(i in 1:nrow(cf)) acf[i, , "location"] <- cf[i,]
-  
+
+  ## contrasts
+  ctr <- obj$contrasts$location
+  xlev <- obj$levels$location
+    
   ## return everything
   return(list(
     coef = acf,
@@ -378,8 +382,8 @@ getSummary.negbin1 <- function(obj, Alpha = 0.05, ...) {
       "AIC" = AIC(obj),
       "BIC" = AIC(obj, k = log(obj$nobs))
     ),
-    contrasts = obj$contrasts,
-    xlevels = obj$xlevels,
+    contrasts = ctr,
+    xlevels = xlev,
     call = obj$call
   ))
 }
