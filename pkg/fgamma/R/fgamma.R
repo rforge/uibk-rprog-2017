@@ -428,6 +428,11 @@ getSummary.fgamma <- function(obj, alpha = 0.05, ...) {
                dimnames = list(nam, c("est", "se", "stat", "p", "lwr", "upr"), names(cf)))
   for(i in seq_along(cf)) acf[rownames(cf[[i]]), , i] <- cf[[i]]
   
+  ## contrasts 
+  ctr <- c(obj$contrasts$mu, obj$contrasts$sigma)
+  ctr <- ctr[!duplicated(names(ctr))]
+  xlev <- obj$levels$full
+  
   ## return everything
   return(list(
     coef = acf,
@@ -437,8 +442,8 @@ getSummary.fgamma <- function(obj, alpha = 0.05, ...) {
       "AIC" = AIC(obj),
       "BIC" = AIC(obj, k = log(obj$nobs))
     ),
-    contrasts = obj$contrasts,
-    xlevels = obj$xlevels,
+    contrasts = ctr,
+    xlevels = xlev,
     call = obj$call
   ))
 }
