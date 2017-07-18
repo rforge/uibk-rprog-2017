@@ -132,11 +132,23 @@ hetprobit(formula, data, subset, na.action,
 \end{verbatim}
 %
 Actually, the \code{formula} can be a two-part \code{Formula} \citep{Formula}, 
-specifying separate sets of regressors $x_i$ and $z_i$ for the mean and 
-scale submodels, respectively.
+specifying sets of regressors $x_i$ and $z_i$ for the mean and 
+scale submodels, respectively. The specification of formula \code{y ~ x1 + x2} is 
+the short version of \code{y ~ x1 + x2 | x1 + x2} with exactly the same set of 
+regressors used in the mean and scale equation. Different sets of regressors, e.g.
+\code{y ~ x1 + x2 | z1}, \code{y ~ x1 + x2 | z1 + x2} and \code{y ~ x1 + x2 | 1} are 
+also possible. The last specification assumes a constant scale (\code{~ 1}), i.e. in 
+this setting a homoscedastic probit model would be estimated. \\
+By default the model frame and the response are returned whereas the model matrix is not.
 
 The underlying workhorse function is \code{hetprobit_fit()} which has a matrix 
-interface and returns an unclassed list.
+interface and returns an unclassed list with e.g. mean and scale coefficients, fitted values, 
+residuals. In order to estimate the coefficients via maximum likelihood the \code{optim()} function 
+is used. If the starting values are not set by the user, the coefficients estimates returned by 
+\code{glm()} with \code{family = binomial(link = "probit")} are used for the mean equation. 
+The starting values for the coefficients in the scale model are set to zero. Remember that there is no intercept in the scale model. \\
+By default analytical gradients together with the \code{"BFGS"}-method are 
+employed and the hessian is approximated numerically.
 
 Additionally, numerous standard \proglang{S}3 methods are provided 
 (see Table~\ref{tab:methods}). As usual fitted means of the observed response variable 
@@ -214,6 +226,13 @@ summary(mn)
 <<echo = FALSE>>=
 summary(mn)
 @
+The same estimates could have been obtained by using the package's \code{hetprobit()} function, but 
+with a trade-off in efficiency compared to \code{glm()}.
+<<homoscedastic-probit, eval = FALSE>>=
+mn1 <- hetprobit(vote ~ age + I(age^2) + south + govelection + 
+  (education + I(education^2)) * closing | 1, 
+  data = VoterTurnout)
+@
 
 
 In a next step the replicated homoscedastic model will be modified in such a way 
@@ -258,13 +277,13 @@ library("lmtest")
 lrtest(mn, m1, m2)
 @
 
-\newpage
+
 \section{Replication}\label{sec:replication}
 This package is a somewhat simpler reimplementation of the function \code{hetglm()} from 
-the package \pkg{glmx}. In case of an implementation not limited to the 
-probit link for the mean and log link for the scale equation \pkg{glmx} offers more flexibility. 
-In particular \code{hetglm} offers analytical Hessian, flexible link functions for the mean and scale 
-submodel, functionality for homoscedastic models, among further features. \\
+the package \pkg{glmx}. In case of an implementation not limited to the probit link for the 
+mean and log link for the scale equation \pkg{glmx} offers more flexibility. 
+In particular, \code{hetglm} offers analytical Hessian and flexible link functions for 
+the mean and scale submodel among further features. \\
 For illustration purposes a sparser heteroscedastic model than in Section~\ref{sec:illustration} is 
 used. Therefore, the polynomials of \code{age} and \code{education} as well as the interaction 
 between \code{education} and \code{closing} are removed from the model equation.
@@ -292,7 +311,7 @@ m <- hetprobit(vote ~ age + south + govelection + education + closing |
   data = VoterTurnout)
 @
 
-\newpage
+
 Using a model table from \pkg{memisc} \citep{memisc} the replicated estimation results 
 (model \code{m}) can be easily embedded in a \TeX-file (see Table~\ref{tab:mtable}). 
 However, the method \code{getSummary()} is not (yet) supported in the \pkg{glmx} package.
@@ -311,7 +330,7 @@ toLatex(mtable(m))
 \end{table}
 
 
-
+\newpage
 \bibliography{hetprobit}
 
 \end{document}
