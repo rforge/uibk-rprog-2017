@@ -1,6 +1,6 @@
 Package: fgamma
 Title: Full Gamma Regression 
-Version: 0.0-4
+Version: 0.0-5
 Date: 2017-06-08
 Authors@R: person("Daniel", "Gstrein", role = c("aut", "cre"), email = "Daniel.Gstrein@uibk.ac.at")
 Description: Full gamma regression modeling the mu (mean) and sigma parameter as functions of explanatory variables using a "log" link for both parameters. 
