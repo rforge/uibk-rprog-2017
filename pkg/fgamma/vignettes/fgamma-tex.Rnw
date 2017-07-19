@@ -55,7 +55,7 @@ f(y_i|\mu_i,\sigma_i) = \frac{y_i^{(1/{\sigma_i}^2 - 1)} \exp{[-y_i/({\sigma_i}^
 for $y_i > 0$, $\mu_i > 0$ and $\sigma_i > 0$.
 
 Here $E(Y) = \mu$ and $Var(Y) = \sigma^2 \mu^2$. This reparametrization is obtained by 
-setting $\sigma^2 = 1/a$ and $\mu = s / \sigma^2$ from the specification in \code{dgamma()}. \\
+setting $a = 1 / \sigma^2$ and $s = \sigma^2 \mu$ from the specification in \code{dgamma()}. \\
 
 The mean $\mu_i$ and $\sigma_i$ are linkend to the linear predictors
 
@@ -165,7 +165,7 @@ summary(g1)
 
 It can be easily seen the results can be replicated using both packages:
 
-<<gamlss>>=
+<<fgamma>>=
 summary(f3)
 @
 
