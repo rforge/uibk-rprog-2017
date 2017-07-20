@@ -139,20 +139,22 @@ regressors used in the mean and scale equation. Different sets of regressors, e.
 \code{y ~ x1 + x2 | z1}, \code{y ~ x1 + x2 | z1 + x2} and \code{y ~ x1 + x2 | 1} are 
 also possible. The last specification assumes a constant scale (\code{~ 1}), i.e. in 
 this setting a homoscedastic probit model would be estimated. \\
-By default the model frame and the response are returned whereas the model matrix is not.
+By default the model frame (\code{model = TRUE}) and the response (\code{y = TRUE}) are 
+returned whereas the model matrix is not (\code{x = FALSE}).
 
 The underlying workhorse function is \code{hetprobit_fit()} which has a matrix 
 interface and returns an unclassed list with e.g. mean and scale coefficients, fitted values, 
-residuals. In order to estimate the coefficients via maximum likelihood the \code{optim()} function 
+raw residuals. In order to estimate the coefficients via maximum likelihood the \code{optim()} function 
 is used. If the starting values are not set by the user, the coefficients estimates returned by 
 \code{glm()} with \code{family = binomial(link = "probit")} are used for the mean equation. 
-The starting values for the coefficients in the scale model are set to zero. Remember that there is no intercept in the scale model. \\
+The starting values for the coefficients in the scale model are set to zero. Remember that there 
+is no intercept in the scale model. \\
 By default analytical gradients together with the \code{"BFGS"}-method are 
 employed and the hessian is approximated numerically.
 
-Additionally, numerous standard \proglang{S}3 methods are provided 
-(see Table~\ref{tab:methods}). As usual fitted means of the observed response variable 
-can be extracted by the generic function \code{fitted()}.
+Additionally, numerous standard \proglang{S}3 methods are provided (see Table~\ref{tab:methods}). 
+As usual fitted means of the observed response variable can be extracted by the generic function 
+\code{fitted()}.
 
 \begin{table}[t!]
 \centering
@@ -318,13 +320,13 @@ However, the method \code{getSummary()} is not (yet) supported in the \pkg{glmx}
 
 <<mtable, eval=FALSE>>=
 library("memisc")
-toLatex(mtable(m))
+toLatex(mtable(m, summary.stats = c("Log-likelihood", "AIC", "BIC", "N")))
 @
 
 \begin{table}[h!]
 \centering
 <<mtable-latex, echo=FALSE, results=tex>>=
-toLatex(mtable(m))
+toLatex(mtable(m, summary.stats = c("Log-likelihood", "AIC", "BIC", "N")))
 @
 \caption{\label{tab:mtable} Replication of \pkg{glmx} results using \pkg{hetprobit}.}
 \end{table}
