@@ -373,26 +373,8 @@ ditree <- function(formula, data, subset, na.action, family = NO(),
     ## FIX ME: if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
     warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
   }
-  
   m$formula <- formula
-  
-  #store modelframe separately
-  mf <- m
-  mfnames <- match(c("formula", "data", "na.action"), names(mf), 0L)
-  mf <- mf[c(1L, mfnames)]
-  
-  ## evaluate model.frame
-  mf[[1L]] <- as.name("model.frame")
-  mf <- eval(mf, parent.frame())
-  
-  ## extract terms, model matrix, response
-  mt <- terms(formula, data = data)
-  mtZ <- terms(formula, data = data, rhs = 1L)
-  attributes(mtZ)$intercept <- 0
-  Y <- model.response(mf, "numeric")
-  Z <- model.matrix(mtZ, mf)
 
-    
   ## glue code for calling difit() with given family in mob()
   d_family_fit <- function(y, x = NULL, start = NULL, weights = NULL, offset = NULL, 
                            cluster = NULL, estfun = TRUE, object = TRUE, ...)
@@ -418,11 +400,11 @@ ditree <- function(formula, data, subset, na.action, family = NO(),
   
   ## further model information
   rval$call <- cl
-  rval$formula <- oformula
+  rval$formula <- m$formula
   rval$family <- family
   
   rval$fitted$`(weights)` <- weights 
-  rval$fitted$`(response)` <- Y    #FIX ME (here on transformed scale if a transformation is included in the formula)
+  rval$fitted$`(response)` <- model.response(rval$data)
   rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
   rval$coefficients <- coef(rval)    # rval is returned from mob -> no type argument needed
   # return estimated par for each observation
