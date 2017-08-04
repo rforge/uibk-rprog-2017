@@ -33,10 +33,14 @@ importFrom("stats",
   "quantile", 
   "update",
   "AIC",
-  "vcov"
+  "vcov",
+  "model.matrix", 
+  "model.response",
+  "terms"
 )
 importFrom("Formula",
-  "as.Formula"
+  "as.Formula",
+  "Formula"
 )
 
 
