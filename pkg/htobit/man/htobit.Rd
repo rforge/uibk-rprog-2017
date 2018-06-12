@@ -143,7 +143,7 @@ htobit_control(maxit = 5000, start = NULL, grad = TRUE, hessian = TRUE, ...)
 
 \examples{
 ## data on alcohol and tobacco expenditures in Belgian households
-data("AlcoholTobacco", package = "htobit")
+data("AlcoholTobacco", package = "htobit2017")
 AlcoholTobacco$persons <- with(AlcoholTobacco, adults + oldkids + youngkids)
 
 ## homoscedastic vs. heteroscedastic tobit model for budget share of alcohol

@@ -37,7 +37,7 @@ Verbeek, M. (2004). \emph{A Guide to Modern Econometrics}, 2nd ed. Chichester, U
 }
 
 \examples{
-data("AlcoholTobacco", package = "htobit")
+data("AlcoholTobacco", package = "htobit2017")
 
 ## homoscedastic tobit model for budget share of alcohol
 ma <- htobit(alcohol ~ (age + adults) * log(expenditure) + oldkids + youngkids,

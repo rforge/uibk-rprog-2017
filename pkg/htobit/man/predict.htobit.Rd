@@ -53,7 +53,7 @@
 
 \examples{
 ## heteroscedastic tobit model for budget share of alcohol
-data("AlcoholTobacco", package = "htobit")
+data("AlcoholTobacco", package = "htobit2017")
 AlcoholTobacco$persons <- with(AlcoholTobacco, adults + oldkids + youngkids)
 ma <- htobit(alcohol ~ age + log(expenditure) + persons | age + log(expenditure) + persons,
   data = AlcoholTobacco)

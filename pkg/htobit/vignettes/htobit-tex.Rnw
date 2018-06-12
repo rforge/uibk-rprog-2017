@@ -31,13 +31,13 @@
 %% need no \usepackage{Sweave}
 %\VignetteIndexEntry{Heteroscedastic Tobit Regression}
 %\VignetteEngine{Sweave}
-%\VignetteDepends{htobit, car, crch, lmtest, memisc}
+%\VignetteDepends{htobit2017, car, crch, lmtest, memisc}
 %\VignetteKeywords{heteroscedastic tobit, regression, R}
-%\VignettePackage{htobit}
+%\VignettePackage{htobit2017}
 
 <<preliminaries, echo=FALSE, results=hide>>=
 options(width = 70, prompt = "R> ", continue = "+  ")
-library("htobit")
+library("htobit2017")
 library("car")
 library("crch")
 library("lmtest")
@@ -123,8 +123,8 @@ data on budget shares of alcohol and tobacco for 2724 Belgian households
 be replicated by:
 
 <<verbeek>>=
-data("AlcoholTobacco", package = "htobit")
-library("htobit")
+data("AlcoholTobacco", package = "htobit2017")
+library("htobit2017")
 ma <- htobit(alcohol ~ (age + adults) * log(expenditure) + oldkids + youngkids,
   data = AlcoholTobacco)
 summary(ma)
